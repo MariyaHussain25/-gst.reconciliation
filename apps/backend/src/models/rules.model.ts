@@ -17,6 +17,10 @@ export interface IGstRule extends Document {
   title: string;
   description: string;
   keywords: string[];
+  /** Relevant GST law section, e.g. "Section 17(5)" — null if not applicable */
+  gstSection: string | null;
+  /** GSTR-3B table reference, e.g. "4(D)(2)" — null if not applicable */
+  gstr3bTable: string | null;
   /** OpenAI text-embedding vector (1536 dimensions for text-embedding-3-small) */
   embedding: number[];
   isActive: boolean;
@@ -35,6 +39,8 @@ const GstRuleSchema = new Schema<IGstRule>(
     title: { type: String, required: true },
     description: { type: String, required: true },
     keywords: { type: [String], default: [] },
+    gstSection: { type: String, default: null },
+    gstr3bTable: { type: String, default: null },
     /**
      * Vector embedding of the rule description.
      * Used with MongoDB Atlas Vector Search for RAG retrieval.

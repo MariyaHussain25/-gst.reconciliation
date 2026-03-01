@@ -45,3 +45,9 @@ export async function disconnectFromDatabase(): Promise<void> {
     console.error('[DB] Error during disconnection:', error);
   }
 }
+
+/**
+ * Alias for connectToDatabase — exported as connectDB for convenience.
+ * Scripts and seed files should import this function.
+ */
+export const connectDB = connectToDatabase;
