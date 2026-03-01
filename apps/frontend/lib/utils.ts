@@ -28,8 +28,22 @@ export function cn(...inputs: ClassValue[]): string {
  * @returns Formatted string (e.g. "March 2024")
  */
 export function formatPeriod(period: string): string {
-  const [year, month] = period.split('-');
-  const date = new Date(parseInt(year ?? '2024', 10), parseInt(month ?? '1', 10) - 1);
+  const parts = period.split('-');
+  const yearStr = parts[0];
+  const monthStr = parts[1];
+
+  if (!yearStr || !monthStr) {
+    return period; // Return as-is if format is invalid
+  }
+
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+
+  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+    return period; // Return as-is if values are out of range
+  }
+
+  const date = new Date(year, month - 1);
   return date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 }
 

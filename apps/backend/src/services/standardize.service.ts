@@ -86,7 +86,10 @@ export function standardizeInvoices(
     igst: rawInvoice.igst,
     cgst: rawInvoice.cgst,
     sgst: rawInvoice.sgst,
-    totalAmount: rawInvoice.taxableAmount + rawInvoice.igst + rawInvoice.cgst + rawInvoice.sgst,
+    totalAmount:
+      Math.round(
+        (rawInvoice.taxableAmount + rawInvoice.igst + rawInvoice.cgst + rawInvoice.sgst) * 100,
+      ) / 100, // Round to 2 decimal places to avoid floating-point precision issues
     matchStatus: 'UNMATCHED',
     itcCategory: null,
     matchConfidence: 0,
