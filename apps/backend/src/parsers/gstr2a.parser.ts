@@ -14,7 +14,7 @@
  * Phase 4: Called during file upload to persist records into MongoDB.
  */
 
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,13 +74,52 @@ const REQUIRED_COLUMNS = [
 // ---------------------------------------------------------------------------
 
 /**
- * Safely converts a cell value to a number.
+ * Extracts a plain primitive value from an ExcelJS cell value.
+ * ExcelJS cells can contain rich text objects, formula results, hyperlinks, etc.
+ * This function always returns a string, number, boolean, Date, or null.
+ *
+ * @param cellValue - Raw cell value from ExcelJS
+ */
+function extractCellValue(
+  cellValue: ExcelJS.CellValue,
+): string | number | boolean | Date | null {
+  if (cellValue === null || cellValue === undefined) return null;
+  if (typeof cellValue === 'string') return cellValue;
+  if (typeof cellValue === 'number') return cellValue;
+  if (typeof cellValue === 'boolean') return cellValue;
+  if (cellValue instanceof Date) return cellValue;
+
+  // Formula cell: return the cached result
+  if (typeof cellValue === 'object' && 'result' in cellValue) {
+    const result = (cellValue as ExcelJS.CellFormulaValue).result;
+    return extractCellValue(result as ExcelJS.CellValue);
+  }
+
+  // Rich text cell: concatenate all text runs
+  if (typeof cellValue === 'object' && 'richText' in cellValue) {
+    return (cellValue as ExcelJS.CellRichTextValue).richText
+      .map((run) => run.text)
+      .join('');
+  }
+
+  // Hyperlink cell: return the display text
+  if (typeof cellValue === 'object' && 'text' in cellValue) {
+    const text = (cellValue as ExcelJS.CellHyperlinkValue).text;
+    return typeof text === 'string' ? text : null;
+  }
+
+  return null;
+}
+
+/**
+ * Safely converts an ExcelJS cell value to a number.
  * Returns 0 for null, undefined, empty string, or non-numeric values.
  *
- * @param value - Raw cell value from xlsx
+ * @param cellValue - Raw cell value from ExcelJS
  */
-function toNumber(value: unknown): number {
-  if (value === null || value === undefined || value === '') return 0;
+function toNumber(cellValue: ExcelJS.CellValue): number {
+  const value = extractCellValue(cellValue);
+  if (value === null || value === '') return 0;
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
     const cleaned = value.replace(/,/g, '').trim();
@@ -91,14 +130,32 @@ function toNumber(value: unknown): number {
 }
 
 /**
- * Safely converts a cell value to a string.
+ * Safely converts an ExcelJS cell value to a string.
  * Returns empty string for null or undefined.
  *
- * @param value - Raw cell value from xlsx
+ * @param cellValue - Raw cell value from ExcelJS
  */
-function toString(value: unknown): string {
+function toString(cellValue: ExcelJS.CellValue): string {
+  const value = extractCellValue(cellValue);
   if (value === null || value === undefined) return '';
+  if (value instanceof Date) return value.toLocaleDateString('en-GB');
   return String(value).trim();
+}
+
+/**
+ * Reads all rows from an ExcelJS worksheet as a 2D array of raw cell values.
+ * Skips completely empty rows.
+ *
+ * @param worksheet - The ExcelJS worksheet to read
+ */
+function readAllRows(worksheet: ExcelJS.Worksheet): ExcelJS.CellValue[][] {
+  const rows: ExcelJS.CellValue[][] = [];
+  worksheet.eachRow({ includeEmpty: false }, (row) => {
+    // row.values is 1-indexed (index 0 is null); slice from index 1
+    const values = (row.values as ExcelJS.CellValue[]).slice(1);
+    rows.push(values);
+  });
+  return rows;
 }
 
 /**
@@ -111,7 +168,7 @@ function toString(value: unknown): string {
  *
  * @param rows - All rows from the worksheet as arrays
  */
-function extractMetadata(rows: unknown[][]): Gstr2AMetadata {
+function extractMetadata(rows: ExcelJS.CellValue[][]): Gstr2AMetadata {
   let companyName = '';
   let periodStart = '';
   let periodEnd = '';
@@ -153,27 +210,29 @@ function extractMetadata(rows: unknown[][]): Gstr2AMetadata {
  * @param fileName   - Original file name (used for logging only)
  * @throws Error if required columns are missing or no data rows are found
  */
-export function parseGstr2A(fileBuffer: Buffer, fileName: string): Gstr2AParseResult {
+export async function parseGstr2A(
+  fileBuffer: Buffer,
+  fileName: string,
+): Promise<Gstr2AParseResult> {
   console.log(`[GSTR-2A Parser] Parsing file: ${fileName}`);
 
-  // Parse the workbook
-  const workbook = XLSX.read(fileBuffer, { type: 'buffer', cellDates: false });
+  const workbook = new ExcelJS.Workbook();
+  // Convert Node.js Buffer to ArrayBuffer to satisfy ExcelJS type definitions
+  const arrayBuffer = fileBuffer.buffer.slice(
+    fileBuffer.byteOffset,
+    fileBuffer.byteOffset + fileBuffer.byteLength,
+  ) as ArrayBuffer;
+  await workbook.xlsx.load(arrayBuffer);
 
   // Use the first sheet
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) {
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
     throw new Error('[GSTR-2A Parser] Excel file contains no sheets');
   }
 
-  console.log(`[GSTR-2A Parser] Reading sheet: "${sheetName}"`);
-  const worksheet = workbook.Sheets[sheetName];
+  console.log(`[GSTR-2A Parser] Reading sheet: "${worksheet.name}"`);
 
-  // Convert to array of arrays (raw values)
-  const allRows: unknown[][] = XLSX.utils.sheet_to_json(worksheet, {
-    header: 1,
-    defval: null,
-    blankrows: false,
-  });
+  const allRows = readAllRows(worksheet);
 
   if (allRows.length === 0) {
     throw new Error('[GSTR-2A Parser] Sheet is empty');
@@ -201,14 +260,14 @@ export function parseGstr2A(fileBuffer: Buffer, fileName: string): Gstr2AParseRe
   }
 
   const headerRow = allRows[headerRowIndex].map((cell) => toString(cell));
-  console.log(`[GSTR-2A Parser] Header row found at row ${headerRowIndex + 1}: ${headerRow.join(' | ')}`);
+  console.log(
+    `[GSTR-2A Parser] Header row found at row ${headerRowIndex + 1}: ${headerRow.join(' | ')}`,
+  );
 
   // Verify all required columns are present
   const missingColumns = REQUIRED_COLUMNS.filter((col) => !headerRow.includes(col));
   if (missingColumns.length > 0) {
-    throw new Error(
-      `[GSTR-2A Parser] Missing required columns: ${missingColumns.join(', ')}`,
-    );
+    throw new Error(`[GSTR-2A Parser] Missing required columns: ${missingColumns.join(', ')}`);
   }
 
   // Build column index map
@@ -224,7 +283,7 @@ export function parseGstr2A(fileBuffer: Buffer, fileName: string): Gstr2AParseRe
     const row = allRows[i];
 
     // Skip completely empty rows
-    if (!row || row.every((cell) => cell === null || cell === '')) continue;
+    if (!row || row.every((cell) => cell === null || cell === undefined || cell === '')) continue;
 
     const dateValue = toString(row[columnIndex['Date']]);
     const particularsValue = toString(row[columnIndex['Particulars']]);

@@ -5,10 +5,10 @@
  * from the exact column and sheet format used in real GSTR-2B downloads.
  *
  * Expected sheets:
- *   - "Read me"          — File header (Financial Year, Tax Period, GSTIN, etc.)
- *   - "B2B"             — B2B invoice rows
- *   - "ITC Available"    — ITC available summary (Part A and Part B)
- *   - "ITC not available" — Blocked/ineligible ITC summary (Part A and Part B)
+ *   - "Read me"            — File header (Financial Year, Tax Period, GSTIN, etc.)
+ *   - "B2B"               — B2B invoice rows
+ *   - "ITC Available"      — ITC available summary (Part A and Part B)
+ *   - "ITC not available"  — Blocked/ineligible ITC summary (Part A and Part B)
  *
  * B2B columns (exact names):
  *   GSTIN of supplier | Trade/Legal name | Invoice number | Invoice type |
@@ -21,7 +21,7 @@
  * Phase 4: Called during file upload to persist records into MongoDB.
  */
 
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -112,13 +112,52 @@ const B2B_REQUIRED_COLUMNS = [
 // ---------------------------------------------------------------------------
 
 /**
- * Safely converts a cell value to a number.
+ * Extracts a plain primitive value from an ExcelJS cell value.
+ * ExcelJS cells can contain rich text objects, formula results, hyperlinks, etc.
+ * This function always returns a string, number, boolean, Date, or null.
+ *
+ * @param cellValue - Raw cell value from ExcelJS
+ */
+function extractCellValue(
+  cellValue: ExcelJS.CellValue,
+): string | number | boolean | Date | null {
+  if (cellValue === null || cellValue === undefined) return null;
+  if (typeof cellValue === 'string') return cellValue;
+  if (typeof cellValue === 'number') return cellValue;
+  if (typeof cellValue === 'boolean') return cellValue;
+  if (cellValue instanceof Date) return cellValue;
+
+  // Formula cell: return the cached result
+  if (typeof cellValue === 'object' && 'result' in cellValue) {
+    const result = (cellValue as ExcelJS.CellFormulaValue).result;
+    return extractCellValue(result as ExcelJS.CellValue);
+  }
+
+  // Rich text cell: concatenate all text runs
+  if (typeof cellValue === 'object' && 'richText' in cellValue) {
+    return (cellValue as ExcelJS.CellRichTextValue).richText
+      .map((run) => run.text)
+      .join('');
+  }
+
+  // Hyperlink cell: return the display text
+  if (typeof cellValue === 'object' && 'text' in cellValue) {
+    const text = (cellValue as ExcelJS.CellHyperlinkValue).text;
+    return typeof text === 'string' ? text : null;
+  }
+
+  return null;
+}
+
+/**
+ * Safely converts an ExcelJS cell value to a number.
  * Returns 0 for null, undefined, empty string, or non-numeric values.
  *
- * @param value - Raw cell value from xlsx
+ * @param cellValue - Raw cell value from ExcelJS
  */
-function toNumber(value: unknown): number {
-  if (value === null || value === undefined || value === '') return 0;
+function toNumber(cellValue: ExcelJS.CellValue): number {
+  const value = extractCellValue(cellValue);
+  if (value === null || value === '') return 0;
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
     const cleaned = value.replace(/,/g, '').trim();
@@ -129,12 +168,13 @@ function toNumber(value: unknown): number {
 }
 
 /**
- * Safely converts a cell value to a number, returning null for empty values.
+ * Safely converts an ExcelJS cell value to a number, returning null for empty values.
  * Used for optional numeric fields.
  *
- * @param value - Raw cell value from xlsx
+ * @param cellValue - Raw cell value from ExcelJS
  */
-function toNumberOrNull(value: unknown): number | null {
+function toNumberOrNull(cellValue: ExcelJS.CellValue): number | null {
+  const value = extractCellValue(cellValue);
   if (value === null || value === undefined || value === '') return null;
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
@@ -147,25 +187,43 @@ function toNumberOrNull(value: unknown): number | null {
 }
 
 /**
- * Safely converts a cell value to a string.
+ * Safely converts an ExcelJS cell value to a string.
  * Returns empty string for null or undefined.
  *
- * @param value - Raw cell value from xlsx
+ * @param cellValue - Raw cell value from ExcelJS
  */
-function toString(value: unknown): string {
+function toString(cellValue: ExcelJS.CellValue): string {
+  const value = extractCellValue(cellValue);
   if (value === null || value === undefined) return '';
+  if (value instanceof Date) return value.toLocaleDateString('en-GB');
   return String(value).trim();
 }
 
 /**
- * Converts a cell value to a nullable string.
+ * Converts an ExcelJS cell value to a nullable string.
  * Returns null for empty/missing values.
  *
- * @param value - Raw cell value from xlsx
+ * @param cellValue - Raw cell value from ExcelJS
  */
-function toStringOrNull(value: unknown): string | null {
-  const str = toString(value);
+function toStringOrNull(cellValue: ExcelJS.CellValue): string | null {
+  const str = toString(cellValue);
   return str === '' ? null : str;
+}
+
+/**
+ * Reads all rows from an ExcelJS worksheet as a 2D array of raw cell values.
+ * Skips completely empty rows.
+ *
+ * @param worksheet - The ExcelJS worksheet to read
+ */
+function readAllRows(worksheet: ExcelJS.Worksheet): ExcelJS.CellValue[][] {
+  const rows: ExcelJS.CellValue[][] = [];
+  worksheet.eachRow({ includeEmpty: false }, (row) => {
+    // row.values is 1-indexed (index 0 is null); slice from index 1
+    const values = (row.values as ExcelJS.CellValue[]).slice(1);
+    rows.push(values);
+  });
+  return rows;
 }
 
 /**
@@ -180,7 +238,7 @@ function toStringOrNull(value: unknown): string | null {
  *
  * @param rows - All rows from the "Read me" sheet as arrays
  */
-function extractReadMeMetadata(rows: unknown[][]): Gstr2BMetadata {
+function extractReadMeMetadata(rows: ExcelJS.CellValue[][]): Gstr2BMetadata {
   let financialYear = '';
   let taxPeriod = '';
   let buyerGstin = '';
@@ -211,19 +269,15 @@ function extractReadMeMetadata(rows: unknown[][]): Gstr2BMetadata {
 }
 
 /**
- * Parses invoice rows from a B2B-type sheet (e.g. "B2B", "B2BA").
+ * Parses invoice rows from a B2B-type worksheet.
  * Finds the header row by looking for "GSTIN of supplier" in any cell,
  * then maps each subsequent row using the confirmed column names.
  *
- * @param worksheet  - The XLSX worksheet object
+ * @param worksheet  - The ExcelJS worksheet object
  * @param sheetLabel - Sheet name used for logging and stored in each record
  */
-function parseB2BSheet(worksheet: XLSX.WorkSheet, sheetLabel: string): Gstr2BInvoice[] {
-  const allRows: unknown[][] = XLSX.utils.sheet_to_json(worksheet, {
-    header: 1,
-    defval: null,
-    blankrows: false,
-  });
+function parseB2BSheet(worksheet: ExcelJS.Worksheet, sheetLabel: string): Gstr2BInvoice[] {
+  const allRows = readAllRows(worksheet);
 
   if (allRows.length === 0) {
     console.log(`[GSTR-2B Parser] Sheet "${sheetLabel}" is empty`);
@@ -241,15 +295,13 @@ function parseB2BSheet(worksheet: XLSX.WorkSheet, sheetLabel: string): Gstr2BInv
   }
 
   if (headerRowIndex === -1) {
-    console.log(
-      `[GSTR-2B Parser] No header row found in sheet "${sheetLabel}" — skipping`,
-    );
+    console.log(`[GSTR-2B Parser] No header row found in sheet "${sheetLabel}" — skipping`);
     return [];
   }
 
   const headerRow = allRows[headerRowIndex].map((cell) => toString(cell));
 
-  // Check required columns (warn but don't throw — some sheets may have partial columns)
+  // Verify all required columns are present
   const missingColumns = B2B_REQUIRED_COLUMNS.filter((col) => !headerRow.includes(col));
   if (missingColumns.length > 0) {
     throw new Error(
@@ -269,7 +321,7 @@ function parseB2BSheet(worksheet: XLSX.WorkSheet, sheetLabel: string): Gstr2BInv
     const row = allRows[i];
 
     // Skip empty rows
-    if (!row || row.every((cell) => cell === null || cell === '')) continue;
+    if (!row || row.every((cell) => cell === null || cell === undefined || cell === '')) continue;
 
     const supplierGstin = toString(row[columnIndex['GSTIN of supplier']]);
 
@@ -312,16 +364,11 @@ function parseB2BSheet(worksheet: XLSX.WorkSheet, sheetLabel: string): Gstr2BInv
  * Parses an ITC summary sheet (e.g. "ITC Available" or "ITC not available").
  * Extracts key-value totals from Part A and Part B sections.
  *
- * @param worksheet  - The XLSX worksheet object
+ * @param worksheet  - The ExcelJS worksheet object
  * @param sheetLabel - Sheet name used for logging
  */
-function parseItcSummarySheet(worksheet: XLSX.WorkSheet, sheetLabel: string): ItcSummary {
-  const allRows: unknown[][] = XLSX.utils.sheet_to_json(worksheet, {
-    header: 1,
-    defval: null,
-    blankrows: false,
-  });
-
+function parseItcSummarySheet(worksheet: ExcelJS.Worksheet, sheetLabel: string): ItcSummary {
+  const allRows = readAllRows(worksheet);
   const partA: Record<string, number> = {};
   const partB: Record<string, number> = {};
   let currentPart = '';
@@ -343,11 +390,10 @@ function parseItcSummarySheet(worksheet: XLSX.WorkSheet, sheetLabel: string): It
     // Extract label-value pairs
     const label = toString(row[0]);
     // Look for a numeric value in the last non-null column
-    const numericValue = row
-      .slice(1)
+    const numericValue = [...row]
       .reverse()
-      .find((cell) => cell !== null && cell !== '');
-    const amount = toNumber(numericValue);
+      .find((cell) => cell !== null && cell !== undefined && cell !== '');
+    const amount = toNumber(numericValue ?? null);
 
     if (label && amount !== 0) {
       if (currentPart === 'A') {
@@ -377,65 +423,67 @@ function parseItcSummarySheet(worksheet: XLSX.WorkSheet, sheetLabel: string): It
  * @param fileName   - Original file name (used for logging only)
  * @throws Error if required sheets or columns are missing
  */
-export function parseGstr2B(fileBuffer: Buffer, fileName: string): Gstr2BParseResult {
+export async function parseGstr2B(
+  fileBuffer: Buffer,
+  fileName: string,
+): Promise<Gstr2BParseResult> {
   console.log(`[GSTR-2B Parser] Parsing file: ${fileName}`);
 
-  const workbook = XLSX.read(fileBuffer, { type: 'buffer', cellDates: false });
-  const sheetNames = workbook.SheetNames;
+  const workbook = new ExcelJS.Workbook();
+  // Convert Node.js Buffer to ArrayBuffer to satisfy ExcelJS type definitions
+  const arrayBuffer = fileBuffer.buffer.slice(
+    fileBuffer.byteOffset,
+    fileBuffer.byteOffset + fileBuffer.byteLength,
+  ) as ArrayBuffer;
+  await workbook.xlsx.load(arrayBuffer);
+
+  const sheetNames = workbook.worksheets.map((ws) => ws.name);
   console.log(`[GSTR-2B Parser] Sheets found: ${sheetNames.join(', ')}`);
 
   // Find the "Read me" sheet (case-insensitive)
-  const readMeSheetName = sheetNames.find((name) => name.toLowerCase().includes('read me'));
-  if (!readMeSheetName) {
+  const readMeSheet = workbook.worksheets.find((ws) =>
+    ws.name.toLowerCase().includes('read me'),
+  );
+  if (!readMeSheet) {
     throw new Error('[GSTR-2B Parser] Required "Read me" sheet not found');
   }
 
   // Extract metadata from "Read me" sheet
-  const readMeRows: unknown[][] = XLSX.utils.sheet_to_json(workbook.Sheets[readMeSheetName], {
-    header: 1,
-    defval: null,
-    blankrows: false,
-  });
+  const readMeRows = readAllRows(readMeSheet);
   const metadata = extractReadMeMetadata(readMeRows);
   console.log(
     `[GSTR-2B Parser] Metadata — FY: ${metadata.financialYear}, Period: ${metadata.taxPeriod}, GSTIN: ${metadata.buyerGstin}`,
   );
 
-  // Find and parse the "B2B" sheet
-  const b2bSheetName = sheetNames.find((name) => name.toUpperCase() === 'B2B');
-  if (!b2bSheetName) {
+  // Find and parse the "B2B" sheet (exact match, case-insensitive)
+  const b2bSheet = workbook.worksheets.find((ws) => ws.name.toUpperCase() === 'B2B');
+  if (!b2bSheet) {
     throw new Error('[GSTR-2B Parser] Required "B2B" sheet not found');
   }
 
-  const b2bInvoices = parseB2BSheet(workbook.Sheets[b2bSheetName], b2bSheetName);
+  const b2bInvoices = parseB2BSheet(b2bSheet, b2bSheet.name);
   console.log(`[GSTR-2B Parser] Parsed ${b2bInvoices.length} B2B invoice rows`);
 
   // Parse "ITC Available" sheet (optional — warn if missing)
   let itcAvailableSummary: ItcSummary = { partA: {}, partB: {} };
-  const itcAvailSheetName = sheetNames.find(
-    (name) =>
-      name.toLowerCase().includes('itc available') &&
-      !name.toLowerCase().includes('not'),
+  const itcAvailSheet = workbook.worksheets.find(
+    (ws) =>
+      ws.name.toLowerCase().includes('itc available') &&
+      !ws.name.toLowerCase().includes('not'),
   );
-  if (itcAvailSheetName) {
-    itcAvailableSummary = parseItcSummarySheet(
-      workbook.Sheets[itcAvailSheetName],
-      itcAvailSheetName,
-    );
+  if (itcAvailSheet) {
+    itcAvailableSummary = parseItcSummarySheet(itcAvailSheet, itcAvailSheet.name);
   } else {
     console.warn('[GSTR-2B Parser] "ITC Available" sheet not found — summary will be empty');
   }
 
   // Parse "ITC not available" sheet (optional — warn if missing)
   let itcNotAvailableSummary: ItcSummary = { partA: {}, partB: {} };
-  const itcNotAvailSheetName = sheetNames.find((name) =>
-    name.toLowerCase().includes('itc not available'),
+  const itcNotAvailSheet = workbook.worksheets.find((ws) =>
+    ws.name.toLowerCase().includes('itc not available'),
   );
-  if (itcNotAvailSheetName) {
-    itcNotAvailableSummary = parseItcSummarySheet(
-      workbook.Sheets[itcNotAvailSheetName],
-      itcNotAvailSheetName,
-    );
+  if (itcNotAvailSheet) {
+    itcNotAvailableSummary = parseItcSummarySheet(itcNotAvailSheet, itcNotAvailSheet.name);
   } else {
     console.warn(
       '[GSTR-2B Parser] "ITC not available" sheet not found — summary will be empty',
