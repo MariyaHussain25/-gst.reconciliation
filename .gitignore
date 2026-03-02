@@ -1,35 +1,15 @@
-# Dependencies
-node_modules/
-.pnpm-store/
-
-# Build outputs
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
 dist/
-.next/
-out/
 build/
-
-# Environment variables
+.venv/
+venv/
 .env
-.env.local
-.env.*.local
 
-# Logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-
-# Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Turbo cache
-.turbo/
-
-# TypeScript
-*.tsbuildinfo
+# Node (for frontend)
+node_modules/
+.next/
