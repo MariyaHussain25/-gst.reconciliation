@@ -1,41 +1,42 @@
 /**
  * @file apps/backend/src/models/user.model.ts
  * @description Mongoose schema and model for User documents.
- * Stores user profile, uploaded document references, and reconciliation results.
+ * Stores user profile, uploaded GSTR file references, and reconciliation result references.
  *
  * Phase 1: Schema defined.
- * Phase 2: Will add indexes and validation hooks.
+ * Phase 2: Updated schema to track gstr2aFiles, gstr2bFiles, and reconciliations.
  */
 
 import mongoose, { Schema, Document } from 'mongoose';
 
-/** Sub-document schema for uploaded purchase/books documents */
-const PurchaseDataSchema = new Schema(
+/** Sub-document schema for uploaded GSTR-2A file references */
+const Gstr2AFileSchema = new Schema(
   {
-    docId: { type: String, required: true },
+    fileId: { type: String, required: true },
     fileName: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
+    period: { type: String, required: true },
+    uploadedAt: { type: Date, default: Date.now },
   },
   { _id: false },
 );
 
-/** Sub-document schema for uploaded GSTR-2A/2B documents */
-const GstrDataSchema = new Schema(
+/** Sub-document schema for uploaded GSTR-2B file references */
+const Gstr2BFileSchema = new Schema(
   {
-    docId: { type: String, required: true },
+    fileId: { type: String, required: true },
     fileName: { type: String, required: true },
-    period: { type: String, required: true }, // YYYY-MM
-    type: { type: String, enum: ['2A', '2B'], required: true },
-    createdAt: { type: Date, default: Date.now },
+    taxPeriod: { type: String, required: true },
+    financialYear: { type: String, required: true },
+    uploadedAt: { type: Date, default: Date.now },
   },
   { _id: false },
 );
 
 /** Sub-document schema for reconciliation result references */
-const ResultsSchema = new Schema(
+const ReconciliationRefSchema = new Schema(
   {
-    docId: { type: String, required: true },
-    period: { type: String, required: true }, // YYYY-MM
+    reconciliationId: { type: String, required: true },
+    period: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
   },
   { _id: false },
@@ -45,20 +46,21 @@ const ResultsSchema = new Schema(
 export interface IUser extends Document {
   userId: string;
   email: string;
-  purchaseData: Array<{
-    docId: string;
-    fileName: string;
-    createdAt: Date;
-  }>;
-  gstrData: Array<{
-    docId: string;
+  gstr2aFiles: Array<{
+    fileId: string;
     fileName: string;
     period: string;
-    type: '2A' | '2B';
-    createdAt: Date;
+    uploadedAt: Date;
   }>;
-  results: Array<{
-    docId: string;
+  gstr2bFiles: Array<{
+    fileId: string;
+    fileName: string;
+    taxPeriod: string;
+    financialYear: string;
+    uploadedAt: Date;
+  }>;
+  reconciliations: Array<{
+    reconciliationId: string;
     period: string;
     createdAt: Date;
   }>;
@@ -71,9 +73,9 @@ const UserSchema = new Schema<IUser>(
   {
     userId: { type: String, required: true, unique: true, index: true },
     email: { type: String, required: true },
-    purchaseData: { type: [PurchaseDataSchema], default: [] },
-    gstrData: { type: [GstrDataSchema], default: [] },
-    results: { type: [ResultsSchema], default: [] },
+    gstr2aFiles: { type: [Gstr2AFileSchema], default: [] },
+    gstr2bFiles: { type: [Gstr2BFileSchema], default: [] },
+    reconciliations: { type: [ReconciliationRefSchema], default: [] },
   },
   {
     timestamps: true, // Automatically manages createdAt and updatedAt
