@@ -104,5 +104,7 @@ const InvoiceSchema = new Schema<IInvoice>(
 
 // Compound index: used frequently when reconciling invoices by user + period
 InvoiceSchema.index({ userId: 1, period: 1 });
+InvoiceSchema.index({ userId: 1, period: 1, source: 1 });
+InvoiceSchema.index({ userId: 1, period: 1, gstin: 1, normalizedInvoiceNumber: 1 });
 
 export const InvoiceModel = mongoose.model<IInvoice>('Invoice', InvoiceSchema);
