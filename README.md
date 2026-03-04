@@ -66,7 +66,7 @@ pnpm dev
 | 2     | Excel parsers (GSTR-2A + GSTR-2B)        | ✅ Done      |
 | 3     | Upload pipeline + MongoDB storage         | ✅ Done      |
 | 4     | Standardization + Invoice normalization   | ✅ Done      |
-| 5     | 3-Pass matching engine (RapidFuzz)        | 🔲 Planned  |
+| 5     | 3-Pass matching engine (RapidFuzz)        | ✅ Done      |
 | 6     | RAG/Vector search for GST rules           | 🔲 Planned  |
 | 7     | LLM-powered AI explanations (GPT-4o)     | 🔲 Planned  |
 | 8     | PDF report generation                     | 🔲 Planned  |
