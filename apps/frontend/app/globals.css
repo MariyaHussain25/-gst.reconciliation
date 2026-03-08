@@ -1,6 +1,91 @@
 /**
  * Global CSS for the GST Reconciliation frontend.
+ * Phase 7: Added Noto Sans + Fira Code font families.
  * Uses Tailwind CSS v4 via @import.
  */
 
 @import "tailwindcss";
+
+@theme {
+  /* ── Font families ── */
+  --font-family-heading: 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-body:    'Noto Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-mono:    'Fira Code', ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+
+  /* ── Design token colours (Light Mode) ── */
+  /* Background */
+  --color-background: #f5f4f2;
+  /* Foreground / primary text */
+  --color-foreground: #191d26;
+  /* Card surface */
+  --color-card: #fdfdfb;
+  /* Primary navy (table headers, sidebar) */
+  --color-primary: #182844;
+  --color-primary-foreground: #f5f4f2;
+  /* Secondary warm gray */
+  --color-secondary: #edece9;
+  /* Accent warm taupe */
+  --color-accent: #917260;
+  --color-accent-foreground: #ffffff;
+  /* Info blue (section headings, hover borders) */
+  --color-info: #4470b0;
+  /* Status colours */
+  --color-success: #278556;
+  --color-warning: #f09517;
+  --color-destructive: #db2525;
+  /* Muted */
+  --color-muted: #eeede9;
+  --color-muted-foreground: #6e7175;
+  /* Border / ring */
+  --color-border: #dddbd7;
+  --color-ring: #4470b0;
+
+  /* ── Sidebar colours ── */
+  --color-sidebar-bg: #132040;
+  --color-sidebar-fg: #a4aab4;
+  --color-sidebar-primary: #917260;
+  --color-sidebar-accent: #233152;
+  --color-sidebar-border: #25304e;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 1px 3px 0 hsl(220 20% 12% / 0.04);
+  --shadow-elevated: 0 8px 24px -4px hsl(220 20% 12% / 0.08);
+}
+
+/* Base styles */
+html {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+body {
+  font-family: var(--font-family-body);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply mono font to GSTIN / currency elements */
+.font-mono {
+  font-family: var(--font-family-mono);
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-background: #141414;
+    --color-card: #1f1f1f;
+    --color-primary: #836b5c;
+    --color-accent: #786658;
+    --color-info: #5580b3;
+    --color-muted: #262626;
+    --color-muted-foreground: #808080;
+    --color-border: #2e2e2e;
+    --color-sidebar-bg: #171717;
+    --color-sidebar-fg: #a6a6a6;
+    --color-sidebar-primary: #836b5c;
+    --color-sidebar-accent: #242424;
+    --color-sidebar-border: #242424;
+  }
+}
