@@ -13,3 +13,11 @@ venv/
 # Node (for frontend)
 node_modules/
 .next/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# pnpm workspace scaffold (dev environment only)
+pnpm-workspace.yaml
+pnpm-lock.yaml
+packages/
