@@ -30,8 +30,10 @@ class Settings(BaseSettings):
         description="CORS allowed origins"
     )
 
-    # Phase 7 — LLM model for AI explanations
-    OPENAI_LLM_MODEL: str = Field(default="gpt-4o-mini", description="OpenAI chat model for AI explanations")
+    # Phase 7 — Gemini model for AI explanations
+    # "Gemini 1.5 Pro" is the valid Google model ID closest to the requested "Gemini Pro".
+    GOOGLE_API_KEY: str | None = Field(default=None, description="Google API key for Gemini AI explanations")
+    GEMINI_MODEL: str = Field(default="gemini-1.5-pro", description="Google Gemini chat model for AI explanations")
 
     model_config = {
         "env_file": ".env",

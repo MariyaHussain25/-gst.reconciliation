@@ -1,7 +1,7 @@
 """
 AI Explanation Service — Phase 7
 
-Uses LangChain + GPT-4o-mini to generate plain-English explanations for each
+Uses LangChain + Gemini 1.5 Pro to generate plain-English explanations for each
 ReconciliationResult, augmented with relevant ITC rules from the Phase 6 RAG.
 """
 
@@ -22,7 +22,7 @@ _SYSTEM_PROMPT = (
     "eligibility. Do not include disclaimers or greetings."
 )
 
-_FALLBACK = "AI explanation unavailable — please configure OPENAI_API_KEY."
+_FALLBACK = "AI explanation unavailable — please configure GOOGLE_API_KEY."
 
 
 def _build_context(result: ReconciliationResult) -> str:
@@ -64,11 +64,11 @@ def _build_rag_context(rules) -> str:
     return "\n".join(parts)
 
 
-def _is_api_key_valid(api_key: Optional[str]) -> bool:
-    """Return True only if the key looks like a real OpenAI key."""
+def _is_google_api_key_valid(api_key: Optional[str]) -> bool:
+    """Return True only if the key looks like a real Google API key."""
     if not api_key:
         return False
-    if api_key.startswith("sk-your") or api_key == "sk-":
+    if api_key.startswith("your-") or api_key == "AIza-your-key":
         return False
     return True
 
@@ -78,11 +78,11 @@ async def _explain_one(result: ReconciliationResult) -> str:
 
     Returns the explanation string or the fallback string — never raises.
     """
-    if not _is_api_key_valid(settings.OPENAI_API_KEY):
+    if not _is_google_api_key_valid(settings.GOOGLE_API_KEY):
         return _FALLBACK
 
     try:
-        from langchain_openai import ChatOpenAI
+        from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.messages import SystemMessage, HumanMessage
 
         # Retrieve top 2 relevant ITC rules for additional context
@@ -96,11 +96,11 @@ async def _explain_one(result: ReconciliationResult) -> str:
         if rag_context:
             human_content = f"{context}\n\n{rag_context}"
 
-        llm = ChatOpenAI(
-            model=settings.OPENAI_LLM_MODEL,
-            api_key=settings.OPENAI_API_KEY,
+        llm = ChatGoogleGenerativeAI(
+            model=settings.GEMINI_MODEL,
+            google_api_key=settings.GOOGLE_API_KEY,
             temperature=0.2,
-            max_tokens=200,
+            max_output_tokens=200,
         )
 
         messages = [
