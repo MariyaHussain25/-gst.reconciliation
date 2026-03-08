@@ -1,6 +1,7 @@
 /**
  * Tailwind CSS v4 configuration for the GST Reconciliation frontend.
- * Phase 1: Base configuration with custom color tokens.
+ * Phase 1: Base configuration.
+ * Phase 7: Added Noto Sans (heading/body) and Fira Code (mono) font families.
  */
 import type { Config } from 'tailwindcss';
 
@@ -11,7 +12,13 @@ const config: Config = {
     './lib/**/*.{ts,tsx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        heading: ['Noto Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body:    ['Noto Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono:    ['Fira Code', 'ui-monospace', 'Cascadia Code', 'Source Code Pro', 'monospace'],
+      },
+    },
   },
   plugins: [],
 };

@@ -4,14 +4,17 @@
  * Contains the app branding and links to all main pages.
  *
  * Phase 1: Static navigation header.
- * Phase 3+: Add user authentication status and active route highlighting.
+ * Phase 8: Added Dashboard, File Returns, GSTR-2A, and ITC Summary links.
  */
 
 import Link from 'next/link';
 
 /** Navigation links shown in the header */
 const navigationLinks = [
-  { href: '/', label: 'Home' },
+  { href: '/', label: 'Dashboard' },
+  { href: '/file-returns', label: 'File Returns' },
+  { href: '/gstr2a', label: 'GSTR-2A' },
+  { href: '/itc-summary', label: 'ITC Summary' },
   { href: '/upload', label: 'Upload' },
   { href: '/results', label: 'Results' },
   { href: '/reports', label: 'Reports' },
