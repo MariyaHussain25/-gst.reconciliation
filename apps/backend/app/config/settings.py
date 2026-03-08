@@ -30,6 +30,9 @@ class Settings(BaseSettings):
         description="CORS allowed origins"
     )
 
+    # Phase 7 — LLM model for AI explanations
+    OPENAI_LLM_MODEL: str = Field(default="gpt-4o-mini", description="OpenAI chat model for AI explanations")
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

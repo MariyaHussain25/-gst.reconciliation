@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config.settings import settings
 from app.db.connection import connect_db, disconnect_db
-from app.routes import upload, process, pdf, rules
+from app.routes import upload, process, pdf, rules, explain
 
 
 @asynccontextmanager
@@ -48,6 +48,7 @@ app.include_router(upload.router, prefix="/api", tags=["Upload"])
 app.include_router(process.router, prefix="/api", tags=["Process"])
 app.include_router(pdf.router, prefix="/api", tags=["PDF"])
 app.include_router(rules.router, prefix="/api", tags=["Rules"])
+app.include_router(explain.router, prefix="/api", tags=["Explain"])
 
 
 # Health check
