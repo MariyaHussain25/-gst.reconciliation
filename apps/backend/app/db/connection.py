@@ -12,6 +12,7 @@ from app.models.gstr2b import Gstr2BRecord
 from app.models.invoice import Invoice
 from app.models.reconciliation import Reconciliation
 from app.models.gst_rule import GstRule
+from app.models.pdf_job import PdfJob
 
 _client: AsyncIOMotorClient | None = None
 
@@ -42,6 +43,7 @@ async def connect_db() -> None:
             Invoice,
             Reconciliation,
             GstRule,
+            PdfJob,
         ],
     )
     print("[DB] Successfully connected to MongoDB Atlas")
