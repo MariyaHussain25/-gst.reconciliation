@@ -3,12 +3,25 @@ import type { NextConfig } from 'next';
 /**
  * Next.js 15 configuration for the GST Reconciliation frontend.
  *
- * Phase 1: Basic configuration.
- * Phase 3: Add image domains for file previews.
+ * - reactStrictMode for better error detection
+ * - rewrites proxy /api/* and /health to the FastAPI backend (port 3001)
  */
 const nextConfig: NextConfig = {
-  /** Enable React strict mode for better error detection */
   reactStrictMode: true,
+
+  async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+      {
+        source: '/health',
+        destination: `${backendUrl}/health`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

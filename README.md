@@ -111,10 +111,17 @@ playwright install chromium
 
 ## Environment Variables
 
-| Variable              | Required | Description                        |
-|-----------------------|----------|------------------------------------|
-| `MONGODB_URI`         | Yes      | MongoDB Atlas connection string    |
-| `OPENAI_API_KEY`      | Yes      | OpenAI API key for GPT-4o          |
-| `PORT`                | No       | Server port (default: 3001)        |
-| `MAX_UPLOAD_SIZE_MB`  | No       | Max file upload size (default: 10) |
-| `ALLOWED_ORIGINS`     | No       | CORS origins (default: localhost)  |
+| Variable                 | Required | Description                                         |
+|--------------------------|----------|-----------------------------------------------------|
+| `MONGODB_URI`            | Yes      | MongoDB Atlas connection string                     |
+| `OPENAI_API_KEY`         | Yes      | OpenAI API key for GPT-4o                           |
+| `GOOGLE_API_KEY`         | Yes      | Google API key for Gemini LLM (Phase 7)             |
+| `GEMINI_MODEL`           | No       | Gemini model name (default: `gemini-1.5-pro`)       |
+| `PORT`                   | No       | Server port (default: 3001)                         |
+| `MAX_UPLOAD_SIZE_MB`     | No       | Max file upload size (default: 10)                  |
+| `ALLOWED_ORIGINS`        | No       | CORS origins (default: localhost)                   |
+| `OPENAI_EMBEDDING_MODEL` | No       | OpenAI embedding model (default: `text-embedding-3-small`) |
+| `AWS_ACCESS_KEY_ID`      | No       | AWS access key for S3 storage                       |
+| `AWS_SECRET_ACCESS_KEY`  | No       | AWS secret key for S3 storage                       |
+| `S3_BUCKET_NAME`         | No       | S3 bucket name for file storage                     |
+| `PDF_BACKEND`            | No       | PDF engine: `weasy` (default) or `chromium`         |
