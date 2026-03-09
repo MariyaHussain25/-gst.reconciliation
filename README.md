@@ -56,7 +56,12 @@ pnpm dev
 | GET    | `/health`                       | Health check                   |
 | POST   | `/api/upload-docs`              | Upload GSTR-2A or GSTR-2B file |
 | POST   | `/api/process/{user_id}`        | Run reconciliation pipeline    |
-| GET    | `/api/generate-pdf/{user_id}/{duration}` | Generate PDF report (Phase 8) |
+| GET    | `/api/generate-pdf/{reconciliation_id}` | Generate PDF (sync, Phase 8) |
+| POST   | `/api/generate-pdf`             | Submit async PDF job (Phase 8) |
+| GET    | `/api/reports/{job_id}/status`  | Poll async job status (Phase 8)|
+| GET    | `/api/reports/{job_id}/download`| Download completed PDF (Phase 8)|
+| GET    | `/api/generate-pdf/by-user/{user_id}/lookup` | List reconciliations (Phase 8)|
+| GET    | `/api/generate-pdf/by-user/{user_id}` | Convenience PDF download (Phase 8)|
 
 ## Phase Roadmap
 
@@ -69,7 +74,40 @@ pnpm dev
 | 5     | 3-Pass matching engine (RapidFuzz)        | ✅ Done      |
 | 6     | RAG/Vector search for GST rules           | 🔲 Planned  |
 | 7     | LLM-powered AI explanations (GPT-4o)     | 🔲 Planned  |
-| 8     | PDF report generation                     | 🔲 Planned  |
+| 8     | PDF report generation                     | ✅ Done      |
+
+## System Dependencies for PDF Generation (Phase 8)
+
+The PDF generation feature uses **WeasyPrint** which requires system-level libraries.
+
+### Ubuntu / Debian
+```bash
+sudo apt-get install -y libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+  libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+pip install weasyprint>=62.0
+```
+
+### macOS (Homebrew)
+```bash
+brew install cairo pango gdk-pixbuf libffi
+pip install weasyprint>=62.0
+```
+
+### Docker
+Add to your `Dockerfile`:
+```dockerfile
+RUN apt-get update && apt-get install -y \
+  libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+  libgdk-pixbuf2.0-0 libffi-dev shared-mime-info \
+  && rm -rf /var/lib/apt/lists/*
+```
+
+### Switching to Chromium backend (if WeasyPrint deps unavailable)
+Set `PDF_BACKEND=chromium` in your `.env` and install:
+```bash
+pip install playwright
+playwright install chromium
+```
 
 ## Environment Variables
 

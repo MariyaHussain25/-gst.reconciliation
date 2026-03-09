@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str | None = Field(default=None, description="Google API key for Gemini AI explanations")
     GEMINI_MODEL: str = Field(default="gemini-1.5-pro", description="Google Gemini chat model for AI explanations")
 
+    # Phase 8 — PDF generation
+    PDF_BACKEND: str = Field(default="weasy", description="PDF backend: 'weasy' or 'chromium'")
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
