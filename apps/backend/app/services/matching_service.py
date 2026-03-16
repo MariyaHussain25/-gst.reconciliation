@@ -1,9 +1,13 @@
 """
-3-Pass Matching Engine — Phase 5 Full Implementation (RapidFuzz)
+4-Pass Matching Engine — Phase 5 Full Implementation (RapidFuzz)
 
-Pass 1: Exact match  (GSTIN + normalized invoice number + amounts within ₹1)
-Pass 2: Fuzzy match  (RapidFuzz token_set_ratio on composite vendor+invoice string)
-Pass 3: Classification (MISSING_IN_2B / MISSING_IN_BOOKS)
+Pass 1:   Exact match       (GSTIN + normalized invoice number + amounts within ₹1)
+Pass 1.5: GSTIN+Amount match (GSTIN + declared invoice amount within ₹1 → MATCHED;
+                              within ₹100 → VALUE_MISMATCH; handles real-world data
+                              where books use internal voucher numbers while the portal
+                              carries the supplier's own invoice numbers)
+Pass 2:   Fuzzy match       (RapidFuzz token_set_ratio on composite vendor+invoice string)
+Pass 3:   Classification    (MISSING_IN_2B / MISSING_IN_BOOKS)
 """
 
 import logging
@@ -189,8 +193,94 @@ def _exact_match(
 
 
 # ---------------------------------------------------------------------------
-# Pass 2: Fuzzy match (RapidFuzz)
+# Pass 1.5: GSTIN + Amount match (handles different invoice numbering systems)
 # ---------------------------------------------------------------------------
+
+def _gstin_amount_match(
+    unmatched_2a: list[Invoice],
+    unmatched_2b: list[Invoice],
+) -> tuple[list[ReconciliationResult], list[Invoice], list[Invoice]]:
+    """Pass 1.5: Match by supplier GSTIN + declared invoice amount.
+
+    This pass handles the common real-world scenario where the buyer's books
+    use internal voucher numbers while the GST portal carries the supplier's
+    own invoice numbers. Since the invoice numbers differ, Pass 1 (exact) fails.
+    Matching is done purely on GSTIN + total_amount:
+
+      * Amount difference ≤ ₹1   → MATCHED
+      * Amount difference ≤ ₹100 → VALUE_MISMATCH
+
+    Within each GSTIN group, invoices are matched greedily in amount order so
+    that duplicate amounts (e.g. several identical LIBERTY invoices) are
+    assigned correctly one-to-one.
+
+    Returns (results, still_unmatched_2a, still_unmatched_2b).
+    """
+    results: list[ReconciliationResult] = []
+    matched_2b_ids: set = set()
+    remaining_2a: list[Invoice] = []
+
+    # Build GSTIN → list[Invoice] lookup for unmatched 2B invoices
+    b_by_gstin: dict[str, list[Invoice]] = {}
+    for inv in unmatched_2b:
+        key = inv.gstin.upper().strip()
+        b_by_gstin.setdefault(key, []).append(inv)
+
+    for inv_2a in unmatched_2a:
+        gstin_key = inv_2a.gstin.upper().strip()
+        candidates = [
+            inv for inv in b_by_gstin.get(gstin_key, [])
+            if str(inv.id) not in matched_2b_ids
+        ]
+        if not candidates:
+            remaining_2a.append(inv_2a)
+            continue
+
+        # Sort by closeness in amount, then by invoice number for determinism when
+        # multiple candidates share the same distance (e.g. four identical LIBERTY invoices)
+        candidates.sort(key=lambda inv: (abs(inv.total_amount - inv_2a.total_amount),
+                                         inv.normalized_invoice_number))
+        best = candidates[0]
+        amount_diff = abs(inv_2a.total_amount - best.total_amount)
+
+        if amount_diff <= EXACT_AMOUNT_TOLERANCE:
+            inv_2a.match_status = "MATCHED"
+            inv_2a.match_confidence = 100.0
+            best.match_status = "MATCHED"
+            best.match_confidence = 100.0
+            matched_2b_ids.add(str(best.id))
+            results.append(_build_result(inv_2a, best, "MATCHED", 100.0))
+
+        elif amount_diff <= FUZZY_AMOUNT_TOLERANCE:
+            mismatch_fields = ["total_amount"]
+            diffs = _compute_amount_diff(inv_2a, best)
+            if diffs["taxable_amount_diff"] != 0:
+                mismatch_fields.append("taxable_amount")
+            if diffs["igst_diff"] != 0:
+                mismatch_fields.append("igst")
+            if diffs["cgst_diff"] != 0:
+                mismatch_fields.append("cgst")
+            if diffs["sgst_diff"] != 0:
+                mismatch_fields.append("sgst")
+
+            inv_2a.match_status = "VALUE_MISMATCH"
+            inv_2a.match_confidence = 90.0
+            best.match_status = "VALUE_MISMATCH"
+            best.match_confidence = 90.0
+            matched_2b_ids.add(str(best.id))
+            results.append(_build_result(
+                inv_2a, best, "VALUE_MISMATCH", 90.0,
+                mismatch_fields=mismatch_fields,
+                mismatch_reason=f"Amount difference: ₹{amount_diff:.2f}",
+            ))
+
+        else:
+            remaining_2a.append(inv_2a)
+
+    remaining_2b = [inv for inv in unmatched_2b if str(inv.id) not in matched_2b_ids]
+    return results, remaining_2a, remaining_2b
+
+
 
 async def run_fuzzy_match_pass(user_id: str, period: str) -> list[dict]:
     """Pass 2: Fuzzy matching with RapidFuzz — called standalone."""
@@ -396,6 +486,13 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         f"{len(remaining_2a)} unmatched 2A, {len(remaining_2b)} unmatched 2B"
     )
 
+    # Pass 1.5: GSTIN + Amount match (handles different invoice numbering systems)
+    gstin_amount_results, remaining_2a, remaining_2b = _gstin_amount_match(remaining_2a, remaining_2b)
+    logger.info(
+        f"[Matching] Pass 1.5 complete: {len(gstin_amount_results)} results, "
+        f"{len(remaining_2a)} unmatched 2A, {len(remaining_2b)} unmatched 2B"
+    )
+
     # Pass 2: Fuzzy match
     fuzzy_results, still_unmatched_2a, still_unmatched_2b = _fuzzy_match(remaining_2a, remaining_2b)
     logger.info(
@@ -407,7 +504,7 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
     classification_results = _classify(still_unmatched_2a, still_unmatched_2b)
     logger.info(f"[Matching] Pass 3 complete: {len(classification_results)} classified")
 
-    all_results = exact_results + fuzzy_results + classification_results
+    all_results = exact_results + gstin_amount_results + fuzzy_results + classification_results
 
     # Persist all invoice status changes
     for inv in all_invoices:

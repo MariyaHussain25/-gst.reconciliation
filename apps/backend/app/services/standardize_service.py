@@ -106,15 +106,31 @@ def derive_period(date_str: str) -> str:
 
 
 def batch_standardize(invoices: list[Invoice]) -> list[Invoice]:
-    """Apply all normalizations to a list of Invoice documents."""
+    """Apply all normalizations to a list of Invoice documents.
+
+    The declared ``total_amount`` (set from the source's ``invoiceAmount`` /
+    ``invoiceValue`` field by the ingest layer) is preserved as-is because it
+    reflects what the supplier and buyer have actually declared on the invoice.
+    Recomputing from individual tax components can mask real discrepancies —
+    for example when the supplier's portal shows ₹600,000 but the buyer's
+    books recorded ₹599,992. Those differences must surface as VALUE_MISMATCH
+    in reconciliation, not be silently zeroed out.
+
+    A computed fallback is still applied when ``total_amount`` is zero or
+    missing (e.g. records that arrived without an explicit invoice total).
+    """
     for invoice in invoices:
         invoice.normalized_vendor_name = normalize_vendor_name(invoice.vendor_name)
         invoice.normalized_invoice_number = normalize_invoice_number(invoice.invoice_number)
         if not invoice.period:
             invoice.period = derive_period(str(invoice.invoice_date))
-        # Recompute total_amount with 2-decimal rounding
-        invoice.total_amount = round(
-            invoice.taxable_amount + invoice.igst + invoice.cgst + invoice.sgst + invoice.cess,
-            2,
-        )
+        # Only compute total from components when the declared amount is absent or zero.
+        # A zero-value invoice is treated as "not set" since GST invoices always carry
+        # a positive value; if a genuine zero-total invoice ever appears it is safe to
+        # leave total_amount at 0.0 (the computed value would also be 0.0).
+        if invoice.total_amount is None or invoice.total_amount == 0.0:
+            invoice.total_amount = round(
+                invoice.taxable_amount + invoice.igst + invoice.cgst + invoice.sgst + invoice.cess,
+                2,
+            )
     return invoices
