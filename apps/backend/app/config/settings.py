@@ -4,6 +4,7 @@ All required environment variables are validated on startup.
 The application will raise a validation error if any required variable is missing.
 """
 
+from typing import List, Optional
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
@@ -14,25 +15,26 @@ class Settings(BaseSettings):
     # Required
     MONGODB_URI: str = Field(..., description="MongoDB Atlas connection string")
     OPENAI_API_KEY: str = Field(..., description="OpenAI API key for GPT-4o")
+    OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-3-small", description="OpenAI embedding model")
 
     # Optional - Cloud storage (Phase 3)
-    AWS_ACCESS_KEY_ID: str | None = Field(default=None)
-    AWS_SECRET_ACCESS_KEY: str | None = Field(default=None)
-    S3_BUCKET_NAME: str | None = Field(default=None)
+    AWS_ACCESS_KEY_ID: Optional[str] = Field(default=None)
+    AWS_SECRET_ACCESS_KEY: Optional[str] = Field(default=None)
+    S3_BUCKET_NAME: Optional[str] = Field(default=None)
 
     # Server
     PORT: int = Field(default=3001, description="HTTP port the server listens on")
 
     # Security
     MAX_UPLOAD_SIZE_MB: int = Field(default=10, description="Maximum file upload size in MB")
-    ALLOWED_ORIGINS: list[str] = Field(
+    ALLOWED_ORIGINS: List[str] = Field(
         default=["http://localhost:3000"],
         description="CORS allowed origins"
     )
 
     # Phase 7 — Gemini model for AI explanations
     # "Gemini 1.5 Pro" is the valid Google model ID closest to the requested "Gemini Pro".
-    GOOGLE_API_KEY: str | None = Field(default=None, description="Google API key for Gemini AI explanations")
+    GOOGLE_API_KEY: Optional[str] = Field(default=None, description="Google API key for Gemini AI explanations")
     GEMINI_MODEL: str = Field(default="gemini-1.5-pro", description="Google Gemini chat model for AI explanations")
 
     # Phase 8 — PDF generation

@@ -1,6 +1,7 @@
 """User document model - replaces user.model.ts"""
 
 from datetime import datetime
+from typing import List
 from beanie import Document, Indexed
 from pydantic import BaseModel, Field
 
@@ -29,9 +30,9 @@ class ReconciliationRef(BaseModel):
 class User(Document):
     user_id: Indexed(str, unique=True)
     email: str
-    gstr2a_files: list[Gstr2AFileRef] = Field(default_factory=list)
-    gstr2b_files: list[Gstr2BFileRef] = Field(default_factory=list)
-    reconciliations: list[ReconciliationRef] = Field(default_factory=list)
+    gstr2a_files: List[Gstr2AFileRef] = Field(default_factory=list)
+    gstr2b_files: List[Gstr2BFileRef] = Field(default_factory=list)
+    reconciliations: List[ReconciliationRef] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

@@ -1,6 +1,6 @@
 """Pydantic schemas for AI Explanation API — Phase 7"""
 
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel
 
 
@@ -31,4 +31,4 @@ class ExplainResultsResponse(BaseModel):
     period: str
     status: str
     total_results: int
-    results: list[ExplainResultItem]
+    results: List[ExplainResultItem]

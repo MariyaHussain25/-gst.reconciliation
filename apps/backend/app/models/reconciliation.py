@@ -1,7 +1,7 @@
 """Reconciliation document model - replaces reconciliation.model.ts"""
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from beanie import Document, Indexed
 from pydantic import BaseModel, Field
 
@@ -33,7 +33,7 @@ class ReconciliationResult(BaseModel):
     # Match fields
     match_status: str = "UNMATCHED"
     match_confidence: float = 0.0
-    mismatch_fields: list[str] = Field(default_factory=list)
+    mismatch_fields: List[str] = Field(default_factory=list)
     mismatch_reason: Optional[str] = None
 
     # Diff fields
@@ -73,7 +73,7 @@ class Reconciliation(Document):
     period: str
     financial_year: str
     status: str = "PENDING"  # PENDING, PROCESSING, COMPLETED, FAILED
-    results: list[ReconciliationResult] = Field(default_factory=list)
+    results: List[ReconciliationResult] = Field(default_factory=list)
     summary: ReconciliationSummary = Field(default_factory=ReconciliationSummary)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

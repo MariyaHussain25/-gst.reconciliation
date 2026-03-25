@@ -1,7 +1,7 @@
 """Pydantic schemas for PDF generation API responses."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 
@@ -11,13 +11,13 @@ class ReconciliationLookupItem(BaseModel):
     financial_year: str
     status: str
     created_at: datetime
-    summary: dict
+    summary: Dict
 
 
 class ReconciliationLookupResponse(BaseModel):
     success: bool
     user_id: str
-    reconciliations: list[ReconciliationLookupItem]
+    reconciliations: List[ReconciliationLookupItem]
 
 
 class GeneratePdfJobResponse(BaseModel):

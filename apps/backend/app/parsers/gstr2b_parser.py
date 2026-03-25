@@ -4,7 +4,7 @@ Rewrite of gstr2b.parser.ts with identical logic.
 """
 
 from io import BytesIO
-from typing import Optional
+from typing import Dict, List, Optional
 import openpyxl
 from pydantic import BaseModel
 
@@ -51,7 +51,7 @@ class ItcSummary(BaseModel):
 
 class Gstr2BParseResult(BaseModel):
     metadata: Gstr2BMetadata
-    b2b_invoices: list[Gstr2BInvoice]
+    b2b_invoices: List[Gstr2BInvoice]
     itc_available_summary: ItcSummary
     itc_not_available_summary: ItcSummary
 
@@ -120,11 +120,11 @@ def _extract_readme_metadata(ws) -> Gstr2BMetadata:
     return metadata
 
 
-def _parse_b2b_sheet(ws) -> list[Gstr2BInvoice]:
+def _parse_b2b_sheet(ws) -> List[Gstr2BInvoice]:
     """Parse the B2B sheet into invoice records."""
     all_rows = list(ws.iter_rows(values_only=True))
     header_row_idx = -1
-    col_map: dict[str, int] = {}
+    col_map: Dict[str, int] = {}
 
     # Find header row by looking for "GSTIN of supplier" in any cell
     for i, row in enumerate(all_rows):
@@ -143,7 +143,7 @@ def _parse_b2b_sheet(ws) -> list[Gstr2BInvoice]:
     if header_row_idx == -1:
         return []
 
-    invoices: list[Gstr2BInvoice] = []
+    invoices: List[Gstr2BInvoice] = []
     for row in all_rows[header_row_idx + 1:]:
         if not row:
             continue
@@ -222,7 +222,7 @@ def parse_gstr2b(file_bytes: bytes, file_name: str) -> Gstr2BParseResult:
             break
 
     # Parse B2B invoices
-    b2b_invoices: list[Gstr2BInvoice] = []
+    b2b_invoices: List[Gstr2BInvoice] = []
     for sheet_name in wb.sheetnames:
         if sheet_name.strip().upper() == "B2B":
             b2b_invoices = _parse_b2b_sheet(wb[sheet_name])

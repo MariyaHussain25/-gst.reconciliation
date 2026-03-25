@@ -6,7 +6,7 @@ ReconciliationResult, augmented with relevant ITC rules from the Phase 6 RAG.
 """
 
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from app.config.settings import settings
 from app.models.reconciliation import Reconciliation, ReconciliationResult
@@ -116,13 +116,13 @@ async def _explain_one(result: ReconciliationResult) -> str:
         return _FALLBACK
 
 
-async def generate_explanations_for_reconciliation(reconciliation: Reconciliation) -> list[str]:
+async def generate_explanations_for_reconciliation(reconciliation: Reconciliation) -> List[str]:
     """Generate AI explanation strings for each result in a Reconciliation document.
 
     Returns a list of explanation strings (same length as reconciliation.results).
     Never raises.
     """
-    explanations: list[str] = []
+    explanations: List[str] = []
     for result in reconciliation.results:
         explanation = await _explain_one(result)
         explanations.append(explanation)

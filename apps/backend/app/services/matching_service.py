@@ -9,6 +9,7 @@ Pass 3: Classification (MISSING_IN_2B / MISSING_IN_BOOKS)
 import logging
 import uuid
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 from rapidfuzz import fuzz
 
@@ -55,8 +56,8 @@ def _compute_amount_diff(inv_a: Invoice, inv_b: Invoice) -> dict:
 
 
 def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: float,
-                  mismatch_fields: list[str] | None = None,
-                  mismatch_reason: str | None = None) -> ReconciliationResult:
+                  mismatch_fields: Optional[List[str]] = None,
+                  mismatch_reason: Optional[str] = None) -> ReconciliationResult:
     """Construct a ReconciliationResult from a matched pair."""
     diffs = _compute_amount_diff(inv_2a, inv_2b)
     return ReconciliationResult(
@@ -91,7 +92,7 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
 # Pass 1: Exact match
 # ---------------------------------------------------------------------------
 
-async def run_exact_match_pass(user_id: str, period: str) -> list[dict]:
+async def run_exact_match_pass(user_id: str, period: str) -> List[dict]:
     """Pass 1: Exact matching — GSTIN + normalized invoice number + amount within ₹1.
 
     Returns a list of ReconciliationResult dicts and mutates both pools (via
@@ -115,19 +116,19 @@ async def run_exact_match_pass(user_id: str, period: str) -> list[dict]:
 
 
 def _exact_match(
-    invoices_2a: list[Invoice],
-    invoices_2b: list[Invoice],
-) -> tuple[list[ReconciliationResult], list[Invoice], list[Invoice]]:
+    invoices_2a: List[Invoice],
+    invoices_2b: List[Invoice],
+) -> Tuple[List[ReconciliationResult], List[Invoice], List[Invoice]]:
     """Core exact-match logic (pure, testable).
 
     Returns (results, remaining_2a, remaining_2b).
     """
-    results: list[ReconciliationResult] = []
+    results: List[ReconciliationResult] = []
     matched_2b_ids: set = set()
-    remaining_2a: list[Invoice] = []
+    remaining_2a: List[Invoice] = []
 
     # Build a lookup for GSTR-2B by (gstin_upper, normalized_invoice_number)
-    b_by_key: dict[tuple, list[Invoice]] = {}
+    b_by_key: Dict[tuple, List[Invoice]] = {}
     for inv in invoices_2b:
         key = (inv.gstin.upper().strip(), inv.normalized_invoice_number)
         b_by_key.setdefault(key, []).append(inv)
@@ -192,7 +193,7 @@ def _exact_match(
 # Pass 2: Fuzzy match (RapidFuzz)
 # ---------------------------------------------------------------------------
 
-async def run_fuzzy_match_pass(user_id: str, period: str) -> list[dict]:
+async def run_fuzzy_match_pass(user_id: str, period: str) -> List[dict]:
     """Pass 2: Fuzzy matching with RapidFuzz — called standalone."""
     invoices_2a = await Invoice.find(
         Invoice.user_id == user_id,
@@ -213,21 +214,21 @@ async def run_fuzzy_match_pass(user_id: str, period: str) -> list[dict]:
 
 
 def _fuzzy_match(
-    unmatched_2a: list[Invoice],
-    unmatched_2b: list[Invoice],
-) -> tuple[list[ReconciliationResult], list[Invoice], list[Invoice]]:
+    unmatched_2a: List[Invoice],
+    unmatched_2b: List[Invoice],
+) -> Tuple[List[ReconciliationResult], List[Invoice], List[Invoice]]:
     """Core fuzzy-match logic (pure, testable).
 
     Returns (results, still_unmatched_2a, still_unmatched_2b).
     """
-    results: list[ReconciliationResult] = []
+    results: List[ReconciliationResult] = []
     matched_2b_ids: set = set()
-    remaining_2a: list[Invoice] = []
+    remaining_2a: List[Invoice] = []
 
     for inv_2a in unmatched_2a:
         composite_a = _build_composite_string(inv_2a)
         best_score = 0.0
-        best_inv_2b: Invoice | None = None
+        best_inv_2b: Optional[Invoice] = None
 
         for inv_2b in unmatched_2b:
             if str(inv_2b.id) in matched_2b_ids:
@@ -293,7 +294,7 @@ def _fuzzy_match(
 # Pass 3: Classification
 # ---------------------------------------------------------------------------
 
-async def run_classification_pass(user_id: str, period: str) -> list[dict]:
+async def run_classification_pass(user_id: str, period: str) -> List[dict]:
     """Pass 3: Classify remaining unmatched invoices — called standalone."""
     unmatched_2a = await Invoice.find(
         Invoice.user_id == user_id,
@@ -314,11 +315,11 @@ async def run_classification_pass(user_id: str, period: str) -> list[dict]:
 
 
 def _classify(
-    unmatched_2a: list[Invoice],
-    unmatched_2b: list[Invoice],
-) -> list[ReconciliationResult]:
+    unmatched_2a: List[Invoice],
+    unmatched_2b: List[Invoice],
+) -> List[ReconciliationResult]:
     """Core classification logic (pure, testable)."""
-    results: list[ReconciliationResult] = []
+    results: List[ReconciliationResult] = []
 
     for inv in unmatched_2a:
         inv.match_status = "MISSING_IN_2B"

@@ -8,6 +8,7 @@ results.
 
 import logging
 import re
+from typing import List, Optional, Tuple
 
 from app.models.gst_rule import GstRule
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Public API
 # ---------------------------------------------------------------------------
 
-async def find_relevant_rules(query: str, top_k: int = 3) -> tuple[list[GstRule], str]:
+async def find_relevant_rules(query: str, top_k: int = 3) -> Tuple[List[GstRule], str]:
     """Return the top_k most relevant rules for *query*.
 
     Tries embedding-based cosine similarity search first; falls back to
@@ -43,12 +44,12 @@ async def find_relevant_rules(query: str, top_k: int = 3) -> tuple[list[GstRule]
     return results, "keyword"
 
 
-async def get_rule_by_id(rule_id: str) -> GstRule | None:
+async def get_rule_by_id(rule_id: str) -> Optional[GstRule]:
     """Look up a single rule by its rule_id."""
     return await GstRule.find_one(GstRule.rule_id == rule_id)
 
 
-async def get_all_active_rules() -> list[GstRule]:
+async def get_all_active_rules() -> List[GstRule]:
     """Return all rules where is_active is True."""
     return await GstRule.find(GstRule.is_active == True).to_list()  # noqa: E712
 
@@ -57,7 +58,7 @@ async def get_all_active_rules() -> list[GstRule]:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
+def _cosine_similarity(a: List[float], b: List[float]) -> float:
     """Compute cosine similarity between two equal-length vectors."""
     if not a or not b or len(a) != len(b):
         return 0.0
@@ -81,7 +82,7 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
         return dot / (norm_a * norm_b)
 
 
-def _get_query_embedding(query: str) -> list[float]:
+def _get_query_embedding(query: str) -> List[float]:
     """Generate embedding for *query* using text-embedding-3-small.
 
     Returns an empty list if OpenAI is unavailable.
@@ -112,7 +113,7 @@ def _get_query_embedding(query: str) -> list[float]:
     return response.data[0].embedding
 
 
-async def _embedding_search(query: str, top_k: int) -> list[GstRule]:
+async def _embedding_search(query: str, top_k: int) -> List[GstRule]:
     """Return rules sorted by cosine similarity to the query embedding.
 
     Returns an empty list if embedding generation fails or no rules have
@@ -123,7 +124,7 @@ async def _embedding_search(query: str, top_k: int) -> list[GstRule]:
         return []
 
     all_rules = await GstRule.find(GstRule.is_active == True).to_list()  # noqa: E712
-    scored: list[tuple[float, GstRule]] = []
+    scored: List[Tuple[float, GstRule]] = []
     for rule in all_rules:
         if rule.embedding:
             score = _cosine_similarity(query_vec, rule.embedding)
@@ -136,13 +137,13 @@ async def _embedding_search(query: str, top_k: int) -> list[GstRule]:
     return [rule for _, rule in scored[:top_k]]
 
 
-async def _keyword_search(query: str, top_k: int) -> list[GstRule]:
+async def _keyword_search(query: str, top_k: int) -> List[GstRule]:
     """Return rules sorted by keyword overlap with the query tokens."""
     # Tokenize: lowercase words and multi-word phrases from query
     tokens = set(re.findall(r"\w+", query.lower()))
 
     all_rules = await GstRule.find(GstRule.is_active == True).to_list()  # noqa: E712
-    scored: list[tuple[int, GstRule]] = []
+    scored: List[Tuple[int, GstRule]] = []
     for rule in all_rules:
         # Tokenize each keyword phrase and count overlapping tokens
         rule_tokens: set[str] = set()

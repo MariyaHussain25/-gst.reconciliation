@@ -6,7 +6,7 @@ PDF rendering to the configured backend (WeasyPrint or Chromium).
 """
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Dict, Optional
 
 from app.models.reconciliation import Reconciliation
 from app.pdf_backends.factory import get_pdf_backend
@@ -45,7 +45,7 @@ def _fmt_inr(amount: Optional[float]) -> str:
 # Match-status badge colours
 # ---------------------------------------------------------------------------
 
-_BADGE_COLOURS: dict[str, str] = {
+_BADGE_COLOURS: Dict[str, str] = {
     "EXACT_MATCH": "#278556",
     "FUZZY_MATCH": "#f09517",
     "NEEDS_REVIEW": "#4470b0",

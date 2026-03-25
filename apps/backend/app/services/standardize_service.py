@@ -7,6 +7,7 @@ Handles real-world GST data discrepancies like:
 """
 
 import re
+from typing import List
 from app.models.invoice import Invoice
 from app.utils.date_helpers import parse_gst_date, to_period
 
@@ -105,7 +106,7 @@ def derive_period(date_str: str) -> str:
         return ""
 
 
-def batch_standardize(invoices: list[Invoice]) -> list[Invoice]:
+def batch_standardize(invoices: List[Invoice]) -> List[Invoice]:
     """Apply all normalizations to a list of Invoice documents."""
     for invoice in invoices:
         invoice.normalized_vendor_name = normalize_vendor_name(invoice.vendor_name)

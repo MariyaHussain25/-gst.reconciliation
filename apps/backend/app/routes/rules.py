@@ -1,5 +1,6 @@
 """ITC Rules API routes — Phase 6 RAG Knowledge Base"""
 
+from typing import List
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
@@ -23,7 +24,7 @@ def _to_response(rule) -> RuleResponse:
     )
 
 
-@router.get("/rules", response_model=list[RuleResponse])
+@router.get("/rules", response_model=List[RuleResponse])
 async def list_rules():
     """Return all active GST rules (without embeddings)."""
     rules = await itc_rules_service.get_all_active_rules()

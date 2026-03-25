@@ -13,7 +13,7 @@ Endpoints:
 import asyncio
 import io
 from datetime import datetime, timezone
-from typing import Annotated, Optional
+from typing import Annotated, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -36,7 +36,7 @@ router = APIRouter()
 # Helper — parse duration query params into a list of YYYY-MM period strings
 # ---------------------------------------------------------------------------
 
-_FY_MONTHS: dict[str, list[str]] = {
+_FY_MONTHS: Dict[str, List[str]] = {
     "Q1": ["04", "05", "06"],
     "Q2": ["07", "08", "09"],
     "Q3": ["10", "11", "12"],
@@ -44,7 +44,7 @@ _FY_MONTHS: dict[str, list[str]] = {
 }
 
 
-def _fy_to_periods(financial_year: str, quarter: Optional[str] = None) -> list[str]:
+def _fy_to_periods(financial_year: str, quarter: Optional[str] = None) -> List[str]:
     """
     Convert a financial year string (e.g. "2024-25") and optional quarter
     ("Q1"–"Q4" or "Full Year") to a list of YYYY-MM period strings.
@@ -78,7 +78,7 @@ def _fy_to_periods(financial_year: str, quarter: Optional[str] = None) -> list[s
     return periods
 
 
-def _date_range_to_periods(date_range: str) -> list[str]:
+def _date_range_to_periods(date_range: str) -> List[str]:
     """
     Convert "YYYY-MM_to_YYYY-MM" to a list of YYYY-MM period strings (inclusive).
     """
@@ -94,7 +94,7 @@ def _date_range_to_periods(date_range: str) -> list[str]:
             detail=f"Invalid date_range format '{date_range}'. Expected YYYY-MM_to_YYYY-MM.",
         ) from exc
 
-    periods: list[str] = []
+    periods: List[str] = []
     y, m = start_year, start_month
     while (y, m) <= (end_year, end_month):
         periods.append(f"{y}-{m:02d}")
@@ -109,7 +109,7 @@ def _resolve_periods(
     financial_year: Optional[str],
     quarter: Optional[str],
     date_range: Optional[str],
-) -> Optional[list[str]]:
+) -> Optional[List[str]]:
     """Return a list of periods to filter by, or None for 'no filter'."""
     if date_range:
         return _date_range_to_periods(date_range)

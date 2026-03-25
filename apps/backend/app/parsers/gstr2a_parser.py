@@ -4,7 +4,7 @@ Rewrite of gstr2a.parser.ts with identical logic.
 """
 
 from io import BytesIO
-from typing import Optional
+from typing import Dict, List, Optional
 import openpyxl
 from pydantic import BaseModel
 
@@ -33,7 +33,7 @@ class Gstr2AInvoice(BaseModel):
 
 class Gstr2AParseResult(BaseModel):
     metadata: Gstr2AMetadata
-    invoices: list[Gstr2AInvoice]
+    invoices: List[Gstr2AInvoice]
 
 
 def safe_number(val) -> float:
@@ -80,7 +80,7 @@ def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
 
     metadata = Gstr2AMetadata()
     header_row_idx = -1
-    col_map: dict[str, int] = {}
+    col_map: Dict[str, int] = {}
 
     # Extract metadata from header rows and find the column header row
     for i, row in enumerate(all_rows):
@@ -113,7 +113,7 @@ def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
     if missing:
         raise ValueError(f"Missing required columns in GSTR-2A file: {missing}")
 
-    invoices: list[Gstr2AInvoice] = []
+    invoices: List[Gstr2AInvoice] = []
 
     # Parse data rows after header
     for row in all_rows[header_row_idx + 1:]:

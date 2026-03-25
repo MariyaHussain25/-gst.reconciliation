@@ -11,6 +11,7 @@ Orchestrates the reconciliation pipeline:
 
 import logging
 from datetime import datetime
+from typing import List
 from app.models.gstr2a import Gstr2ARecord
 from app.models.gstr2b import Gstr2BRecord
 from app.models.invoice import Invoice
@@ -108,7 +109,7 @@ async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
     )
 
     # Step 3: Map GSTR-2A records to Invoice documents
-    gstr2a_invoices: list[Invoice] = []
+    gstr2a_invoices: List[Invoice] = []
     for rec in gstr2a_records:
         try:
             invoice_date = parse_gst_date(rec.date) if rec.date else datetime.utcnow()
@@ -133,7 +134,7 @@ async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
         gstr2a_invoices.append(inv)
 
     # Step 4: Map GSTR-2B records to Invoice documents
-    gstr2b_invoices: list[Invoice] = []
+    gstr2b_invoices: List[Invoice] = []
     for rec in gstr2b_records:
         try:
             invoice_date = parse_gst_date(rec.invoice_date) if rec.invoice_date else datetime.utcnow()
