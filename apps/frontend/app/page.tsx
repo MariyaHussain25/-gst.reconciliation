@@ -61,15 +61,15 @@ export default function DashboardPage(): React.ReactElement {
   return (
     <div>
       {/* Company / GSTIN header strip */}
-      <div className="mb-6 rounded-lg bg-[#182844] px-6 py-4">
+      <div className="mb-6 rounded-xl border border-gray-200 bg-surface px-6 py-4 shadow-sm dark:border-gray-800">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-lg font-bold text-white">{COMPANY}</h1>
-            <p className="mt-0.5 font-mono text-sm text-[#a4aab4]">GSTIN: {GSTIN}</p>
+            <h1 className="text-xl font-bold text-foreground">{COMPANY}</h1>
+            <p className="mt-0.5 font-mono text-sm text-muted-foreground">GSTIN: {GSTIN}</p>
           </div>
-          <div className="text-sm text-[#a4aab4]">
+          <div className="text-sm text-muted-foreground">
             Financial Year:{' '}
-            <span className="font-semibold text-white">{FINANCIAL_YEAR}</span>
+            <span className="font-semibold text-foreground">{FINANCIAL_YEAR}</span>
           </div>
         </div>
       </div>
@@ -78,9 +78,9 @@ export default function DashboardPage(): React.ReactElement {
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Returns Calendar table */}
         <div className="min-w-0 flex-1">
-          <div className="rounded-lg border border-[#dddbd7] bg-white shadow-sm">
-            <div className="flex items-center rounded-t-lg bg-[#182844] px-4 py-3">
-              <h2 className="text-sm font-semibold text-white">
+          <div className="rounded-xl border border-gray-200 bg-surface shadow-sm dark:border-gray-800">
+            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+              <h2 className="text-lg font-semibold text-foreground">
                 Returns Calendar — FY {FINANCIAL_YEAR}
               </h2>
             </div>
@@ -88,26 +88,26 @@ export default function DashboardPage(): React.ReactElement {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#dddbd7] bg-[#edece9]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#6e7175]">
+                  <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Return Type
                     </th>
                     {PERIODS.map((p) => (
                       <th
                         key={p}
-                        className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-[#6e7175]"
+                        className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                       >
                         {p}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#dddbd7]">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {RETURN_ROWS.map((row) => (
-                    <tr key={row.type} className="hover:bg-[#f5f4f2]">
+                    <tr key={row.type} className="hover:bg-muted">
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-[#182844]">{row.type}</span>
-                        <span className="ml-2 text-xs text-[#6e7175]">{row.description}</span>
+                        <span className="text-sm font-semibold text-foreground">{row.type}</span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">{row.description}</span>
                       </td>
                       {row.statuses.map((status, idx) => (
                         <td key={idx} className="px-4 py-3 text-center">
@@ -125,19 +125,19 @@ export default function DashboardPage(): React.ReactElement {
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href="/file-returns"
-              className="rounded bg-[#4470b0] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#2f5a9b] focus:outline-none focus:ring-2 focus:ring-[#4470b0] focus:ring-offset-2"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               File Returns
             </Link>
             <Link
               href="/gstr2a"
-              className="rounded border border-[#182844] bg-white px-5 py-2 text-sm font-semibold text-[#182844] transition hover:bg-[#edece9]"
+              className="rounded-lg border border-gray-300 bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted dark:border-gray-700 dark:hover:bg-gray-800"
             >
               View GSTR-2A
             </Link>
             <Link
               href="/itc-summary"
-              className="rounded border border-[#278556] bg-white px-5 py-2 text-sm font-semibold text-[#278556] transition hover:bg-[#edece9]"
+              className="rounded-lg border border-gray-300 bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted dark:border-gray-700 dark:hover:bg-gray-800"
             >
               ITC Summary
             </Link>
@@ -146,19 +146,19 @@ export default function DashboardPage(): React.ReactElement {
 
         {/* Right quick-links sidebar */}
         <aside className="w-full lg:w-56 lg:flex-shrink-0">
-          <div className="rounded-lg border border-[#dddbd7] bg-white shadow-sm">
-            <div className="rounded-t-lg bg-[#182844] px-4 py-3">
-              <h2 className="text-sm font-semibold text-white">Quick Links</h2>
+          <div className="rounded-xl border border-gray-200 bg-surface shadow-sm dark:border-gray-800">
+            <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+              <h2 className="text-lg font-semibold text-foreground">Quick Links</h2>
             </div>
-            <ul className="divide-y divide-[#dddbd7]">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-800">
               {SIDEBAR_LINKS.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="flex items-center justify-between px-4 py-3 text-sm text-[#4470b0] transition hover:bg-[#edece9]"
+                    className="flex items-center justify-between px-4 py-3 text-sm text-info transition hover:bg-muted dark:hover:bg-gray-800"
                   >
                     <span>{link.label}</span>
-                    <span className="text-[#a4aab4]">›</span>
+                    <span className="text-muted-foreground">›</span>
                   </Link>
                 </li>
               ))}
