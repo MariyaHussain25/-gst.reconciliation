@@ -1,8 +1,8 @@
 """
 ITC Rules Service — Phase 6 RAG Knowledge Base
 
-Provides embedding-based search (via OpenAI text-embedding-3-small) with
-automatic keyword-based fallback when OpenAI is unavailable or returns no
+Provides embedding-based search (via Google GenAI text-embedding-004) with
+automatic keyword-based fallback when Google is unavailable or returns no
 results.
 """
 
@@ -47,7 +47,6 @@ async def get_rule_by_id(rule_id: str) -> GstRule | None:
     """Look up a single rule by its rule_id."""
     return await GstRule.find_one(GstRule.rule_id == rule_id)
 
-
 async def get_all_active_rules() -> list[GstRule]:
     """Return all rules where is_active is True."""
     return await GstRule.find(GstRule.is_active == True).to_list()  # noqa: E712
@@ -82,34 +81,41 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 def _get_query_embedding(query: str) -> list[float]:
-    """Generate embedding for *query* using text-embedding-3-small.
-
-    Returns an empty list if OpenAI is unavailable.
+    """Generate embedding using the Direct Google GenAI SDK.
+    
+    Returns an empty list if API key is missing or the call fails.
     """
     from app.config.settings import settings
-
-    api_key = settings.OPENAI_API_KEY
-    if not api_key or api_key.startswith("sk-your"):
+    
+    api_key = settings.GOOGLE_API_KEY
+    if not api_key:
+        logger.warning("GOOGLE_API_KEY is not set. Cannot generate embeddings.")
         return []
 
-    from openai import OpenAI
-
-    client = OpenAI(api_key=api_key)
-    # Truncate to 8000 tokens to stay within text-embedding-3-small limit (8191 tokens)
     try:
-        import tiktoken
-
-        enc = tiktoken.get_encoding("cl100k_base")
-        tokens = enc.encode(query)
-        if len(tokens) > 8000:
-            query = enc.decode(tokens[:8000])
-    except Exception:  # pylint: disable=broad-except
-        query = query[:32000]  # ~8000 tokens as rough character fallback
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=query,
-    )
-    return response.data[0].embedding
+        import google.generativeai as genai
+        
+        # Configure the direct SDK
+        genai.configure(api_key=api_key)
+        
+        # Truncate string roughly to avoid exceeding limits
+        query = query[:10000]
+        
+        # Call the direct API
+        result = genai.embed_content(
+            model="models/text-embedding-004",
+            content=query,
+            task_type="retrieval_document"
+        )
+        
+        return result['embedding']
+        
+    except ImportError:
+        logger.error("google-generativeai package is not installed.")
+        return []
+    except Exception as exc:
+        logger.error("[itc_rules] Google GenAI Embedding failed: %s", exc)
+        return []
 
 
 async def _embedding_search(query: str, top_k: int) -> list[GstRule]:
