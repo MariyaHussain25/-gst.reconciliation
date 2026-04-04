@@ -1,213 +1,77 @@
-"""
-ITC Rules Seed Script — Phase 6
-Run once manually: cd apps/backend && python -m scripts.seed_rules
-
-Seeds 5 ITC rules into the gst_rules MongoDB collection with embeddings
-generated via OpenAI text-embedding-3-small. If OpenAI is unavailable,
-rules are saved with an empty embedding field.
-"""
-
 import asyncio
-import logging
 import os
 import sys
-from pathlib import Path
 
-# Allow running as: python -m scripts.seed_rules from apps/backend/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Add the app directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import init_beanie
-
-from app.config.settings import settings
+from app.db.mongodb import init_db
 from app.models.gst_rule import GstRule
+from app.services.itc_rules_service import _get_query_embedding
 
-logging.basicConfig(level=logging.INFO, format="[seed_rules] %(levelname)s: %(message)s")
-logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Rule definitions
-# ---------------------------------------------------------------------------
-
-RULES_DATA = [
+# A sample of essential GST rules to seed
+SAMPLE_RULES = [
     {
-        "rule_id": "ITC_ELIGIBILITY_S16",
+        "rule_id": "SEC_16_4",
         "category": "ITC_ELIGIBILITY",
-        "title": "ITC Eligibility — Section 16 Conditions",
-        "gst_section": "Section 16",
-        "gstr3b_table": "Table 4",
-        "keywords": [
-            "itc",
-            "input tax credit",
-            "eligibility",
-            "section 16",
-            "tax invoice",
-            "debit note",
-            "section 37",
-            "section 38",
-            "section 39",
-        ],
-        "source_file": "chapter_v_itc.txt",
+        "title": "Time Limit for Availing ITC - Section 16(4)",
+        "description": "A registered person shall not be entitled to take input tax credit in respect of any invoice or debit note for supply of goods or services or both after the 30th day of November following the end of financial year to which such invoice or debit note pertains or furnishing of the relevant annual return, whichever is earlier.",
+        "keywords": ["time limit", "deadline", "november", "annual return", "16(4)", "late ITC"],
+        "gst_section": "16(4)",
+        "gstr3b_table": "4(A)(5)"
     },
     {
-        "rule_id": "BLOCKED_ITC_S17",
+        "rule_id": "SEC_17_5",
         "category": "BLOCKED_ITC",
-        "title": "Blocked ITC — Section 17(5)",
-        "gst_section": "Section 17(5)",
-        "gstr3b_table": "Table 4(D)",
-        "keywords": [
-            "blocked itc",
-            "section 17",
-            "ineligible",
-            "personal consumption",
-            "motor vehicle",
-            "food and beverages",
-        ],
-        "source_file": "chapter_v_itc.txt",
+        "title": "Blocked Credits - Section 17(5)",
+        "description": "Input tax credit shall not be available in respect of: motor vehicles for transportation of persons having approved seating capacity of not more than thirteen persons, food and beverages, outdoor catering, beauty treatment, health services, cosmetic and plastic surgery, membership of a club, health and fitness centre, travel benefits extended to employees on vacation.",
+        "keywords": ["blocked", "ineligible", "17(5)", "motor vehicle", "food", "catering"],
+        "gst_section": "17(5)",
+        "gstr3b_table": "4(D)(1)"
     },
     {
-        "rule_id": "RCM_S9_3",
-        "category": "RCM",
-        "title": "Reverse Charge Mechanism — Section 9(3)",
-        "gst_section": "Section 9(3)",
-        "gstr3b_table": "Table 3.1(d)",
-        "keywords": [
-            "rcm",
-            "reverse charge",
-            "section 9",
-            "recipient",
-            "specified categories",
-        ],
-        "source_file": "chapter_3_rcm.txt",
-    },
-    {
-        "rule_id": "RCM_S9_4",
-        "category": "RCM",
-        "title": "RCM on Unregistered Supply — Section 9(4)",
-        "gst_section": "Section 9(4)",
-        "gstr3b_table": "Table 3.1(d)",
-        "keywords": [
-            "rcm",
-            "reverse charge",
-            "unregistered supplier",
-            "section 9(4)",
-        ],
-        "source_file": "chapter_3_rcm.txt",
-    },
-    {
-        "rule_id": "RETURN_FILING_S39",
+        "rule_id": "RULE_36_4",
         "category": "MATCHING",
-        "title": "Return Filing Rules — Section 37, 38, 39",
-        "gst_section": "Section 37/38/39",
-        "gstr3b_table": "Table 4",
-        "keywords": [
-            "return filing",
-            "section 37",
-            "section 38",
-            "section 39",
-            "outward supplies",
-            "inward supplies",
-            "rectification",
-            "annual return",
-        ],
-        "source_file": "section_37_38_39_returns.txt",
-    },
+        "title": "Condition for ITC availment - Rule 36(4)",
+        "description": "Input tax credit to be availed by a registered person in respect of invoices or debit notes, the details of which have not been furnished by the suppliers under sub-section (1) of section 37 in FORM GSTR-1 or using the invoice furnishing facility, shall not exceed 5 per cent of the eligible credit available in respect of invoices or debit notes the details of which have been furnished by the suppliers.",
+        "keywords": ["matching", "36(4)", "5 percent", "GSTR-2B", "supplier", "provisional"],
+        "gst_section": "Rule 36(4)",
+        "gstr3b_table": "4(A)"
+    }
 ]
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "rules"
-
-
-def _read_source_file(filename: str) -> str:
-    """Read a knowledge base text file."""
-    path = DATA_DIR / filename
-    return path.read_text(encoding="utf-8")
-
-
-def _get_embedding(text: str) -> list[float]:
-    """Generate embedding via OpenAI text-embedding-3-small.
-
-    Returns an empty list if the API key is missing or the call fails.
-    """
-    try:
-        from openai import OpenAI
-
-        api_key = settings.OPENAI_API_KEY
-        if not api_key or api_key.startswith("sk-your"):
-            logger.warning("OpenAI API key not configured — skipping embedding generation.")
-            return []
-
-        client = OpenAI(api_key=api_key)
-        # Truncate to 8000 tokens to stay within text-embedding-3-small limit (8191 tokens)
-        try:
-            import tiktoken
-
-            enc = tiktoken.get_encoding("cl100k_base")
-            tokens = enc.encode(text)
-            if len(tokens) > 8000:
-                text = enc.decode(tokens[:8000])
-        except Exception:  # pylint: disable=broad-except
-            text = text[:32000]  # ~8000 tokens as rough character fallback
-        response = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=text,
+async def seed_gst_rules():
+    print("Initializing Database...")
+    await init_db()
+    
+    print("Clearing existing rules...")
+    await GstRule.find_all().delete()
+    
+    print(f"Seeding {len(SAMPLE_RULES)} GST rules...")
+    for rule_data in SAMPLE_RULES:
+        print(f"Generating embedding for: {rule_data['title']}...")
+        
+        # Combine title and description for a richer embedding
+        text_to_embed = f"{rule_data['title']}. {rule_data['description']}"
+        embedding = _get_query_embedding(text_to_embed)
+        
+        if not embedding:
+            print("⚠️ Warning: Could not generate embedding. Is GOOGLE_API_KEY set?")
+        
+        rule = GstRule(
+            rule_id=rule_data["rule_id"],
+            category=rule_data["category"],
+            title=rule_data["title"],
+            description=rule_data["description"],
+            keywords=rule_data["keywords"],
+            gst_section=rule_data["gst_section"],
+            gstr3b_table=rule_data["gstr3b_table"],
+            embedding=embedding
         )
-        return response.data[0].embedding
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.warning("Embedding generation failed: %s — saving with empty embedding.", exc)
-        return []
+        await rule.insert()
+        print(f"✅ Inserted: {rule.rule_id}")
 
-
-# ---------------------------------------------------------------------------
-# Main seed logic
-# ---------------------------------------------------------------------------
-
-async def seed_rules() -> None:
-    """Connect to MongoDB, generate embeddings, and upsert 5 ITC rules."""
-    logger.info("Connecting to MongoDB...")
-    client = AsyncIOMotorClient(
-        settings.MONGODB_URI,
-        maxPoolSize=10,
-        serverSelectionTimeoutMS=5000,
-    )
-    db = client.get_default_database()
-    await init_beanie(database=db, document_models=[GstRule])
-    logger.info("Connected. Seeding %d rules...", len(RULES_DATA))
-
-    for rule_data in RULES_DATA:
-        description = _read_source_file(rule_data["source_file"])
-        embedding_input = rule_data["title"] + " " + description
-        logger.info("Generating embedding for rule: %s", rule_data["rule_id"])
-        embedding = _get_embedding(embedding_input)
-
-        # Build the document fields
-        fields = {
-            "category": rule_data["category"],
-            "title": rule_data["title"],
-            "description": description,
-            "keywords": rule_data["keywords"],
-            "gst_section": rule_data["gst_section"],
-            "gstr3b_table": rule_data["gstr3b_table"],
-            "embedding": embedding,
-            "is_active": True,
-        }
-
-        # Upsert: find by rule_id and update, or insert if not found
-        existing = await GstRule.find_one(GstRule.rule_id == rule_data["rule_id"])
-        if existing:
-            await existing.set(fields)
-            logger.info("Updated rule: %s", rule_data["rule_id"])
-        else:
-            rule = GstRule(rule_id=rule_data["rule_id"], **fields)
-            await rule.insert()
-            logger.info("Inserted rule: %s", rule_data["rule_id"])
-
-    client.close()
-    logger.info("Seeding complete.")
-
+    print("🎉 Seeding complete!")
 
 if __name__ == "__main__":
-    asyncio.run(seed_rules())
+    asyncio.run(seed_gst_rules())
