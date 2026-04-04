@@ -11,9 +11,9 @@
 export type FilingStatus = 'Filed' | 'To be Filed' | 'Not Filed';
 
 const filingStatusStyles: Record<FilingStatus, string> = {
-  'Filed': 'bg-[#278556] text-white',
-  'To be Filed': 'bg-[#f09517] text-white',
-  'Not Filed': 'bg-[#db2525] text-white',
+  'Filed': 'bg-status-success-bg text-status-success-text',
+  'To be Filed': 'bg-status-warning-bg text-status-warning-text',
+  'Not Filed': 'bg-status-danger-bg text-status-danger-text',
 };
 
 /**
@@ -27,7 +27,7 @@ export function FilingStatusBadge({
 }): React.ReactElement {
   return (
     <span
-      className={`inline-block whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium ${filingStatusStyles[status]}`}
+      className={`inline-block whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-medium tracking-wide ${filingStatusStyles[status]}`}
     >
       {status}
     </span>
@@ -41,8 +41,8 @@ export function FilingStatusBadge({
 export function YNBadge({ status }: { status: 'Y' | 'N' }): React.ReactElement {
   const style =
     status === 'Y'
-      ? 'bg-[#278556] text-white'
-      : 'bg-[#db2525] text-white';
+      ? 'bg-status-success-bg text-status-success-text'
+      : 'bg-status-danger-bg text-status-danger-text';
   return (
     <span
       className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${style}`}
