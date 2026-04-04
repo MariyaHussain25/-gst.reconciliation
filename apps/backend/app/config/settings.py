@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     # "Gemini 1.5 Pro" is the valid Google model ID closest to the requested "Gemini Pro".
     GOOGLE_API_KEY: str | None = Field(default=None, description="Google API key for Gemini AI explanations")
     GEMINI_MODEL: str = Field(default="gemini-1.5-pro", description="Google Gemini chat model for AI explanations")
+    AI_EXPLANATIONS_ENABLED: bool = Field(default=False, description="If true, generate AI explanations after matching")
 
     # Phase 8 — PDF generation
     PDF_BACKEND: str = Field(default="weasy", description="PDF backend: 'weasy' or 'chromium'")

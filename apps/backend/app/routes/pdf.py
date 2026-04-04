@@ -12,6 +12,8 @@ Endpoints:
 
 import asyncio
 import io
+from beanie.operators import In
+
 from datetime import datetime, timezone
 from typing import Annotated, Optional
 
@@ -144,12 +146,10 @@ async def lookup_reconciliations(
         raise HTTPException(status_code=403, detail="Access denied")
 
     periods = _resolve_periods(financial_year, quarter, date_range)
-
-    query = Reconciliation.user_id == user_id
+    filters = [Reconciliation.user_id == user_id]
     if periods:
-        query = query & (Reconciliation.period.in_(periods))  # type: ignore[operator]
-
-    docs = await Reconciliation.find(query).to_list()
+        filters.append(In(Reconciliation.period, periods))
+    docs = await Reconciliation.find(*filters).to_list()
 
     items = [
         ReconciliationLookupItem(
@@ -188,12 +188,10 @@ async def download_pdf_by_user(
         raise HTTPException(status_code=403, detail="Access denied")
 
     periods = _resolve_periods(financial_year, quarter, date_range)
-
-    query = Reconciliation.user_id == user_id
+    filters = [Reconciliation.user_id == user_id]
     if periods:
-        query = query & (Reconciliation.period.in_(periods))  # type: ignore[operator]
-
-    docs = await Reconciliation.find(query).to_list()
+        filters.append(In(Reconciliation.period, periods))
+    docs = await Reconciliation.find(*filters).to_list()
 
     if not docs:
         available = await Reconciliation.find(

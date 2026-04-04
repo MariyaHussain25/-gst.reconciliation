@@ -46,12 +46,15 @@ def _fmt_inr(amount: Optional[float]) -> str:
 # ---------------------------------------------------------------------------
 
 _BADGE_COLOURS: dict[str, str] = {
-    "EXACT_MATCH": "#278556",
-    "FUZZY_MATCH": "#f09517",
-    "NEEDS_REVIEW": "#4470b0",
-    "MISSING_IN_2B": "#db2525",
-    "MISSING_IN_BOOKS": "#db2525",
-    "UNMATCHED": "#db2525",
+    # Engine emits these:
+    "MATCHED": "#278556",           # green
+    "FUZZY_MATCHED": "#f09517",     # amber
+    "NEEDS_REVIEW": "#4470b0",      # blue
+    "VALUE_MISMATCH": "#db2525",    # red
+    "GSTIN_MISMATCH": "#db2525",    # red
+    "MISSING_IN_2B": "#db2525",     # red
+    "MISSING_IN_BOOKS": "#db2525",  # red
+    "UNMATCHED": "#db2525",         # red
 }
 
 
@@ -132,11 +135,12 @@ def build_html(reconciliation: Reconciliation, generated_at: datetime) -> str:
                 f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.sgst_diff)}</td>'
                 f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.itc_category}</td>'
                 f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.itc_availability}</td>'
+                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;max-width:280px;">{(r.ai_explanation or "—").replace("<", "&lt;").replace(">", "&gt;")}</td>'
                 f"</tr>"
             )
     else:
         rows_html = (
-            '<tr><td colspan="12" style="padding:20px;text-align:center;'
+            '<tr><td colspan="13" style="padding:20px;text-align:center;'
             'color:#6e7175;font-style:italic;">No reconciliation results found.</td></tr>'
         )
 
@@ -289,6 +293,7 @@ table.results td {{
       <th {th_style}>SGST Diff</th>
       <th {th_style}>ITC Category</th>
       <th {th_style}>ITC Availability</th>
+      <th {th_style}>AI Explanation</th>
     </tr>
   </thead>
   <tbody>

@@ -16,6 +16,17 @@ from app.schemas.api import UploadResponse
 
 ALLOWED_EXTENSIONS = {".xlsx", ".xls"}
 
+async def _ensure_user_exists(user_id: str) -> None:
+    """Create a minimal User document if one doesn't already exist."""
+    existing = await User.find_one(User.user_id == user_id)
+    if existing is None:
+        user = User(
+            user_id=user_id,
+            email=f"{user_id}@example.com",
+        )
+        await user.insert()
+        # No return value; caller just needs the user to exist
+
 
 def _detect_file_type(file_bytes: bytes) -> str:
     """Detect whether file is GSTR-2A or GSTR-2B by scanning first sheet."""
@@ -86,6 +97,7 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
             await Gstr2ARecord.insert_many(records)
 
         # Update user file reference
+        await _ensure_user_exists(user_id)
         file_ref = Gstr2AFileRef(
             file_id=file_id,
             file_name=file_name,
@@ -147,6 +159,7 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
             await Gstr2BRecord.insert_many(records)
 
         # Update user file reference
+        await _ensure_user_exists(user_id)
         file_ref = Gstr2BFileRef(
             file_id=file_id,
             file_name=file_name,

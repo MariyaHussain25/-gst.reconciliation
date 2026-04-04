@@ -15,6 +15,8 @@ from rapidfuzz import fuzz
 from app.models.invoice import Invoice
 from app.models.reconciliation import Reconciliation, ReconciliationResult, ReconciliationSummary
 from app.utils.date_helpers import derive_financial_year
+from app.services import ai_explanation_service
+from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,41 @@ NEEDS_REVIEW_THRESHOLD = 70         # RapidFuzz score for needs review
 # ---------------------------------------------------------------------------
 # Pure helper functions (testable without MongoDB)
 # ---------------------------------------------------------------------------
+def _derive_itc_from_values(
+    itc_availability: str | None,
+    itc_category_raw: str | None,
+    igst: float | None,
+    cgst: float | None,
+    sgst: float | None,
+) -> tuple[str, str, float, float]:
+    """
+    Derive normalized ITC fields from GSTR-2B attributes.
+    Returns (itc_category, itc_availability, itc_claimable_amount, itc_blocked_amount).
+    """
+    avail = (itc_availability or "").strip().upper()
+    cat_raw = (itc_category_raw or "").strip().upper()
+    total_tax = round(float(igst or 0) + float(cgst or 0) + float(sgst or 0), 2)
+
+    # Normalize availability string
+    if avail == "AVAILABLE":
+        category = "ELIGIBLE"
+        return category, "Available", total_tax, 0.0
+    if avail == "NOT AVAILABLE":
+        # Distinguish INELIGIBLE vs BLOCKED if category indicates
+        if cat_raw == "INELIGIBLE":
+            return "INELIGIBLE", "Not Available", 0.0, total_tax
+        return "BLOCKED", "Not Available", 0.0, total_tax
+
+    # Fallback to category when availability is missing
+    if cat_raw in {"ELIGIBLE", "AVAILABLE"}:
+        return "ELIGIBLE", "Available", total_tax, 0.0
+    if cat_raw in {"BLOCKED"}:
+        return "BLOCKED", "Not Available", 0.0, total_tax
+    if cat_raw in {"INELIGIBLE"}:
+        return "INELIGIBLE", "Not Available", 0.0, total_tax
+
+    # Unknown → treat as pending/unclassified
+    return (cat_raw or "ELIGIBLE"), (avail or "Available"), total_tax, 0.0
 
 def _build_composite_string(inv: Invoice) -> str:
     """Build the composite string used for fuzzy matching."""
@@ -59,6 +96,13 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
                   mismatch_reason: str | None = None) -> ReconciliationResult:
     """Construct a ReconciliationResult from a matched pair."""
     diffs = _compute_amount_diff(inv_2a, inv_2b)
+    norm_itc_category, norm_itc_availability, claimable_itc, blocked_itc = _derive_itc_from_values(
+        inv_2b.itc_category if hasattr(inv_2b, "itc_category") else None,
+        inv_2b.itc_category if hasattr(inv_2b, "itc_category") else None,
+        inv_2b.igst,
+        inv_2b.cgst,
+        inv_2b.sgst,
+    )
     return ReconciliationResult(
         gstr2a_record_id=str(inv_2a.id) if inv_2a.id else None,
         gstr2a_vendor_name=inv_2a.vendor_name,
@@ -77,12 +121,14 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
         gstr2b_igst=inv_2b.igst,
         gstr2b_cgst=inv_2b.cgst,
         gstr2b_sgst=inv_2b.sgst,
-        gstr2b_itc_availability=inv_2b.itc_category,
+        gstr2b_itc_availability=norm_itc_availability,
         match_status=status,
         match_confidence=confidence,
         mismatch_fields=mismatch_fields or [],
         mismatch_reason=mismatch_reason,
-        itc_category=inv_2b.itc_category or "ELIGIBLE",
+        itc_category=norm_itc_category,
+        itc_claimable_amount=claimable_itc,
+        itc_blocked_amount=blocked_itc,
         **diffs,
     )
 
@@ -333,10 +379,21 @@ def _classify(
             gstr2a_sgst=inv.sgst,
             match_status="MISSING_IN_2B",
             match_confidence=0.0,
+            itc_category="INELIGIBLE",
+            itc_claimable_amount=0.0,
+            itc_blocked_amount=0.0,
         ))
 
     for inv in unmatched_2b:
         inv.match_status = "MISSING_IN_BOOKS"
+        # Derive ITC from the 2B invoice values
+        norm_cat, norm_avail, claimable_itc, blocked_itc = _derive_itc_from_values(
+            inv.itc_category if hasattr(inv, "itc_category") else None,
+            inv.itc_category if hasattr(inv, "itc_category") else None,
+            inv.igst,
+            inv.cgst,
+            inv.sgst,
+        )
         results.append(ReconciliationResult(
             gstr2b_record_id=str(inv.id) if inv.id else None,
             gstr2b_vendor_name=inv.vendor_name,
@@ -347,9 +404,12 @@ def _classify(
             gstr2b_igst=inv.igst,
             gstr2b_cgst=inv.cgst,
             gstr2b_sgst=inv.sgst,
-            gstr2b_itc_availability=inv.itc_category,
+            gstr2b_itc_availability=norm_avail,
             match_status="MISSING_IN_BOOKS",
             match_confidence=0.0,
+            itc_category=norm_cat,
+            itc_claimable_amount=claimable_itc,
+            itc_blocked_amount=blocked_itc,
         ))
 
     return results
@@ -424,6 +484,10 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         "value_mismatch": 0,
         "gstin_mismatch": 0,
     }
+    # ITC aggregation (derive from 2B tax components by category/availability)
+    total_eligible_itc = 0.0
+    total_blocked_itc = 0.0
+    total_ineligible_itc = 0.0
     for result in all_results:
         status = result.match_status
         if status == "MATCHED":
@@ -443,6 +507,22 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         else:
             counters["unmatched"] += 1
 
+        # Sum GST components from GSTR-2B side (proxy for ITC amount)
+        b_igst = float(result.gstr2b_igst or 0.0)
+        b_cgst = float(result.gstr2b_cgst or 0.0)
+        b_sgst = float(result.gstr2b_sgst or 0.0)
+        itc_amount = round(b_igst + b_cgst + b_sgst, 2)
+        # Normalize category/availability labels
+        cat = (result.itc_category or "").strip().upper()
+        avail = (result.itc_availability or "").strip().upper()
+        # Decide buckets with tolerant mapping
+        if cat in {"ELIGIBLE", "AVAILABLE"} or avail == "AVAILABLE":
+            total_eligible_itc += itc_amount
+        elif cat in {"BLOCKED"} or avail == "NOT AVAILABLE":
+            total_blocked_itc += itc_amount
+        elif cat in {"INELIGIBLE"}:
+            total_ineligible_itc += itc_amount
+
     # Build and persist Reconciliation document
     summary = ReconciliationSummary(
         total_invoices=len(all_invoices),
@@ -452,6 +532,9 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         missing_in_2b_count=counters["missing_in_2b"],
         value_mismatch_count=counters["value_mismatch"],
         gstin_mismatch_count=counters["gstin_mismatch"],
+        total_eligible_itc=round(total_eligible_itc, 2),
+        total_blocked_itc=round(total_blocked_itc, 2),
+        total_ineligible_itc=round(total_ineligible_itc, 2),
     )
 
     reconciliation = Reconciliation(
@@ -465,6 +548,17 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         updated_at=datetime.utcnow(),
     )
     await reconciliation.insert()
+
+    # Optionally enrich with AI explanations (non-blocking failure)
+    if settings.AI_EXPLANATIONS_ENABLED:
+        try:
+            explanations = await ai_explanation_service.generate_explanations_for_reconciliation(reconciliation)
+            if explanations and len(explanations) == len(reconciliation.results):
+                for result, expl in zip(reconciliation.results, explanations):
+                    result.ai_explanation = expl
+                await reconciliation.save()
+        except Exception:  # noqa: BLE001
+            logger.warning("[Matching] AI explanations failed; continuing without them.", exc_info=True)
     logger.info(
         f"[Matching] Pipeline complete for user={user_id}, period={period}: "
         f"matched={counters['matched']}, fuzzy={counters['fuzzy_matched']}, "

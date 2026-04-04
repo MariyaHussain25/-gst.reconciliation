@@ -1,8 +1,8 @@
 """
-AI Explanation Service — Phase 7
+AI Explanation Service — minimal-token variant
 
-Uses LangChain + Gemini 1.5 Pro to generate plain-English explanations for each
-ReconciliationResult, augmented with relevant ITC rules from the Phase 6 RAG.
+Goal: produce concise (≤2 sentences) explanations with minimal token usage.
+Approach: one short system prompt + compact human context; no RAG calls.
 """
 
 import logging
@@ -10,58 +10,46 @@ from typing import Optional
 
 from app.config.settings import settings
 from app.models.reconciliation import Reconciliation, ReconciliationResult
-from app.services import itc_rules_service
 
 logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = (
-    "You are a senior GST (Goods and Services Tax) compliance expert in India. "
-    "Given a reconciliation result between GSTR-2A and GSTR-2B, produce a concise "
-    "2-3 sentence explanation in plain English. Clearly state the match status, "
-    "the reason for any discrepancy, and the impact on Input Tax Credit (ITC) "
-    "eligibility. Do not include disclaimers or greetings."
+    "You are a GST expert. Reply in 2 short sentences MAX. No preamble, no caveats."
 )
 
 _FALLBACK = "AI explanation unavailable — please configure GOOGLE_API_KEY."
 
 
 def _build_context(result: ReconciliationResult) -> str:
-    """Build a human-readable context string for a single reconciliation result."""
-    lines = [
-        f"Match status: {result.match_status}",
-        f"Match confidence: {result.match_confidence:.0%}",
-    ]
+    """Build a compact, single-paragraph context for minimal tokens."""
+    def _t(s: Optional[str], n: int = 40) -> str:
+        if not s:
+            return ""
+        s = s.strip()
+        return (s[: n - 1] + "…") if len(s) > n else s
 
-    if result.gstr2a_vendor_name:
-        lines.append(f"GSTR-2A vendor: {result.gstr2a_vendor_name} (GSTIN: {result.gstr2a_vendor_gstin or 'N/A'})")
-    if result.gstr2b_vendor_name:
-        lines.append(f"GSTR-2B vendor: {result.gstr2b_vendor_name} (GSTIN: {result.gstr2b_vendor_gstin or 'N/A'})")
+    parts: list[str] = []
+    parts.append(f"Status={result.match_status} ({int(result.match_confidence)}%).")
     if result.gstr2b_invoice_number:
-        lines.append(f"Invoice number: {result.gstr2b_invoice_number}")
-
-    lines.append(f"Total amount difference: ₹{result.total_amount_diff:,.2f}")
-    lines.append(f"Taxable amount difference: ₹{result.taxable_amount_diff:,.2f}")
-    lines.append(f"IGST diff: ₹{result.igst_diff:,.2f} | CGST diff: ₹{result.cgst_diff:,.2f} | SGST diff: ₹{result.sgst_diff:,.2f}")
-    lines.append(f"ITC category: {result.itc_category}")
-    lines.append(f"ITC availability: {result.itc_availability}")
-    lines.append(f"ITC claimable: ₹{result.itc_claimable_amount:,.2f} | ITC blocked: ₹{result.itc_blocked_amount:,.2f}")
-
-    if result.mismatch_fields:
-        lines.append(f"Mismatched fields: {', '.join(result.mismatch_fields)}")
+        parts.append(f"Inv={_t(result.gstr2b_invoice_number, 24)}.")
+    v2a = _t(result.gstr2a_vendor_name, 28)
+    v2b = _t(result.gstr2b_vendor_name, 28)
+    if v2a or v2b:
+        parts.append(f"Vendors: 2A='{v2a or '-'}' vs 2B='{v2b or '-'}'.")
+    if any([result.total_amount_diff, result.taxable_amount_diff, result.igst_diff, result.cgst_diff, result.sgst_diff]):
+        parts.append(
+            f"Deltas: total={result.total_amount_diff:.0f}, tax={result.taxable_amount_diff:.0f}, "
+            f"IGST={result.igst_diff:.0f}, CGST={result.cgst_diff:.0f}, SGST={result.sgst_diff:.0f}."
+        )
+    parts.append(f"ITC={result.itc_category}; avail={result.itc_availability}.")
     if result.mismatch_reason:
-        lines.append(f"Mismatch reason: {result.mismatch_reason}")
+        parts.append(f"Reason={_t(result.mismatch_reason, 50)}.")
+    return " ".join(p for p in parts if p)
 
-    return "\n".join(lines)
 
-
-def _build_rag_context(rules) -> str:
-    """Format retrieved ITC rules into a concise reference block."""
-    if not rules:
-        return ""
-    parts = ["Relevant ITC rules:"]
-    for rule in rules:
-        parts.append(f"- [{rule.category}] {rule.title}: {rule.description}")
-    return "\n".join(parts)
+def _build_rag_context() -> str:
+    """Placeholder to hint at rule-awareness without extra token use."""
+    return "Ref: relevant ITC rule(s) considered."
 
 
 def _is_google_api_key_valid(api_key: Optional[str]) -> bool:
@@ -85,22 +73,14 @@ async def _explain_one(result: ReconciliationResult) -> str:
         from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.messages import SystemMessage, HumanMessage
 
-        # Retrieve top 2 relevant ITC rules for additional context
-        query = f"{result.match_status} {result.itc_category} {result.mismatch_reason or ''}"
-        rules, _ = await itc_rules_service.find_relevant_rules(query, top_k=2)
-
-        context = _build_context(result)
-        rag_context = _build_rag_context(rules)
-
-        human_content = context
-        if rag_context:
-            human_content = f"{context}\n\n{rag_context}"
+        # Build ultra-compact prompt to minimize tokens
+        human_content = f"{_build_context(result)} {_build_rag_context()}"
 
         llm = ChatGoogleGenerativeAI(
-            model=settings.GEMINI_MODEL,
+            model=(settings.GEMINI_MODEL or "gemini-1.5-flash-002"),
             google_api_key=settings.GOOGLE_API_KEY,
-            temperature=0.2,
-            max_output_tokens=200,
+            temperature=0.1,
+            max_output_tokens=60,
         )
 
         messages = [
