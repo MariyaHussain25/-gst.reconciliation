@@ -1,7 +1,7 @@
 """
 AI Explanation Service — Phase 7
 
-Uses LangChain + Gemini 1.5 Pro to generate plain-English explanations for each
+Uses Google GenAI direct SDK to generate plain-English explanations for each
 ReconciliationResult, augmented with relevant ITC rules from the Phase 6 RAG.
 """
 
@@ -74,55 +74,52 @@ def _is_google_api_key_valid(api_key: Optional[str]) -> bool:
 
 
 async def _explain_one(result: ReconciliationResult) -> str:
-    """Generate an AI explanation for a single ReconciliationResult.
-
-    Returns the explanation string or the fallback string — never raises.
-    """
-    if not _is_google_api_key_valid(settings.GOOGLE_API_KEY):
+    """Generate an AI explanation for a single ReconciliationResult."""
+    api_key = settings.GOOGLE_API_KEY
+    if not _is_google_api_key_valid(api_key):
         return _FALLBACK
 
     try:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        from langchain_core.messages import SystemMessage, HumanMessage
+        import google.generativeai as genai
 
-        # Retrieve top 2 relevant ITC rules for additional context
+        genai.configure(api_key=api_key)
+
+        # 1. Look up the rule using Phase 6 Vector Search
         query = f"{result.match_status} {result.itc_category} {result.mismatch_reason or ''}"
         rules, _ = await itc_rules_service.find_relevant_rules(query, top_k=2)
 
+        # 2. Combine the Invoice Data + The GST Rules
         context = _build_context(result)
         rag_context = _build_rag_context(rules)
+        human_content = f"{context}\n\n{rag_context}" if rag_context else context
 
-        human_content = context
-        if rag_context:
-            human_content = f"{context}\n\n{rag_context}"
-
-        llm = ChatGoogleGenerativeAI(
-            model=settings.GEMINI_MODEL,
-            google_api_key=settings.GOOGLE_API_KEY,
-            temperature=0.2,
-            max_output_tokens=200,
+        # 3. Ask Google Gemini to explain it
+        model_name = getattr(settings, "GEMINI_MODEL", "gemini-1.5-pro")
+        model = genai.GenerativeModel(
+            model_name=model_name,
+            system_instruction=_SYSTEM_PROMPT
         )
 
-        messages = [
-            SystemMessage(content=_SYSTEM_PROMPT),
-            HumanMessage(content=human_content),
-        ]
+        response = await model.generate_content_async(
+            human_content,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.2,
+                max_output_tokens=200,
+            )
+        )
+        return response.text.strip()
 
-        response = await llm.ainvoke(messages)
-        return response.content.strip()
-
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.warning("[ai_explanation] Failed to generate explanation: %s", exc)
+    except ImportError:
+        logger.error("[ai_explanation] google-generativeai package not found.")
+        return _FALLBACK
+    except Exception as exc:
+        logger.warning(f"Failed to generate explanation: {exc}")
         return _FALLBACK
 
 
 async def generate_explanations_for_reconciliation(reconciliation: Reconciliation) -> list[str]:
-    """Generate AI explanation strings for each result in a Reconciliation document.
-
-    Returns a list of explanation strings (same length as reconciliation.results).
-    Never raises.
-    """
-    explanations: list[str] = []
+    """Generate AI explanation strings for each result in a Reconciliation document."""
+    explanations = []
     for result in reconciliation.results:
         explanation = await _explain_one(result)
         explanations.append(explanation)
