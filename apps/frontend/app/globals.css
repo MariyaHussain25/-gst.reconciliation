@@ -1,67 +1,164 @@
 /**
  * Global CSS for the GST Reconciliation frontend.
  * Phase 7: Added Noto Sans + Fira Code font families.
+ * Phase 9: Professional financial dashboard color scheme with Light/Dark mode.
  * Uses Tailwind CSS v4 via @import.
  */
 
 @import "tailwindcss";
 
+/* ── Enable class-based dark mode for Tailwind v4 ── */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── Font families (static tokens) ── */
 @theme {
-  /* ── Font families ── */
   --font-family-heading: 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
   --font-family-body:    'Noto Sans', ui-sans-serif, system-ui, sans-serif;
   --font-family-mono:    'Fira Code', ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+}
 
-  /* ── Design token colours (Light Mode) ── */
-  /* Background */
-  --color-background: #f5f4f2;
-  /* Foreground / primary text */
-  --color-foreground: #191d26;
-  /* Card surface */
-  --color-card: #fdfdfb;
-  /* Primary navy (table headers, sidebar) */
-  --color-primary: #182844;
-  --color-primary-foreground: #f5f4f2;
-  /* Secondary warm gray */
-  --color-secondary: #edece9;
-  /* Accent warm taupe */
-  --color-accent: #917260;
-  --color-accent-foreground: #ffffff;
-  /* Info blue (section headings, hover borders) */
-  --color-info: #4470b0;
-  /* Status colours */
-  --color-success: #278556;
-  --color-warning: #f09517;
-  --color-destructive: #db2525;
-  /* Muted */
-  --color-muted: #eeede9;
-  --color-muted-foreground: #6e7175;
-  /* Border / ring */
-  --color-border: #dddbd7;
-  --color-ring: #4470b0;
+/* ────────────────────────────────────────────────
+   Light Mode – CSS custom properties
+   ──────────────────────────────────────────────── */
+:root {
+  /* Brand */
+  --primary:            #182844;   /* Dark Navy Blue – sidebar, table headers, primary buttons */
+  --primary-foreground: #f4f5f7;
+  --accent:             #917260;   /* Professional Brown/Amber – Download buttons, highlights */
+  --accent-foreground:  #ffffff;
 
-  /* ── Sidebar colours ── */
-  --color-sidebar-bg: #132040;
-  --color-sidebar-fg: #a4aab4;
-  --color-sidebar-primary: #917260;
-  --color-sidebar-accent: #233152;
-  --color-sidebar-border: #25304e;
+  /* Backgrounds & surfaces */
+  --background: #f4f5f7;   /* Off-white/Light Gray page background */
+  --surface:    #ffffff;   /* Pure White cards/modals */
+  --muted:      #eeede9;
+  --muted-foreground: #6e7175;
 
-  /* ── Shadows ── */
-  --shadow-card: 0 1px 3px 0 hsl(220 20% 12% / 0.04);
+  /* Text */
+  --foreground: #191d26;   /* High-contrast charcoal */
+
+  /* Borders & rings */
+  --border: #dddbd7;
+  --ring:   #4470b0;
+
+  /* Info */
+  --info:   #4470b0;
+
+  /* Status badge colours */
+  --status-success-bg:   #dcfce7;  /* Faded green background – "Filed" */
+  --status-success-text: #166534;  /* Dark green text */
+  --status-warning-bg:   #fef3c7;  /* Faded orange/amber background – "To be Filed" */
+  --status-warning-text: #92400e;  /* Dark orange text */
+  --status-danger-bg:    #fee2e2;  /* Faded red background – "Not Filed" */
+  --status-danger-text:  #991b1b;  /* Dark red text */
+
+  /* Sidebar */
+  --sidebar-bg:      #132040;
+  --sidebar-fg:      #a4aab4;
+  --sidebar-accent:  #233152;
+  --sidebar-border:  #25304e;
+
+  /* Shadows */
+  --shadow-card:     0 1px 3px 0 hsl(220 20% 12% / 0.04);
   --shadow-elevated: 0 8px 24px -4px hsl(220 20% 12% / 0.08);
 }
 
-/* Base styles */
+/* ────────────────────────────────────────────────
+   Dark Mode – CSS custom properties
+   ──────────────────────────────────────────────── */
+.dark {
+  /* Brand – keep navy readable on dark backgrounds */
+  --primary:            #1e3a5f;
+  --primary-foreground: #e2e8f0;
+  --accent:             #b69678;   /* Slightly lighter Brown/Amber for dark */
+  --accent-foreground:  #1a1a1a;
+
+  /* Backgrounds & surfaces */
+  --background: #0f172a;   /* Deep Slate/Navy page background */
+  --surface:    #1e293b;   /* Slightly lighter Slate for cards/modals */
+  --muted:      #1e293b;
+  --muted-foreground: #94a3b8;
+
+  /* Text */
+  --foreground: #f1f5f9;   /* Light gray/white for high contrast */
+
+  /* Borders & rings */
+  --border: #334155;
+  --ring:   #5580b3;
+
+  /* Info */
+  --info:   #5580b3;
+
+  /* Status badge colours – adjusted for dark backgrounds */
+  --status-success-bg:   #14532d;  /* Dark green background */
+  --status-success-text: #86efac;  /* Light green text */
+  --status-warning-bg:   #78350f;  /* Dark amber background */
+  --status-warning-text: #fde68a;  /* Light amber text */
+  --status-danger-bg:    #7f1d1d;  /* Dark red background */
+  --status-danger-text:  #fca5a5;  /* Light red text */
+
+  /* Sidebar */
+  --sidebar-bg:     #0c1829;
+  --sidebar-fg:     #94a3b8;
+  --sidebar-accent: #172340;
+  --sidebar-border: #1e3a5f;
+
+  /* Shadows */
+  --shadow-card:     0 1px 3px 0 hsl(220 40% 4% / 0.24);
+  --shadow-elevated: 0 8px 24px -4px hsl(220 40% 4% / 0.40);
+}
+
+/* ────────────────────────────────────────────────
+   Tailwind design tokens – @theme inline keeps these
+   as CSS variable references so dark mode changes apply
+   ──────────────────────────────────────────────── */
+@theme inline {
+  /* Brand */
+  --color-primary:            var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent:             var(--accent);
+  --color-accent-foreground:  var(--accent-foreground);
+
+  /* Backgrounds & surfaces */
+  --color-background: var(--background);
+  --color-surface:    var(--surface);
+  --color-muted:      var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Text */
+  --color-foreground: var(--foreground);
+
+  /* Borders */
+  --color-border: var(--border);
+  --color-ring:   var(--ring);
+
+  /* Info */
+  --color-info: var(--info);
+
+  /* Status badges */
+  --color-status-success-bg:   var(--status-success-bg);
+  --color-status-success-text: var(--status-success-text);
+  --color-status-warning-bg:   var(--status-warning-bg);
+  --color-status-warning-text: var(--status-warning-text);
+  --color-status-danger-bg:    var(--status-danger-bg);
+  --color-status-danger-text:  var(--status-danger-text);
+
+  /* Sidebar */
+  --color-sidebar-bg:     var(--sidebar-bg);
+  --color-sidebar-fg:     var(--sidebar-fg);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+}
+
+/* ── Base styles ── */
 html {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 body {
   font-family: var(--font-family-body);
-  background-color: var(--color-background);
-  color: var(--color-foreground);
+  background-color: var(--background);
+  color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -69,23 +166,4 @@ body {
 /* Apply mono font to GSTIN / currency elements */
 .font-mono {
   font-family: var(--font-family-mono);
-}
-
-/* Dark mode overrides */
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: #141414;
-    --color-card: #1f1f1f;
-    --color-primary: #836b5c;
-    --color-accent: #786658;
-    --color-info: #5580b3;
-    --color-muted: #262626;
-    --color-muted-foreground: #808080;
-    --color-border: #2e2e2e;
-    --color-sidebar-bg: #171717;
-    --color-sidebar-fg: #a6a6a6;
-    --color-sidebar-primary: #836b5c;
-    --color-sidebar-accent: #242424;
-    --color-sidebar-border: #242424;
-  }
 }
