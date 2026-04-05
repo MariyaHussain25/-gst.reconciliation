@@ -57,6 +57,7 @@ const CHATBOT_SUGGESTIONS = [
 
 const INITIAL_MESSAGES = [
   {
+    id: 0,
     role: 'bot' as const,
     text: '👋 Hi! I\'m your GST AI Assistant. Ask me anything about your returns, ITC, or reconciliation!',
   },
@@ -73,14 +74,18 @@ export default function DashboardPage(): React.ReactElement {
   function sendMessage(text?: string): void {
     const msg = text ?? input;
     if (!msg.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { role: 'user', text: msg },
-      {
-        role: 'bot',
-        text: `I'll look into "${msg}" for you. For detailed analysis, please use the Upload page to process your GST files.`,
-      },
-    ]);
+    setMessages((prev) => {
+      const nextId = prev.length;
+      return [
+        ...prev,
+        { id: nextId, role: 'user' as const, text: msg },
+        {
+          id: nextId + 1,
+          role: 'bot' as const,
+          text: `I'll look into "${msg}" for you. For detailed analysis, please use the Upload page to process your GST files.`,
+        },
+      ];
+    });
     setInput('');
   }
 
@@ -196,7 +201,7 @@ export default function DashboardPage(): React.ReactElement {
               </div>
               <button
                 type="button"
-                className="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+                className="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
               >
                 Edit Profile
               </button>
@@ -214,9 +219,9 @@ export default function DashboardPage(): React.ReactElement {
 
             {/* Message list */}
             <div className="flex max-h-52 flex-col gap-2 overflow-y-auto px-4 py-3">
-              {messages.map((m, i) => (
+              {messages.map((m) => (
                 <div
-                  key={i}
+                  key={m.id}
                   className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <span
@@ -260,6 +265,7 @@ export default function DashboardPage(): React.ReactElement {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask anything…"
+                  aria-label="Chat with GST AI Assistant"
                   className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder-muted-foreground outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
