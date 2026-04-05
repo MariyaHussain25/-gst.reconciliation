@@ -89,37 +89,37 @@ export default function GSTR2APage(): React.ReactElement {
   return (
     <div>
       {/* Page header strip */}
-      <div className="mb-6 rounded-lg bg-[#182844] px-6 py-4">
-        <nav className="mb-1 flex items-center gap-1 text-xs text-[#a4aab4]">
-          <Link href="/" className="transition hover:text-white">
+      <div className="mb-6 rounded-lg bg-primary px-6 py-4">
+        <nav className="mb-1 flex items-center gap-1 text-xs text-primary-foreground/70">
+          <Link href="/" className="transition hover:text-primary-foreground">
             Home
           </Link>
           <span>›</span>
-          <Link href="/file-returns" className="transition hover:text-white">
+          <Link href="/file-returns" className="transition hover:text-primary-foreground">
             File Returns
           </Link>
           <span>›</span>
-          <Link href="/file-returns/returns" className="transition hover:text-white">
+          <Link href="/file-returns/returns" className="transition hover:text-primary-foreground">
             Returns List
           </Link>
           <span>›</span>
-          <span className="text-white">GSTR-2A</span>
+          <span className="text-primary-foreground">GSTR-2A</span>
         </nav>
-        <h1 className="text-lg font-bold text-white">GSTR-2A — Auto Drafted Details</h1>
-        <div className="mt-1 flex flex-wrap gap-6 text-sm text-[#a4aab4]">
+        <h1 className="text-lg font-bold text-primary-foreground">GSTR-2A — Auto Drafted Details</h1>
+        <div className="mt-1 flex flex-wrap gap-6 text-sm text-primary-foreground/70">
           <span>
             Financial Year:{' '}
-            <strong className="text-white">2024-25</strong>
+            <strong className="text-primary-foreground">2024-25</strong>
           </span>
           <span>
             Return Period:{' '}
-            <strong className="text-white">July 2024</strong>
+            <strong className="text-primary-foreground">July 2024</strong>
           </span>
         </div>
       </div>
 
       {/* Read-only note banner */}
-      <div className="mb-6 flex items-start gap-3 rounded-lg border border-[#4470b0] bg-[#eef2fa] px-4 py-3 text-sm text-[#2f5a9b]">
+      <div className="mb-6 flex items-start gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground">
         <span className="mt-0.5 flex-shrink-0">ℹ️</span>
         <p>
           <strong>Note:</strong> You can only view details of inward supplies in GSTR-2A.
@@ -134,10 +134,10 @@ export default function GSTR2APage(): React.ReactElement {
           <div key={group.part}>
             {/* Part label */}
             <div className="mb-3 flex items-center gap-3">
-              <span className="rounded bg-[#182844] px-2.5 py-1 text-xs font-bold text-white">
+              <span className="rounded bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground">
                 {group.part}
               </span>
-              <span className="text-sm font-semibold text-[#182844]">{group.label}</span>
+              <span className="text-sm font-semibold text-primary">{group.label}</span>
             </div>
 
             {/* Section cards */}
@@ -145,13 +145,13 @@ export default function GSTR2APage(): React.ReactElement {
               {group.sections.map((section) => (
                 <button
                   key={section.id}
-                  className="group flex items-center justify-between rounded-lg bg-[#182844] px-5 py-4 text-left transition hover:bg-[#1e3566] focus:outline-none focus:ring-2 focus:ring-[#4470b0] focus:ring-offset-2"
+                  className="group flex items-center justify-between rounded-lg bg-primary px-5 py-4 text-left transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-white">{section.title}</p>
-                    <p className="mt-0.5 text-xs text-[#a4aab4]">{section.subtitle}</p>
+                    <p className="text-sm font-semibold text-primary-foreground">{section.title}</p>
+                    <p className="mt-0.5 text-xs text-primary-foreground/70">{section.subtitle}</p>
                   </div>
-                  <span className="ml-4 flex-shrink-0 text-lg text-[#a4aab4] transition group-hover:text-white">
+                  <span className="ml-4 flex-shrink-0 text-lg text-primary-foreground/70 transition group-hover:text-primary-foreground">
                     ›
                   </span>
                 </button>

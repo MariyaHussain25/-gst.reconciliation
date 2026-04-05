@@ -72,12 +72,12 @@ const MONTH_OPTIONS = last24Months();
 
 function StatusBadge({ status }: { status: string }): React.ReactElement {
   const colourMap: Record<string, string> = {
-    COMPLETED: 'bg-[#278556] text-white',
-    PROCESSING: 'bg-[#f09517] text-white',
-    PENDING: 'bg-gray-400 text-white',
-    FAILED: 'bg-[#db2525] text-white',
+    COMPLETED: 'bg-status-success-bg text-status-success-text',
+    PROCESSING: 'bg-status-warning-bg text-status-warning-text',
+    PENDING: 'bg-muted text-muted-foreground',
+    FAILED: 'bg-status-danger-bg text-status-danger-text',
   };
-  const cls = colourMap[status] ?? 'bg-gray-300 text-gray-700';
+  const cls = colourMap[status] ?? 'bg-muted text-muted-foreground';
   return (
     <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${cls}`}>
       {status}
@@ -187,8 +187,8 @@ export default function ReportsPage(): React.ReactElement {
         onClick={() => setMode(id)}
         className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
           active
-            ? 'bg-[#182844] text-white'
-            : 'border border-[#dddbd7] bg-white text-[#191d26] hover:bg-[#eeede9]'
+            ? 'bg-primary text-primary-foreground'
+            : 'border border-border bg-surface text-foreground hover:bg-muted'
         }`}
       >
         {label}
@@ -199,20 +199,20 @@ export default function ReportsPage(): React.ReactElement {
   return (
     <div>
       {/* Page header strip */}
-      <div className="bg-[#182844] px-8 py-6 text-white">
-        <h1 className="text-2xl font-bold">PDF Reports</h1>
-        <p className="mt-1 text-sm text-blue-200">
+      <div className="bg-primary px-8 py-6">
+        <h1 className="text-2xl font-bold text-primary-foreground">PDF Reports</h1>
+        <p className="mt-1 text-sm text-primary-foreground/70">
           Generate and download GST Reconciliation Reports
         </p>
       </div>
 
       <div className="mx-auto max-w-5xl px-6 py-8">
         {/* Card */}
-        <div className="rounded-lg border border-[#dddbd7] bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
 
           {/* Duration Mode Tabs */}
           <div className="mb-6">
-            <p className="mb-2 text-sm font-medium text-[#191d26]">Filter by</p>
+            <p className="mb-2 text-sm font-medium text-foreground">Filter by</p>
             <div className="flex gap-2">
               <TabButton id="fy" label="Financial Year + Quarter" />
               <TabButton id="daterange" label="Date Range" />
@@ -224,13 +224,13 @@ export default function ReportsPage(): React.ReactElement {
           {mode === 'fy' && (
             <div className="mb-6 flex flex-wrap gap-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
                   Financial Year
                 </label>
                 <select
                   value={fy}
                   onChange={(e) => setFy(e.target.value)}
-                  className="rounded border border-[#dddbd7] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#182844]"
+                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {['2023-24', '2024-25', '2025-26'].map((y) => (
                     <option key={y} value={y}>
@@ -240,11 +240,11 @@ export default function ReportsPage(): React.ReactElement {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Quarter</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Quarter</label>
                 <select
                   value={quarter}
                   onChange={(e) => setQuarter(e.target.value)}
-                  className="rounded border border-[#dddbd7] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#182844]"
+                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {['Full Year', 'Q1 (Apr-Jun)', 'Q2 (Jul-Sep)', 'Q3 (Oct-Dec)', 'Q4 (Jan-Mar)'].map(
                     (q) => (
@@ -262,11 +262,11 @@ export default function ReportsPage(): React.ReactElement {
           {mode === 'daterange' && (
             <div className="mb-6 flex flex-wrap gap-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">From</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">From</label>
                 <select
                   value={fromMonth}
                   onChange={(e) => setFromMonth(e.target.value)}
-                  className="rounded border border-[#dddbd7] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#182844]"
+                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {MONTH_OPTIONS.map((m) => (
                     <option key={m} value={m}>
@@ -276,11 +276,11 @@ export default function ReportsPage(): React.ReactElement {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">To</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">To</label>
                 <select
                   value={toMonth}
                   onChange={(e) => setToMonth(e.target.value)}
-                  className="rounded border border-[#dddbd7] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#182844]"
+                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {MONTH_OPTIONS.map((m) => (
                     <option key={m} value={m}>
@@ -294,13 +294,13 @@ export default function ReportsPage(): React.ReactElement {
 
           {/* User ID input */}
           <div className="mb-6">
-            <label className="mb-1 block text-sm font-medium text-[#191d26]">User ID</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">User ID</label>
             <input
               type="text"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               placeholder="Enter your User ID"
-              className="w-full max-w-sm rounded border border-[#dddbd7] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#182844]"
+              className="w-full max-w-sm rounded border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void handleFind();
               }}
@@ -312,7 +312,7 @@ export default function ReportsPage(): React.ReactElement {
             type="button"
             onClick={() => void handleFind()}
             disabled={loading}
-            className="flex items-center gap-2 rounded bg-[#182844] px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="flex items-center gap-2 rounded bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {loading && (
               <svg
@@ -342,23 +342,23 @@ export default function ReportsPage(): React.ReactElement {
 
         {/* Error alert */}
         {error && (
-          <div className="mt-4 rounded-lg border border-[#db2525] bg-red-50 px-4 py-3 text-sm text-[#db2525]">
+          <div className="mt-4 rounded-lg border border-status-danger-bg bg-status-danger-bg/20 px-4 py-3 text-sm text-status-danger-text">
             {error}
           </div>
         )}
 
         {/* Download error */}
         {downloadError && (
-          <div className="mt-4 rounded-lg border border-[#db2525] bg-red-50 px-4 py-3 text-sm text-[#db2525]">
+          <div className="mt-4 rounded-lg border border-status-danger-bg bg-status-danger-bg/20 px-4 py-3 text-sm text-status-danger-text">
             Download error: {downloadError}
           </div>
         )}
 
         {/* Empty state */}
         {results !== null && results.length === 0 && (
-          <div className="mt-6 rounded-lg border border-[#dddbd7] bg-white p-10 text-center shadow-sm">
-            <p className="text-gray-500">No reconciliation reports found for the selected period.</p>
-            <p className="mt-1 text-xs text-gray-400">
+          <div className="mt-6 rounded-lg border border-border bg-surface p-10 text-center shadow-sm">
+            <p className="text-muted-foreground">No reconciliation reports found for the selected period.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
               Try selecting &quot;All Records&quot; to see all available reports.
             </p>
           </div>
@@ -366,10 +366,10 @@ export default function ReportsPage(): React.ReactElement {
 
         {/* Results table */}
         {results !== null && results.length > 0 && (
-          <div className="mt-6 overflow-auto rounded-lg border border-[#dddbd7] bg-white shadow-sm">
+          <div className="mt-6 overflow-auto rounded-lg border border-border bg-surface shadow-sm">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-[#182844] text-white">
+                <tr className="bg-primary text-primary-foreground">
                   {[
                     'Period',
                     'Financial Year',
@@ -390,27 +390,27 @@ export default function ReportsPage(): React.ReactElement {
                 {results.map((item, idx) => (
                   <tr
                     key={item.reconciliation_id}
-                    className={idx % 2 === 0 ? 'bg-white' : 'bg-[#f5f4f2]'}
+                    className={idx % 2 === 0 ? 'bg-surface' : 'bg-muted'}
                   >
-                    <td className="px-4 py-3">{formatPeriod(item.period)}</td>
-                    <td className="px-4 py-3">{item.financial_year}</td>
+                    <td className="px-4 py-3 text-foreground">{formatPeriod(item.period)}</td>
+                    <td className="px-4 py-3 text-foreground">{item.financial_year}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {new Date(item.created_at).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',
                       })}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
                       {item.summary.total_invoices}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
                       {formatCurrency(item.summary.total_eligible_itc)}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
                       {formatCurrency(item.summary.total_blocked_itc)}
                     </td>
                     <td className="px-4 py-3">
@@ -421,7 +421,7 @@ export default function ReportsPage(): React.ReactElement {
                           downloadingId === item.reconciliation_id
                         }
                         onClick={() => void handleDownload(item)}
-                        className="flex items-center gap-1 rounded bg-[#182844] px-3 py-1 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex items-center gap-1 rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {downloadingId === item.reconciliation_id ? (
                           <svg
