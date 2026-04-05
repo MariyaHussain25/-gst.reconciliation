@@ -62,20 +62,20 @@ export default function ReturnsListPage(): React.ReactElement {
   return (
     <div>
       {/* Page header strip */}
-      <div className="mb-6 rounded-lg bg-[#182844] px-6 py-4">
-        <nav className="mb-1 flex items-center gap-1 text-xs text-[#a4aab4]">
-          <Link href="/" className="transition hover:text-white">
+      <div className="mb-6 rounded-lg bg-primary px-6 py-4">
+        <nav className="mb-1 flex items-center gap-1 text-xs text-primary-foreground/70">
+          <Link href="/" className="transition hover:text-primary-foreground">
             Home
           </Link>
           <span>›</span>
-          <Link href="/file-returns" className="transition hover:text-white">
+          <Link href="/file-returns" className="transition hover:text-primary-foreground">
             File Returns
           </Link>
           <span>›</span>
-          <span className="text-white">Returns List</span>
+          <span className="text-primary-foreground">Returns List</span>
         </nav>
-        <h1 className="text-lg font-bold text-white">File Returns</h1>
-        <p className="mt-0.5 text-sm text-[#a4aab4]">
+        <h1 className="text-lg font-bold text-primary-foreground">File Returns</h1>
+        <p className="mt-0.5 text-sm text-primary-foreground/70">
           Period: July 2024 · Q2 · FY 2024-25
         </p>
       </div>
@@ -85,13 +85,13 @@ export default function ReturnsListPage(): React.ReactElement {
         {RETURNS.map((ret) => (
           <div
             key={ret.id}
-            className="rounded-lg border border-[#dddbd7] bg-white p-5 shadow-sm transition hover:shadow-md"
+            className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:shadow-md"
           >
             {/* Card header */}
             <div className="mb-3 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-base font-bold text-[#182844]">{ret.type}</h3>
-                <p className="mt-1 text-xs text-[#6e7175]">{ret.description}</p>
+                <h3 className="text-base font-bold text-primary">{ret.type}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{ret.description}</p>
               </div>
               {ret.status && (
                 <div className="flex-shrink-0">
@@ -102,7 +102,7 @@ export default function ReturnsListPage(): React.ReactElement {
 
             {/* Frequency pill */}
             <div className="mb-4">
-              <span className="rounded-full bg-[#edece9] px-2.5 py-0.5 text-xs text-[#6e7175]">
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
                 {ret.frequency}
               </span>
             </div>
@@ -111,11 +111,11 @@ export default function ReturnsListPage(): React.ReactElement {
             <div className="flex items-center gap-2">
               <Link
                 href={ret.detailHref}
-                className="rounded bg-[#4470b0] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#2f5a9b]"
+                className="rounded bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
               >
                 VIEW
               </Link>
-              <button className="rounded border border-[#dddbd7] px-4 py-1.5 text-xs font-semibold text-[#6e7175] transition hover:bg-[#edece9]">
+              <button className="rounded border border-border px-4 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted">
                 DOWNLOAD
               </button>
             </div>

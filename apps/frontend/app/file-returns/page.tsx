@@ -39,8 +39,8 @@ const MONTHS = [
 
 /** Common class for the three styled <select> elements. */
 const SELECT_CLASS =
-  'w-full rounded border border-[#dddbd7] bg-white px-3 py-2 text-sm text-[#191d26] ' +
-  'focus:border-[#4470b0] focus:outline-none focus:ring-1 focus:ring-[#4470b0]';
+  'w-full rounded border border-border bg-surface px-3 py-2 text-sm text-foreground ' +
+  'focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring';
 
 /**
  * Period Selector page for filing GST returns.
@@ -59,21 +59,21 @@ export default function FileReturnsPage(): React.ReactElement {
   return (
     <div>
       {/* Page header strip */}
-      <div className="mb-6 rounded-lg bg-[#182844] px-6 py-4">
-        <nav className="mb-1 flex items-center gap-1 text-xs text-[#a4aab4]">
-          <Link href="/" className="transition hover:text-white">
+      <div className="mb-6 rounded-lg bg-primary px-6 py-4">
+        <nav className="mb-1 flex items-center gap-1 text-xs text-primary-foreground/70">
+          <Link href="/" className="transition hover:text-primary-foreground">
             Home
           </Link>
           <span>›</span>
-          <span className="text-white">File Returns</span>
+          <span className="text-primary-foreground">File Returns</span>
         </nav>
-        <h1 className="text-lg font-bold text-white">File Returns</h1>
+        <h1 className="text-lg font-bold text-primary-foreground">File Returns</h1>
       </div>
 
       {/* Period selector card */}
-      <div className="rounded-lg border border-[#dddbd7] bg-white shadow-sm">
-        <div className="border-b border-[#dddbd7] px-6 py-4">
-          <h2 className="text-base font-semibold text-[#182844]">Select Period</h2>
+      <div className="rounded-lg border border-border bg-surface shadow-sm">
+        <div className="border-b border-border px-6 py-4">
+          <h2 className="text-base font-semibold text-primary">Select Period</h2>
         </div>
 
         <div className="px-6 py-6">
@@ -82,7 +82,7 @@ export default function FileReturnsPage(): React.ReactElement {
             <div>
               <label
                 htmlFor="fy"
-                className="mb-1.5 block text-sm font-medium text-[#191d26]"
+                className="mb-1.5 block text-sm font-medium text-foreground"
               >
                 Financial Year
               </label>
@@ -104,7 +104,7 @@ export default function FileReturnsPage(): React.ReactElement {
             <div>
               <label
                 htmlFor="quarter"
-                className="mb-1.5 block text-sm font-medium text-[#191d26]"
+                className="mb-1.5 block text-sm font-medium text-foreground"
               >
                 Quarter
               </label>
@@ -126,7 +126,7 @@ export default function FileReturnsPage(): React.ReactElement {
             <div>
               <label
                 htmlFor="month"
-                className="mb-1.5 block text-sm font-medium text-[#191d26]"
+                className="mb-1.5 block text-sm font-medium text-foreground"
               >
                 Period (Month)
               </label>
@@ -149,7 +149,7 @@ export default function FileReturnsPage(): React.ReactElement {
           <div className="mt-6">
             <button
               onClick={handleSearch}
-              className="rounded bg-[#4470b0] px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2f5a9b] focus:outline-none focus:ring-2 focus:ring-[#4470b0] focus:ring-offset-2"
+              className="rounded bg-primary px-8 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               SEARCH
             </button>
@@ -158,7 +158,7 @@ export default function FileReturnsPage(): React.ReactElement {
       </div>
 
       {/* Info banner */}
-      <div className="mt-4 flex items-start gap-3 rounded-lg border border-[#4470b0] bg-[#eef2fa] px-4 py-3 text-sm text-[#2f5a9b]">
+      <div className="mt-4 flex items-start gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground">
         <span className="mt-0.5 flex-shrink-0">ℹ️</span>
         <p>
           <strong>Note:</strong> GSTR-1 and GSTR-3B shall be filed for each month of the

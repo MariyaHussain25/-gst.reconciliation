@@ -67,48 +67,48 @@
 
 /* ────────────────────────────────────────────────
    Dark Mode – CSS custom properties
-   Palette: Mocha Earth #4B3935 + Vanilla Cream #F0E7D5
+   Palette: Deep Matte Black + Metallic/Champagne Gold
    ──────────────────────────────────────────────── */
 .dark {
-  /* Brand – Vanilla Cream as primary on dark backgrounds */
-  --primary:            #F0E7D5;   /* Vanilla Cream – buttons, highlights */
-  --primary-foreground: #4B3935;   /* Mocha Earth text on Cream buttons */
-  --accent:             #C9B9B0;   /* Muted Cream accent */
-  --accent-foreground:  #4B3935;
+  /* Brand – Metallic Gold as primary on deep black backgrounds */
+  --primary:            #C6A87C;   /* Metallic/Champagne Gold – buttons, highlights */
+  --primary-foreground: #0A0A0A;   /* Deep Black text on Gold buttons */
+  --accent:             #D4AF37;   /* Brighter Gold for hover/active states */
+  --accent-foreground:  #0A0A0A;
 
   /* Backgrounds & surfaces */
-  --background: #4B3935;   /* Mocha Earth page background */
-  --surface:    #5E4A45;   /* Slightly lighter Mocha for cards/modals */
-  --muted:      #5E4A45;
-  --muted-foreground: #C9B9B0;
+  --background: #0A0A0A;   /* Deep Matte Black page background */
+  --surface:    #141414;   /* Rich Charcoal for cards/modals */
+  --muted:      #1C1A16;   /* Slightly lighter for hover states */
+  --muted-foreground: #8A7A5F;   /* Muted warm grey */
 
   /* Text */
-  --foreground: #F0E7D5;   /* Vanilla Cream for high contrast */
+  --foreground: #E8D9BF;   /* Warm Champagne off-white for high contrast */
 
   /* Borders & rings */
-  --border: #7A5C57;
-  --ring:   #F0E7D5;
+  --border: #2A2318;   /* Very dark warm-tinted border */
+  --ring:   #C6A87C;   /* Gold ring for focus states */
 
   /* Info */
-  --info:   #E8DACC;
+  --info:   #C6A87C;   /* Gold info accent */
 
-  /* Status badge colours – adjusted for dark mocha backgrounds */
-  --status-success-bg:   #2A4A32;  /* Dark Sage background */
-  --status-success-text: #A8D4A8;  /* Light Sage text */
-  --status-warning-bg:   #5A4210;  /* Dark Ochre background */
-  --status-warning-text: #F0D080;  /* Light Mustard text */
-  --status-danger-bg:    #5A2A22;  /* Dark Terracotta background */
-  --status-danger-text:  #F0A898;  /* Light Terracotta text */
+  /* Status badge colours – adjusted for deep black backgrounds */
+  --status-success-bg:   #0F2018;  /* Very dark forest green */
+  --status-success-text: #7EC89A;  /* Soft mint green */
+  --status-warning-bg:   #221500;  /* Very dark amber */
+  --status-warning-text: #D4A855;  /* Warm gold */
+  --status-danger-bg:    #200A0A;  /* Very dark crimson */
+  --status-danger-text:  #D48080;  /* Soft rose */
 
   /* Sidebar */
-  --sidebar-bg:     #3A2A27;   /* Darker Mocha for sidebar */
-  --sidebar-fg:     #C9B9B0;
-  --sidebar-accent: #4B3935;
-  --sidebar-border: #5E4A45;
+  --sidebar-bg:     #0D0C0A;   /* Near-black with warm tint */
+  --sidebar-fg:     #C6A87C;   /* Metallic Gold for sidebar text */
+  --sidebar-accent: #1C1A16;   /* Dark gold-tinted surface */
+  --sidebar-border: #2A2318;
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(10 30% 4% / 0.36);
-  --shadow-elevated: 0 8px 24px -4px hsl(10 30% 4% / 0.52);
+  --shadow-card:     0 1px 3px 0 hsl(0 0% 0% / 0.70);
+  --shadow-elevated: 0 8px 24px -4px hsl(0 0% 0% / 0.90);
 }
 
 /* ────────────────────────────────────────────────
