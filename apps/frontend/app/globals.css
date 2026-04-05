@@ -2,6 +2,8 @@
  * Global CSS for the GST Reconciliation frontend.
  * Phase 7: Added Noto Sans + Fira Code font families.
  * Phase 9: Professional financial dashboard color scheme with Light/Dark mode.
+ * Phase 11: Mocha Earth (#4B3935) + Vanilla Cream (#F0E7D5) luxury palette.
+ *           Earthy status badges, Plus Jakarta Sans typography.
  * Uses Tailwind CSS v4 via @import.
  */
 
@@ -12,101 +14,101 @@
 
 /* ── Font families (static tokens) ── */
 @theme {
-  --font-family-heading: 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-family-body:    'Noto Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-body:    'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-family-mono:    'Fira Code', ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
 }
 
 /* ────────────────────────────────────────────────
    Light Mode – CSS custom properties
-   Palette: Midnight Indigo #212842 + Vanilla Cream #F0E7D5
+   Palette: Mocha Earth #4B3935 + Vanilla Cream #F0E7D5
    ──────────────────────────────────────────────── */
 :root {
   /* Brand */
-  --primary:            #212842;   /* Midnight Indigo – sidebar, table headers, primary buttons */
-  --primary-foreground: #F0E7D5;   /* Vanilla Cream text on Indigo */
-  --accent:             #3D4F82;   /* Lighter Indigo – highlights, links */
+  --primary:            #4B3935;   /* Mocha Earth – sidebar, table headers, primary buttons */
+  --primary-foreground: #F0E7D5;   /* Vanilla Cream text on Mocha */
+  --accent:             #7A5C57;   /* Lighter Mocha – highlights, links */
   --accent-foreground:  #F0E7D5;
 
   /* Backgrounds & surfaces */
   --background: #F0E7D5;   /* Vanilla Cream page background */
   --surface:    #F8F4EC;   /* Slightly lighter Cream for cards/modals */
-  --muted:      #E8DFCC;   /* Muted Cream for hover states */
-  --muted-foreground: #5a5248;
+  --muted:      #EDE3D3;   /* Muted Cream for hover states */
+  --muted-foreground: #6B534E;
 
   /* Text */
-  --foreground: #212842;   /* Midnight Indigo for high contrast */
+  --foreground: #2E1F1C;   /* Deep Mocha for high contrast */
 
   /* Borders & rings */
-  --border: #d4cbbf;
-  --ring:   #212842;
+  --border: #D9CBBB;
+  --ring:   #4B3935;
 
   /* Info */
-  --info:   #3D4F82;
+  --info:   #7A5C57;
 
-  /* Status badge colours */
-  --status-success-bg:   #dcfce7;  /* Faded green background – "Filed" */
-  --status-success-text: #166534;  /* Dark green text */
-  --status-warning-bg:   #fef3c7;  /* Faded orange/amber background – "To be Filed" */
-  --status-warning-text: #92400e;  /* Dark orange text */
-  --status-danger-bg:    #fee2e2;  /* Faded red background – "Not Filed" */
-  --status-danger-text:  #991b1b;  /* Dark red text */
+  /* Status badge colours – earthy muted tones */
+  --status-success-bg:   #D6E8D0;  /* Muted Sage Green background – "Filed" */
+  --status-success-text: #3A6344;  /* Dark Sage text */
+  --status-warning-bg:   #EFE0B0;  /* Muted Ochre/Mustard background – "To be Filed" */
+  --status-warning-text: #7A5A1E;  /* Dark Ochre text */
+  --status-danger-bg:    #EAD0C8;  /* Muted Terracotta background – "Not Filed" */
+  --status-danger-text:  #7A3228;  /* Dark Brick Red text */
 
   /* Sidebar */
-  --sidebar-bg:      #212842;   /* Midnight Indigo */
-  --sidebar-fg:      #b8b0a4;
-  --sidebar-accent:  #2d3657;
-  --sidebar-border:  #2d3657;
+  --sidebar-bg:      #4B3935;   /* Mocha Earth */
+  --sidebar-fg:      #C9B9B0;
+  --sidebar-accent:  #5E4A45;
+  --sidebar-border:  #5E4A45;
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(228 32% 18% / 0.08);
-  --shadow-elevated: 0 8px 24px -4px hsl(228 32% 18% / 0.14);
+  --shadow-card:     0 1px 3px 0 hsl(10 25% 12% / 0.08);
+  --shadow-elevated: 0 8px 24px -4px hsl(10 25% 12% / 0.14);
 }
 
 /* ────────────────────────────────────────────────
    Dark Mode – CSS custom properties
-   Palette: Midnight Indigo #212842 + Vanilla Cream #F0E7D5
+   Palette: Mocha Earth #4B3935 + Vanilla Cream #F0E7D5
    ──────────────────────────────────────────────── */
 .dark {
   /* Brand – Vanilla Cream as primary on dark backgrounds */
   --primary:            #F0E7D5;   /* Vanilla Cream – buttons, highlights */
-  --primary-foreground: #212842;   /* Midnight Indigo text on Cream buttons */
-  --accent:             #b8b0a4;   /* Muted Cream accent */
-  --accent-foreground:  #212842;
+  --primary-foreground: #4B3935;   /* Mocha Earth text on Cream buttons */
+  --accent:             #C9B9B0;   /* Muted Cream accent */
+  --accent-foreground:  #4B3935;
 
   /* Backgrounds & surfaces */
-  --background: #212842;   /* Midnight Indigo page background */
-  --surface:    #2d3657;   /* Slightly lighter Indigo for cards/modals */
-  --muted:      #2d3657;
-  --muted-foreground: #b8b0a4;
+  --background: #4B3935;   /* Mocha Earth page background */
+  --surface:    #5E4A45;   /* Slightly lighter Mocha for cards/modals */
+  --muted:      #5E4A45;
+  --muted-foreground: #C9B9B0;
 
   /* Text */
   --foreground: #F0E7D5;   /* Vanilla Cream for high contrast */
 
   /* Borders & rings */
-  --border: #3d4f82;
+  --border: #7A5C57;
   --ring:   #F0E7D5;
 
   /* Info */
-  --info:   #b8c4e8;
+  --info:   #E8DACC;
 
-  /* Status badge colours – adjusted for dark backgrounds */
-  --status-success-bg:   #14532d;  /* Dark green background */
-  --status-success-text: #86efac;  /* Light green text */
-  --status-warning-bg:   #78350f;  /* Dark amber background */
-  --status-warning-text: #fde68a;  /* Light amber text */
-  --status-danger-bg:    #7f1d1d;  /* Dark red background */
-  --status-danger-text:  #fca5a5;  /* Light red text */
+  /* Status badge colours – adjusted for dark mocha backgrounds */
+  --status-success-bg:   #2A4A32;  /* Dark Sage background */
+  --status-success-text: #A8D4A8;  /* Light Sage text */
+  --status-warning-bg:   #5A4210;  /* Dark Ochre background */
+  --status-warning-text: #F0D080;  /* Light Mustard text */
+  --status-danger-bg:    #5A2A22;  /* Dark Terracotta background */
+  --status-danger-text:  #F0A898;  /* Light Terracotta text */
 
   /* Sidebar */
-  --sidebar-bg:     #181e35;   /* Darker Indigo for sidebar */
-  --sidebar-fg:     #b8b0a4;
-  --sidebar-accent: #212842;
-  --sidebar-border: #2d3657;
+  --sidebar-bg:     #3A2A27;   /* Darker Mocha for sidebar */
+  --sidebar-fg:     #C9B9B0;
+  --sidebar-accent: #4B3935;
+  --sidebar-border: #5E4A45;
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(228 36% 4% / 0.32);
-  --shadow-elevated: 0 8px 24px -4px hsl(228 36% 4% / 0.48);
+  --shadow-card:     0 1px 3px 0 hsl(10 30% 4% / 0.36);
+  --shadow-elevated: 0 8px 24px -4px hsl(10 30% 4% / 0.52);
 }
 
 /* ────────────────────────────────────────────────

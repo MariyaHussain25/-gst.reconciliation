@@ -1,12 +1,13 @@
 /**
  * @file apps/frontend/app/layout.tsx
  * @description Root layout for the GST Reconciliation Next.js app.
- * Applies global styles, metadata, Google Fonts (Noto Sans + Fira Code),
+ * Applies global styles, metadata, Google Fonts (Plus Jakarta Sans + Fira Code),
  * and wraps all pages with the Header component.
  *
  * Phase 1: Basic layout with navigation.
  * Phase 7: Added Noto Sans + Fira Code font integration.
  * Phase 10: Added anti-FOUC script for Light/Dark theme persistence via localStorage.
+ * Phase 11: Switched to Plus Jakarta Sans for luxury premium feel.
  */
 
 import type { Metadata } from 'next';
@@ -32,11 +33,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google Fonts: Noto Sans (headings + body) and Fira Code (mono / data) */}
+        {/* Google Fonts: Plus Jakarta Sans (headings + body) and Fira Code (mono / data) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Noto+Sans:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
         {/*

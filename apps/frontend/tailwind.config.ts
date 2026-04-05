@@ -16,8 +16,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ['Noto Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        body:    ['Noto Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        heading: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body:    ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono:    ['Fira Code', 'ui-monospace', 'Cascadia Code', 'Source Code Pro', 'monospace'],
       },
       colors: {
