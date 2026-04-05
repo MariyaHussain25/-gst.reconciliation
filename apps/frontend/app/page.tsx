@@ -86,10 +86,10 @@ export default function DashboardPage(): React.ReactElement {
       const nextId = prev.length;
       return [
         ...prev,
-        { id: nextId, role: 'user' as ChatRole, text: msg },
+        { id: nextId, role: 'user', text: msg },
         {
           id: nextId + 1,
-          role: 'bot' as ChatRole,
+          role: 'bot',
           text: `I'll look into "${msg}" for you. For detailed analysis, please use the Upload page to process your GST files.`,
         },
       ];
