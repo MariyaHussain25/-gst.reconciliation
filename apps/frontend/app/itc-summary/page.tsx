@@ -153,7 +153,7 @@ const ROWS_PER_PAGE = 3;
 /** Renders a single currency value or a dash when zero. */
 function AmtCell({ value }: { value: number }): React.ReactElement {
   return (
-    <td className="px-4 py-3 text-right font-mono text-sm text-[#191d26]">
+    <td className="px-4 py-3 text-right font-mono text-sm text-foreground">
       {value !== 0 ? formatCurrency(value) : '—'}
     </td>
   );
@@ -165,23 +165,23 @@ function ITCTableRow({ row }: { row: ITCRow }): React.ReactElement {
 
   return (
     <>
-      <tr className="border-b border-[#dddbd7] hover:bg-[#f5f4f2]">
-        <td className="px-4 py-3 text-sm font-bold text-[#182844]">{row.sno}</td>
+      <tr className="border-b border-border hover:bg-muted">
+        <td className="px-4 py-3 text-sm font-bold text-primary">{row.sno}</td>
         <td className="px-4 py-3">
           <div className="flex items-center gap-2">
             {row.expandable && (
               <button
                 onClick={() => setExpanded((v) => !v)}
                 aria-label={expanded ? 'Collapse' : 'Expand'}
-                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs text-[#6e7175] hover:bg-[#edece9] hover:text-[#182844]"
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs text-muted-foreground hover:bg-muted hover:text-primary"
               >
                 {expanded ? '▲' : '▼'}
               </button>
             )}
-            <span className="text-sm font-medium text-[#191d26]">{row.heading}</span>
+            <span className="text-sm font-medium text-foreground">{row.heading}</span>
           </div>
         </td>
-        <td className="px-4 py-3 text-sm text-[#6e7175]">{row.tableRef}</td>
+        <td className="px-4 py-3 text-sm text-muted-foreground">{row.tableRef}</td>
         <AmtCell value={row.igst} />
         <AmtCell value={row.cgst} />
         <AmtCell value={row.sgst} />
@@ -190,11 +190,11 @@ function ITCTableRow({ row }: { row: ITCRow }): React.ReactElement {
 
       {expanded &&
         row.children?.map((child, i) => (
-          <tr key={i} className="border-b border-[#dddbd7] bg-[#f5f4f2]">
+          <tr key={i} className="border-b border-border bg-muted">
             <td className="px-4 py-3" />
             <td className="px-4 py-3">
-              <span className="ml-7 text-sm text-[#6e7175]">
-                <span className="mr-1.5 text-[#dddbd7]">└</span>
+              <span className="ml-7 text-sm text-muted-foreground">
+                <span className="mr-1.5 text-border">└</span>
                 {child.heading}
               </span>
             </td>
@@ -213,24 +213,24 @@ function ITCTableRow({ row }: { row: ITCRow }): React.ReactElement {
 function ITCTableHead(): React.ReactElement {
   return (
     <thead>
-      <tr className="border-b border-[#dddbd7] bg-[#f5f4f2]">
-        <th className="w-12 px-4 py-3 text-left text-xs font-semibold text-[#6e7175]">
+      <tr className="border-b border-border bg-muted">
+        <th className="w-12 px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
           S.No
         </th>
-        <th className="px-4 py-3 text-left text-xs font-semibold text-[#6e7175]">Heading</th>
-        <th className="w-28 px-4 py-3 text-left text-xs font-semibold text-[#6e7175]">
+        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Heading</th>
+        <th className="w-28 px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
           GSTR-3B Ref
         </th>
-        <th className="w-32 px-4 py-3 text-right text-xs font-semibold text-[#6e7175]">
+        <th className="w-32 px-4 py-3 text-right text-xs font-semibold text-muted-foreground">
           Integrated Tax (₹)
         </th>
-        <th className="w-32 px-4 py-3 text-right text-xs font-semibold text-[#6e7175]">
+        <th className="w-32 px-4 py-3 text-right text-xs font-semibold text-muted-foreground">
           Central Tax (₹)
         </th>
-        <th className="w-32 px-4 py-3 text-right text-xs font-semibold text-[#6e7175]">
+        <th className="w-32 px-4 py-3 text-right text-xs font-semibold text-muted-foreground">
           State / UT Tax (₹)
         </th>
-        <th className="w-24 px-4 py-3 text-right text-xs font-semibold text-[#6e7175]">
+        <th className="w-24 px-4 py-3 text-right text-xs font-semibold text-muted-foreground">
           Cess (₹)
         </th>
       </tr>
@@ -244,9 +244,9 @@ function SectionHeader({ text }: { text: string }): React.ReactElement {
     <tr>
       <td
         colSpan={7}
-        className="border-b border-t border-[#dddbd7] bg-[#edece9] px-4 py-2.5"
+        className="border-b border-t border-border bg-muted px-4 py-2.5"
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#182844]">
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
           {text}
         </p>
       </td>
@@ -276,27 +276,27 @@ export default function ITCSummaryPage(): React.ReactElement {
   const tabClass = (key: TabKey) =>
     `px-6 py-3 text-sm font-semibold transition border-b-2 ${
       activeTab === key
-        ? 'border-[#278556] text-[#278556]'
-        : 'border-transparent text-[#6e7175] hover:text-[#191d26]'
+        ? 'border-primary text-primary'
+        : 'border-transparent text-muted-foreground hover:text-foreground'
     }`;
 
   return (
     <div>
       {/* Page header strip */}
-      <div className="mb-6 rounded-lg bg-[#182844] px-6 py-4">
-        <nav className="mb-1 flex items-center gap-1 text-xs text-[#a4aab4]">
-          <Link href="/" className="transition hover:text-white">
+      <div className="mb-6 rounded-lg bg-primary px-6 py-4">
+        <nav className="mb-1 flex items-center gap-1 text-xs text-primary-foreground/70">
+          <Link href="/" className="transition hover:text-primary-foreground">
             Home
           </Link>
           <span>›</span>
-          <span className="text-white">ITC Summary</span>
+          <span className="text-primary-foreground">ITC Summary</span>
         </nav>
-        <h1 className="text-lg font-bold text-white">Input Tax Credit (ITC) Summary</h1>
-        <p className="mt-0.5 text-sm text-[#a4aab4]">Period: July 2024 · FY 2024-25</p>
+        <h1 className="text-lg font-bold text-primary-foreground">Input Tax Credit (ITC) Summary</h1>
+        <p className="mt-0.5 text-sm text-primary-foreground/70">Period: July 2024 · FY 2024-25</p>
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 flex border-b border-[#dddbd7]">
+      <div className="mb-4 flex border-b border-border">
         <button onClick={() => setActiveTab('available')} className={tabClass('available')}>
           ITC Available
         </button>
@@ -310,7 +310,7 @@ export default function ITCSummaryPage(): React.ReactElement {
 
       {/* Tab panels */}
       {activeTab === 'available' ? (
-        <div className="rounded-lg border border-[#dddbd7] bg-white shadow-sm">
+        <div className="rounded-lg border border-border bg-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <ITCTableHead />
@@ -321,12 +321,12 @@ export default function ITCSummaryPage(): React.ReactElement {
                 ))}
                 <SectionHeader text="Part B — ITC Available: Credit notes should be net off" />
                 {/* Static Part B row */}
-                <tr className="border-b border-[#dddbd7] hover:bg-[#f5f4f2]">
-                  <td className="px-4 py-3 text-sm font-bold text-[#182844]">V</td>
-                  <td className="px-4 py-3 text-sm font-medium text-[#191d26]">
+                <tr className="border-b border-border hover:bg-muted">
+                  <td className="px-4 py-3 text-sm font-bold text-primary">V</td>
+                  <td className="px-4 py-3 text-sm font-medium text-foreground">
                     Credit Notes received from registered persons
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#6e7175]">4(B)(2)</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">4(B)(2)</td>
                   <AmtCell value={5500} />
                   <AmtCell value={2750} />
                   <AmtCell value={2750} />
@@ -337,8 +337,8 @@ export default function ITCSummaryPage(): React.ReactElement {
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-[#dddbd7] bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-[#6e7175]">
+        <div className="rounded-lg border border-border bg-surface p-8 text-center shadow-sm">
+          <p className="text-sm text-muted-foreground">
             No ITC Not Available entries for this period.
           </p>
         </div>
@@ -346,52 +346,52 @@ export default function ITCSummaryPage(): React.ReactElement {
 
       {/* ── Supplier Filing Status Table ─────────────────────────────────── */}
       <div className="mt-10">
-        <h2 className="mb-3 text-base font-semibold text-[#182844]">
+        <h2 className="mb-3 text-base font-semibold text-primary">
           Supplier Filing Status
         </h2>
 
-        <div className="rounded-lg border border-[#dddbd7] bg-white shadow-sm">
+        <div className="rounded-lg border border-border bg-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#dddbd7] bg-[#182844]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white">
+                <tr className="border-b border-border bg-primary">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-primary-foreground">
                     GSTIN of Supplier
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-primary-foreground">
                     Supplier Name
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-white">
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-primary-foreground">
                     GSTR-1 / IFF / GSTR-5
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-white">
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-primary-foreground">
                     GSTR-1 Filing Date
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-white">
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-primary-foreground">
                     GSTR-1 Period
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-white">
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-primary-foreground">
                     GSTR-3B
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#dddbd7]">
+              <tbody className="divide-y divide-border">
                 {visibleSuppliers.map((row, i) => (
                   <tr
                     key={row.gstin}
-                    className={i % 2 === 0 ? 'bg-white' : 'bg-[#f5f4f2]'}
+                    className={i % 2 === 0 ? 'bg-surface' : 'bg-muted'}
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-[#191d26]">
+                    <td className="px-4 py-3 font-mono text-xs text-foreground">
                       {row.gstin}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#191d26]">{row.name}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{row.name}</td>
                     <td className="px-4 py-3 text-center">
                       <YNBadge status={row.gstr1Filed} />
                     </td>
-                    <td className="px-4 py-3 text-center text-xs text-[#6e7175]">
+                    <td className="px-4 py-3 text-center text-xs text-muted-foreground">
                       {row.gstr1Date}
                     </td>
-                    <td className="px-4 py-3 text-center text-xs text-[#6e7175]">
+                    <td className="px-4 py-3 text-center text-xs text-muted-foreground">
                       {row.gstr1Period}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -404,22 +404,22 @@ export default function ITCSummaryPage(): React.ReactElement {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between border-t border-[#dddbd7] px-4 py-3">
-            <p className="text-xs text-[#6e7175]">
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">
               Showing {firstShown}–{lastShown} of {SUPPLIER_ROWS.length} suppliers
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded border border-[#dddbd7] px-3 py-1 text-xs text-[#6e7175] transition hover:bg-[#edece9] disabled:opacity-40"
+                className="rounded border border-border px-3 py-1 text-xs text-muted-foreground transition hover:bg-muted disabled:opacity-40"
               >
                 ← Prev
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded border border-[#dddbd7] px-3 py-1 text-xs text-[#6e7175] transition hover:bg-[#edece9] disabled:opacity-40"
+                className="rounded border border-border px-3 py-1 text-xs text-muted-foreground transition hover:bg-muted disabled:opacity-40"
               >
                 Next →
               </button>

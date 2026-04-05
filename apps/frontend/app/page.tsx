@@ -49,16 +49,24 @@ const RETURN_ROWS: ReturnRow[] = [
   },
 ];
 
+type ChatRole = 'bot' | 'user';
+
+interface ChatMessage {
+  id: number;
+  role: ChatRole;
+  text: string;
+}
+
 const CHATBOT_SUGGESTIONS = [
   'What is my ITC mismatch?',
   'Show filing status summary',
   'How to reconcile GSTR-2A?',
 ];
 
-const INITIAL_MESSAGES = [
+const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 0,
-    role: 'bot' as const,
+    role: 'bot',
     text: '👋 Hi! I\'m your GST AI Assistant. Ask me anything about your returns, ITC, or reconciliation!',
   },
 ];
@@ -68,7 +76,7 @@ const INITIAL_MESSAGES = [
  * Shows a GST portal-style returns calendar, profile card, and AI chatbot.
  */
 export default function DashboardPage(): React.ReactElement {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
 
   function sendMessage(text?: string): void {
@@ -78,10 +86,10 @@ export default function DashboardPage(): React.ReactElement {
       const nextId = prev.length;
       return [
         ...prev,
-        { id: nextId, role: 'user' as const, text: msg },
+        { id: nextId, role: 'user' as ChatRole, text: msg },
         {
           id: nextId + 1,
-          role: 'bot' as const,
+          role: 'bot' as ChatRole,
           text: `I'll look into "${msg}" for you. For detailed analysis, please use the Upload page to process your GST files.`,
         },
       ];
