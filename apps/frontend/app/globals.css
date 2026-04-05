@@ -19,29 +19,30 @@
 
 /* ────────────────────────────────────────────────
    Light Mode – CSS custom properties
+   Palette: Midnight Indigo #212842 + Vanilla Cream #F0E7D5
    ──────────────────────────────────────────────── */
 :root {
   /* Brand */
-  --primary:            #182844;   /* Dark Navy Blue – sidebar, table headers, primary buttons */
-  --primary-foreground: #f4f5f7;
-  --accent:             #917260;   /* Professional Brown/Amber – Download buttons, highlights */
-  --accent-foreground:  #ffffff;
+  --primary:            #212842;   /* Midnight Indigo – sidebar, table headers, primary buttons */
+  --primary-foreground: #F0E7D5;   /* Vanilla Cream text on Indigo */
+  --accent:             #3D4F82;   /* Lighter Indigo – highlights, links */
+  --accent-foreground:  #F0E7D5;
 
   /* Backgrounds & surfaces */
-  --background: #f4f5f7;   /* Off-white/Light Gray page background */
-  --surface:    #ffffff;   /* Pure White cards/modals */
-  --muted:      #eeede9;
-  --muted-foreground: #6e7175;
+  --background: #F0E7D5;   /* Vanilla Cream page background */
+  --surface:    #F8F4EC;   /* Slightly lighter Cream for cards/modals */
+  --muted:      #E8DFCC;   /* Muted Cream for hover states */
+  --muted-foreground: #5a5248;
 
   /* Text */
-  --foreground: #191d26;   /* High-contrast charcoal */
+  --foreground: #212842;   /* Midnight Indigo for high contrast */
 
   /* Borders & rings */
-  --border: #dddbd7;
-  --ring:   #4470b0;
+  --border: #d4cbbf;
+  --ring:   #212842;
 
   /* Info */
-  --info:   #4470b0;
+  --info:   #3D4F82;
 
   /* Status badge colours */
   --status-success-bg:   #dcfce7;  /* Faded green background – "Filed" */
@@ -52,41 +53,42 @@
   --status-danger-text:  #991b1b;  /* Dark red text */
 
   /* Sidebar */
-  --sidebar-bg:      #132040;
-  --sidebar-fg:      #a4aab4;
-  --sidebar-accent:  #233152;
-  --sidebar-border:  #25304e;
+  --sidebar-bg:      #212842;   /* Midnight Indigo */
+  --sidebar-fg:      #b8b0a4;
+  --sidebar-accent:  #2d3657;
+  --sidebar-border:  #2d3657;
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(220 20% 12% / 0.04);
-  --shadow-elevated: 0 8px 24px -4px hsl(220 20% 12% / 0.08);
+  --shadow-card:     0 1px 3px 0 hsl(228 32% 18% / 0.08);
+  --shadow-elevated: 0 8px 24px -4px hsl(228 32% 18% / 0.14);
 }
 
 /* ────────────────────────────────────────────────
    Dark Mode – CSS custom properties
+   Palette: Midnight Indigo #212842 + Vanilla Cream #F0E7D5
    ──────────────────────────────────────────────── */
 .dark {
-  /* Brand – keep navy readable on dark backgrounds */
-  --primary:            #1e3a5f;
-  --primary-foreground: #e2e8f0;
-  --accent:             #b69678;   /* Slightly lighter Brown/Amber for dark */
-  --accent-foreground:  #1a1a1a;
+  /* Brand – Vanilla Cream as primary on dark backgrounds */
+  --primary:            #F0E7D5;   /* Vanilla Cream – buttons, highlights */
+  --primary-foreground: #212842;   /* Midnight Indigo text on Cream buttons */
+  --accent:             #b8b0a4;   /* Muted Cream accent */
+  --accent-foreground:  #212842;
 
   /* Backgrounds & surfaces */
-  --background: #0f172a;   /* Deep Slate/Navy page background */
-  --surface:    #1e293b;   /* Slightly lighter Slate for cards/modals */
-  --muted:      #1e293b;
-  --muted-foreground: #94a3b8;
+  --background: #212842;   /* Midnight Indigo page background */
+  --surface:    #2d3657;   /* Slightly lighter Indigo for cards/modals */
+  --muted:      #2d3657;
+  --muted-foreground: #b8b0a4;
 
   /* Text */
-  --foreground: #f1f5f9;   /* Light gray/white for high contrast */
+  --foreground: #F0E7D5;   /* Vanilla Cream for high contrast */
 
   /* Borders & rings */
-  --border: #334155;
-  --ring:   #5580b3;
+  --border: #3d4f82;
+  --ring:   #F0E7D5;
 
   /* Info */
-  --info:   #5580b3;
+  --info:   #b8c4e8;
 
   /* Status badge colours – adjusted for dark backgrounds */
   --status-success-bg:   #14532d;  /* Dark green background */
@@ -97,14 +99,14 @@
   --status-danger-text:  #fca5a5;  /* Light red text */
 
   /* Sidebar */
-  --sidebar-bg:     #0c1829;
-  --sidebar-fg:     #94a3b8;
-  --sidebar-accent: #172340;
-  --sidebar-border: #1e3a5f;
+  --sidebar-bg:     #181e35;   /* Darker Indigo for sidebar */
+  --sidebar-fg:     #b8b0a4;
+  --sidebar-accent: #212842;
+  --sidebar-border: #2d3657;
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(220 40% 4% / 0.24);
-  --shadow-elevated: 0 8px 24px -4px hsl(220 40% 4% / 0.40);
+  --shadow-card:     0 1px 3px 0 hsl(228 36% 4% / 0.32);
+  --shadow-elevated: 0 8px 24px -4px hsl(228 36% 4% / 0.48);
 }
 
 /* ────────────────────────────────────────────────

@@ -6,6 +6,7 @@
  *
  * Phase 1: Basic layout with navigation.
  * Phase 7: Added Noto Sans + Fira Code font integration.
+ * Phase 10: Added anti-FOUC script for Light/Dark theme persistence via localStorage.
  */
 
 import type { Metadata } from 'next';
@@ -37,6 +38,16 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Noto+Sans:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
+        />
+        {/*
+          Anti-FOUC (Flash of Unstyled Content) script.
+          Runs synchronously before first paint to apply the stored theme class
+          so the page never flashes between light and dark modes on load.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+          }}
         />
       </head>
       <body className="min-h-screen antialiased">
