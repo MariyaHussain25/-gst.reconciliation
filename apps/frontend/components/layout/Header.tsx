@@ -21,6 +21,7 @@ const navigationLinks = [
   { href: '/upload', label: 'Upload' },
   { href: '/results', label: 'Results' },
   { href: '/reports', label: 'Reports' },
+  { href: '/rules', label: 'Rules' },
   { href: '/chat', label: 'Chat' },
 ] as const;
 

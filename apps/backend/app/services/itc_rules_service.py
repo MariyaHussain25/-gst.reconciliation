@@ -81,40 +81,41 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 def _get_query_embedding(query: str) -> list[float]:
-    """Generate embedding using the Direct Google GenAI SDK.
-    
-    Returns an empty list if API key is missing or the call fails.
+    """Generate embedding using OpenAI text-embedding-3-small via vector_service.
+
+    Returns an empty list if the API key is missing or the call fails.
+    Falls back to Google GenAI text-embedding-004 if OpenAI fails.
     """
+    from app.services.vector_service import get_openai_embedding
+
+    vec = get_openai_embedding(query)
+    if vec:
+        return vec
+
+    # Secondary fallback: Google GenAI text-embedding-004
     from app.config.settings import settings
-    
+
     api_key = settings.GOOGLE_API_KEY
     if not api_key:
-        logger.warning("GOOGLE_API_KEY is not set. Cannot generate embeddings.")
+        logger.warning("[itc_rules] GOOGLE_API_KEY is not set. Cannot generate fallback embeddings.")
         return []
 
     try:
         import google.generativeai as genai
-        
-        # Configure the direct SDK
+
         genai.configure(api_key=api_key)
-        
-        # Truncate string roughly to avoid exceeding limits
         query = query[:10000]
-        
-        # Call the direct API
         result = genai.embed_content(
             model="models/text-embedding-004",
             content=query,
-            task_type="retrieval_document"
+            task_type="retrieval_document",
         )
-        
-        return result['embedding']
-        
+        return result["embedding"]
     except ImportError:
-        logger.error("google-generativeai package is not installed.")
+        logger.error("[itc_rules] google-generativeai package is not installed.")
         return []
     except Exception as exc:
-        logger.error("[itc_rules] Google GenAI Embedding failed: %s", exc)
+        logger.error("[itc_rules] Google GenAI Embedding fallback failed: %s", exc)
         return []
 
 
