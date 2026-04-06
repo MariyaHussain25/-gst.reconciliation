@@ -17,11 +17,11 @@ import { useEffect, useState } from 'react';
 const navigationLinks = [
   { href: '/', label: 'Dashboard' },
   { href: '/file-returns', label: 'File Returns' },
-  { href: '/gstr2a', label: 'GSTR-2A' },
   { href: '/itc-summary', label: 'ITC Summary' },
   { href: '/upload', label: 'Upload' },
   { href: '/results', label: 'Results' },
   { href: '/reports', label: 'Reports' },
+  { href: '/chat', label: 'Chat' },
 ] as const;
 
 /**

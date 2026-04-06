@@ -1,6 +1,8 @@
 """
 Upload service - rewrite of upload.service.ts
 Handles file upload, validation, parsing and storage.
+Files are pushed to S3/R2 when credentials are configured; otherwise
+metadata is stored in MongoDB only.
 """
 
 import time
@@ -12,6 +14,7 @@ from app.models.gstr2a import Gstr2ARecord
 from app.models.gstr2b import Gstr2BRecord
 from app.models.user import User, Gstr2AFileRef, Gstr2BFileRef
 from app.schemas.api import UploadResponse
+from app.services import s3_service
 
 
 ALLOWED_EXTENSIONS = {".xlsx", ".xls"}
@@ -56,6 +59,11 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
 
     file_type = _detect_file_type(file_bytes)
     file_id = f"{file_type.lower()}_{user_id}_{int(time.time())}"
+
+    # Push raw file to S3 / R2 (no-op when credentials are absent)
+    import os
+    s3_key = f"gstr_uploads/{user_id}/{file_id}{os.path.splitext(file_name)[1].lower()}"
+    s3_service.upload_file(file_bytes, s3_key)
 
     if file_type == "GSTR_2A":
         result = parse_gstr2a(file_bytes, file_name)

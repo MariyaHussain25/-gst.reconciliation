@@ -55,10 +55,16 @@ const CHATBOT_SUGGESTIONS = [
   'How to reconcile GSTR-2A?',
 ];
 
-const INITIAL_MESSAGES = [
+interface ChatMessage {
+  id: number;
+  role: 'bot' | 'user';
+  text: string;
+}
+
+const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 0,
-    role: 'bot' as const,
+    role: 'bot',
     text: '👋 Hi! I\'m your GST AI Assistant. Ask me anything about your returns, ITC, or reconciliation!',
   },
 ];
