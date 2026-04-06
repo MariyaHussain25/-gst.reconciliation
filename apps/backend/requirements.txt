@@ -20,3 +20,6 @@ langchain-community==0.3.27
 langchain-google-genai==2.0.10
 weasyprint>=62.0
 google-generativeai>=0.4.0
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+boto3>=1.34.0

@@ -1,20 +1,19 @@
 """
 Authentication dependencies for FastAPI.
 
-SECURITY WARNING: This module implements a STUB bearer-token authentication
-that is intentionally simplified for development. The current implementation
-treats the bearer token directly as the user_id (or decodes it from base64).
+Uses JWT tokens signed with SECRET_KEY for secure user identification.
+The bearer token is decoded using python-jose; the subject claim (sub)
+is used as the user_id.
 
-BEFORE PRODUCTION: Replace `get_current_user_id` with real JWT validation
-(e.g. using `python-jose` or `authlib`) that verifies signature, expiry,
-issuer, and audience claims.
+BEFORE PRODUCTION: Ensure SECRET_KEY is a long random string stored securely
+in environment variables and never committed to source control.
 """
 
 from fastapi import Header, HTTPException
 from typing import Optional
-import base64
 
 from app.models.reconciliation import Reconciliation
+from app.services.auth_service import decode_access_token
 
 
 async def get_current_user_id(
@@ -25,24 +24,20 @@ async def get_current_user_id(
     Extract and return the user_id from an incoming request.
 
     Priority:
-    1. `Authorization: Bearer <token>` — token is treated as user_id directly,
-       or decoded from base64 if it is valid base64.
+    1. `Authorization: Bearer <token>` — JWT token is decoded and the ``sub``
+       claim is used as the user_id.
     2. `X-User-Id: <user_id>` — development fallback header.
 
     Raises:
-        HTTPException(401): If neither header is present.
+        HTTPException(401): If neither header is present or the token is invalid.
     """
     if authorization:
         parts = authorization.split(" ", 1)
         if len(parts) == 2 and parts[0].lower() == "bearer":
             token = parts[1].strip()
-            # Attempt base64 decode; fall back to raw token value.
-            try:
-                user_id = base64.b64decode(token + "==").decode("utf-8").strip()
-                if not user_id:
-                    user_id = token
-            except Exception:
-                user_id = token
+            user_id = decode_access_token(token)
+            if not user_id:
+                raise HTTPException(status_code=401, detail="Invalid or expired token")
             return user_id
 
     if x_user_id:

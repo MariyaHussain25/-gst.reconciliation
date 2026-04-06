@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str | None = Field(default=None)
     AWS_SECRET_ACCESS_KEY: str | None = Field(default=None)
     S3_BUCKET_NAME: str | None = Field(default=None)
+    S3_ENDPOINT_URL: str | None = Field(default=None, description="S3-compatible endpoint URL (e.g. Cloudflare R2)")
 
     # Server
     PORT: int = Field(default=3001, description="HTTP port the server listens on")
@@ -29,6 +30,7 @@ class Settings(BaseSettings):
         default=["http://localhost:3000"],
         description="CORS allowed origins"
     )
+    SECRET_KEY: str = Field(default="change-me-in-production", description="JWT signing secret key")
 
     # Phase 7 — Gemini model for AI explanations
     # "Gemini 1.5 Pro" is the valid Google model ID closest to the requested "Gemini Pro".
