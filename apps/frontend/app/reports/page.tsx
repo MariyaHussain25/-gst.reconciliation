@@ -94,7 +94,7 @@ export default function ReportsPage(): React.ReactElement {
   const router = useRouter();
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
       router.push('/login');
     }
   }, [router]);

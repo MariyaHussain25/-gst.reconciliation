@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatCurrency } from '../../lib/utils';
+import { parseJwtUserId } from '../../lib/auth';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -46,23 +47,7 @@ interface ReconciliationLookupResponse {
 
 // ─── Helper: decode user_id from JWT ─────────────────────────────────────────
 
-function parseJwtUserId(token: string): string | null {
-  try {
-    const base64Url = token.split('.')[1];
-    if (!base64Url) return null;
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
-        .join(''),
-    );
-    const payload = JSON.parse(json) as { sub?: string };
-    return payload.sub ?? null;
-  } catch {
-    return null;
-  }
-}
+// Imported from ../../lib/auth
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -111,6 +96,7 @@ export default function ITCSummaryPage(): React.ReactElement {
   const [reconciliation, setReconciliation] = useState<ReconciliationLookupItem | null>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
