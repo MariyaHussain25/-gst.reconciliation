@@ -6,7 +6,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatCurrency, formatPeriod } from '../../lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -90,6 +91,13 @@ function StatusBadge({ status }: { status: string }): React.ReactElement {
 // ---------------------------------------------------------------------------
 
 export default function ReportsPage(): React.ReactElement {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      router.push('/login');
+    }
+  }, [router]);
   const [mode, setMode] = useState<DurationMode>('fy');
   const [userId, setUserId] = useState('');
   const [fy, setFy] = useState('2024-25');

@@ -11,7 +11,7 @@
 'use client';
 
 import React, { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { formatCurrency } from '../../lib/utils';
 
@@ -265,6 +265,13 @@ function ResultsContent(): React.ReactElement {
 // ---------------------------------------------------------------------------
 
 export default function ResultsPage(): React.ReactElement {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      router.push('/login');
+    }
+  }, [router]);
   return (
     <div className="py-8">
       <h1 className="mb-2 text-3xl font-bold text-foreground">Reconciliation Results</h1>

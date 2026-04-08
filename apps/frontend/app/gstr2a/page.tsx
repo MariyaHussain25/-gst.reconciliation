@@ -1,12 +1,15 @@
 /**
  * @file apps/frontend/app/gstr2a/page.tsx
- * @description GSTR-2A Detail View — navigates inward supply sections.
- * Displays PART-A, PART-B, and PART-C section groups as dark navy clickable cards.
- *
- * Phase 8: GST portal-style GSTR-2A section navigator.
+ * @description GSTR-2A Detail View — fetches actual reconciliation data for
+ * the logged-in user and navigates inward supply sections.
  */
 
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { parseJwtUserId } from '../../lib/auth';
 
 interface Section {
   id: string;
@@ -81,11 +84,91 @@ const SECTION_GROUPS: SectionGroup[] = [
   },
 ];
 
+interface ReconciliationSummary {
+  total_invoices: number;
+  matched_count: number;
+  missing_in_2a_count: number;
+  missing_in_2b_count: number;
+  total_eligible_itc: number;
+}
+
+interface ReconciliationLookupItem {
+  reconciliation_id: string;
+  period: string;
+  financial_year: string;
+  status: string;
+  created_at: string;
+  summary: ReconciliationSummary;
+}
+
+interface ReconciliationLookupResponse {
+  success: boolean;
+  user_id: string;
+  reconciliations: ReconciliationLookupItem[];
+}
+
+// parseJwtUserId is imported from ../../lib/auth
+
 /**
  * GSTR-2A detail view.
- * Shows FY / period metadata, a read-only note banner, and section navigation cards.
+ * Shows actual FY / period metadata from the latest reconciliation,
+ * a read-only note banner, and section navigation cards.
  */
 export default function GSTR2APage(): React.ReactElement {
+  const router = useRouter();
+  const [reconciliation, setReconciliation] = useState<ReconciliationLookupItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    const userId = parseJwtUserId(token);
+    if (!userId) {
+      router.push('/login');
+      return;
+    }
+
+    void fetchReconciliationData(token, userId);
+  }, [router]);
+
+  async function fetchReconciliationData(token: string, userId: string): Promise<void> {
+    try {
+      const res = await fetch(
+        `/api/generate-pdf/by-user/${encodeURIComponent(userId)}/lookup`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (!res.ok) {
+        const body = (await res.json()) as { detail?: string; error?: string };
+        throw new Error(body.detail ?? body.error ?? `Request failed (${res.status})`);
+      }
+
+      const data = (await res.json()) as ReconciliationLookupResponse;
+
+      if (data.reconciliations.length > 0) {
+        const sorted = [...data.reconciliations].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        setReconciliation(sorted[0] ?? null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load reconciliation data.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const period = reconciliation?.period ?? '—';
+  const financialYear = reconciliation?.financial_year ?? '—';
+
   return (
     <div>
       {/* Page header strip */}
@@ -107,16 +190,70 @@ export default function GSTR2APage(): React.ReactElement {
         </nav>
         <h1 className="text-lg font-bold text-primary-foreground">GSTR-2A — Auto Drafted Details</h1>
         <div className="mt-1 flex flex-wrap gap-6 text-sm text-primary-foreground/70">
-          <span>
-            Financial Year:{' '}
-            <strong className="text-primary-foreground">2024-25</strong>
-          </span>
-          <span>
-            Return Period:{' '}
-            <strong className="text-primary-foreground">July 2024</strong>
-          </span>
+          {loading ? (
+            <span>Loading period data…</span>
+          ) : (
+            <>
+              <span>
+                Financial Year:{' '}
+                <strong className="text-primary-foreground">{financialYear}</strong>
+              </span>
+              <span>
+                Return Period:{' '}
+                <strong className="text-primary-foreground">{period}</strong>
+              </span>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Error banner */}
+      {error !== null && (
+        <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Reconciliation summary strip (when data available) */}
+      {reconciliation !== null && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border border-border bg-surface p-4 text-center">
+            <p className="text-xs text-muted-foreground">Total Invoices</p>
+            <p className="mt-1 text-xl font-bold text-foreground">
+              {reconciliation.summary.total_invoices}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-4 text-center">
+            <p className="text-xs text-muted-foreground">Matched</p>
+            <p className="mt-1 text-xl font-bold text-foreground">
+              {reconciliation.summary.matched_count}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-4 text-center">
+            <p className="text-xs text-muted-foreground">Missing in 2A</p>
+            <p className="mt-1 text-xl font-bold text-foreground">
+              {reconciliation.summary.missing_in_2a_count}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-4 text-center">
+            <p className="text-xs text-muted-foreground">Missing in 2B</p>
+            <p className="mt-1 text-xl font-bold text-foreground">
+              {reconciliation.summary.missing_in_2b_count}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* No data state */}
+      {!loading && reconciliation === null && error === null && (
+        <div className="mb-6 rounded-lg border border-border bg-surface p-6 text-center text-sm text-muted-foreground">
+          No reconciliation data found. Please{' '}
+          <Link href="/upload" className="font-medium text-primary hover:underline">
+            upload your GST files
+          </Link>{' '}
+          to run reconciliation first.
+        </div>
+      )}
 
       {/* Read-only note banner */}
       <div className="mb-6 flex items-start gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground">

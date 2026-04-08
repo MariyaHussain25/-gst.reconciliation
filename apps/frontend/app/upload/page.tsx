@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -19,6 +19,12 @@ import { useRouter } from 'next/navigation';
  */
 export default function UploadPage(): React.ReactElement {
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      router.push('/login');
+    }
+  }, [router]);
 
   const [userId, setUserId] = useState('');
   const [fileBooks, setFileBooks] = useState<File | null>(null);
