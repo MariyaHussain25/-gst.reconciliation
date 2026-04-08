@@ -14,6 +14,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { FilingStatusBadge, type FilingStatus } from '../components/ui/StatusBadge';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 const COMPANY = 'ABC Industries Private Limited';
 const GSTIN = '29AABCI1234G1Z5';
 const FINANCIAL_YEAR = '2024-25';
@@ -76,23 +78,50 @@ const INITIAL_MESSAGES: ChatMessage[] = [
 export default function DashboardPage(): React.ReactElement {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
-  function sendMessage(text?: string): void {
+  async function sendMessage(text?: string): Promise<void> {
     const msg = text ?? input;
-    if (!msg.trim()) return;
-    setMessages((prev) => {
-      const nextId = prev.length;
-      return [
-        ...prev,
-        { id: nextId, role: 'user' as const, text: msg },
-        {
-          id: nextId + 1,
-          role: 'bot' as const,
-          text: `I'll look into "${msg}" for you. For detailed analysis, please use the Upload page to process your GST files.`,
-        },
-      ];
-    });
+    if (!msg.trim() || chatLoading) return;
+
     setInput('');
+    setMessages((prev) => [
+      ...prev,
+      { id: prev.length, role: 'user' as const, text: msg },
+    ]);
+    setChatLoading(true);
+
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ query: msg }),
+      });
+
+      if (res.ok) {
+        const data: { reply: string } = await res.json();
+        setMessages((prev) => [
+          ...prev,
+          { id: prev.length, role: 'bot' as const, text: data.reply },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { id: prev.length, role: 'bot' as const, text: 'Sorry, I encountered an error. Please try again.' },
+        ]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { id: prev.length, role: 'bot' as const, text: 'Unable to connect to the server. Please try again.' },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
   }
 
   return (
@@ -249,7 +278,7 @@ export default function DashboardPage(): React.ReactElement {
                 <button
                   key={s}
                   type="button"
-                  onClick={() => sendMessage(s)}
+                  onClick={() => void sendMessage(s)}
                   className="rounded-full border border-border bg-transparent px-2 py-0.5 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 >
                   {s}
@@ -262,7 +291,7 @@ export default function DashboardPage(): React.ReactElement {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  sendMessage();
+                  void sendMessage();
                 }}
                 className="flex gap-2"
               >
@@ -276,9 +305,10 @@ export default function DashboardPage(): React.ReactElement {
                 />
                 <button
                   type="submit"
-                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+                  disabled={chatLoading || !input.trim()}
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
                 >
-                  Send
+                  {chatLoading ? '…' : 'Send'}
                 </button>
               </form>
             </div>
