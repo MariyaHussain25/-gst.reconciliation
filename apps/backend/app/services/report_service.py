@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 async def generate_reconciliation_excel(reconciliation: Reconciliation) -> io.BytesIO:
     data = [{
         "Match Status": r.match_status,
-        "Invoice Number": r.gstr2b_invoice_number or r.gstr2a_invoice_number,
+        "Invoice Number": r.gstr2b_invoice_number or r.gstr2a_vch_no,
         "GSTR-2A Vendor": r.gstr2a_vendor_name,
         "GSTR-2B Vendor": r.gstr2b_vendor_name,
         "Total Diff": r.total_amount_diff,

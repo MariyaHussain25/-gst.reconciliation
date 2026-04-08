@@ -59,6 +59,14 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
                   mismatch_reason: str | None = None) -> ReconciliationResult:
     """Construct a ReconciliationResult from a matched pair."""
     diffs = _compute_amount_diff(inv_2a, inv_2b)
+    # ITC claimable = total tax from 2B when ITC is eligible; blocked otherwise
+    _inv_for_itc = inv_2b
+    _total_tax = round(
+        (_inv_for_itc.igst or 0.0) + (_inv_for_itc.cgst or 0.0) + (_inv_for_itc.sgst or 0.0), 2
+    )
+    _itc_category = inv_2b.itc_category or "ELIGIBLE"
+    _itc_claimable = _total_tax if _itc_category == "ELIGIBLE" else 0.0
+    _itc_blocked = _total_tax if _itc_category == "BLOCKED" else 0.0
     return ReconciliationResult(
         gstr2a_record_id=str(inv_2a.id) if inv_2a.id else None,
         gstr2a_vendor_name=inv_2a.vendor_name,
@@ -82,7 +90,9 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
         match_confidence=confidence,
         mismatch_fields=mismatch_fields or [],
         mismatch_reason=mismatch_reason,
-        itc_category=inv_2b.itc_category or "ELIGIBLE",
+        itc_category=_itc_category,
+        itc_claimable_amount=_itc_claimable,
+        itc_blocked_amount=_itc_blocked,
         **diffs,
     )
 
@@ -419,6 +429,7 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         "fuzzy_matched": 0,
         "needs_review": 0,
         "unmatched": 0,
+        "missing_in_2a": 0,
         "missing_in_2b": 0,
         "missing_in_books": 0,
         "value_mismatch": 0,
@@ -436,6 +447,7 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
             counters["missing_in_2b"] += 1
         elif status == "MISSING_IN_BOOKS":
             counters["missing_in_books"] += 1
+            counters["missing_in_2a"] += 1
         elif status == "VALUE_MISMATCH":
             counters["value_mismatch"] += 1
         elif status == "GSTIN_MISMATCH":
@@ -449,6 +461,7 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         matched_count=counters["matched"],
         fuzzy_match_count=counters["fuzzy_matched"],
         needs_review_count=counters["needs_review"],
+        missing_in_2a_count=counters["missing_in_2a"],
         missing_in_2b_count=counters["missing_in_2b"],
         value_mismatch_count=counters["value_mismatch"],
         gstin_mismatch_count=counters["gstin_mismatch"],

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config.settings import settings
 from app.db.connection import connect_db, disconnect_db
-from app.routes import upload, process, pdf, rules, explain, auth, chat
+from app.routes import upload, process, pdf, rules, explain, auth, chat, reports
 
 
 @asynccontextmanager
@@ -51,6 +51,7 @@ app.include_router(rules.router, prefix="/api", tags=["Rules"])
 app.include_router(explain.router, prefix="/api", tags=["Explain"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
+app.include_router(reports.router, prefix="/api", tags=["Reports"])
 
 
 # Health check

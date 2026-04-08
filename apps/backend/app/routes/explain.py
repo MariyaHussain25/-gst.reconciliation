@@ -1,10 +1,12 @@
 """AI Explanation API routes — Phase 7"""
 
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
+from app.auth.dependencies import get_current_user_id
 from app.models.reconciliation import Reconciliation
 from app.schemas.explain import ExplainResponse, ExplainResultItem, ExplainResultsResponse
 from app.services import ai_explanation_service
@@ -14,7 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/explain/{reconciliation_id}", response_model=ExplainResponse)
-async def generate_explanations(reconciliation_id: str):
+async def generate_explanations(
+    reconciliation_id: str,
+    current_user_id: Annotated[str, Depends(get_current_user_id)],
+):
     """Trigger AI explanation generation for all results in a reconciliation."""
     try:
         reconciliation = await Reconciliation.find_one(
@@ -54,7 +59,10 @@ async def generate_explanations(reconciliation_id: str):
 
 
 @router.get("/explain/{reconciliation_id}", response_model=ExplainResultsResponse)
-async def get_explanations(reconciliation_id: str):
+async def get_explanations(
+    reconciliation_id: str,
+    current_user_id: Annotated[str, Depends(get_current_user_id)],
+):
     """Fetch a reconciliation with its AI explanations."""
     reconciliation = await Reconciliation.find_one(
         Reconciliation.reconciliation_id == reconciliation_id
