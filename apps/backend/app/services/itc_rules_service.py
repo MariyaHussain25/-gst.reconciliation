@@ -120,27 +120,72 @@ def _get_query_embedding(query: str) -> list[float]:
 
 
 async def _embedding_search(query: str, top_k: int) -> list[GstRule]:
-    """Return rules sorted by cosine similarity to the query embedding.
+    """Return rules most similar to the query using MongoDB Atlas Vector Search.
 
-    Returns an empty list if embedding generation fails or no rules have
-    stored embeddings.
+    Uses a ``$vectorSearch`` aggregation pipeline on the ``gst_rules``
+    collection so the similarity ranking is performed server-side by the
+    Atlas index rather than fetching every document and computing cosine
+    similarity in Python.
+
+    Requirements (configured manually in the Atlas UI):
+      - Collection : gst_rules
+      - Index name : vector_index
+      - Field      : embedding
+      - Dimensions : 1536
+      - Similarity : cosine
+
+    Returns an empty list if embedding generation fails or the aggregation
+    returns no results.
     """
     query_vec = _get_query_embedding(query)
     if not query_vec:
         return []
 
-    all_rules = await GstRule.find(GstRule.is_active == True).to_list()  # noqa: E712
-    scored: list[tuple[float, GstRule]] = []
-    for rule in all_rules:
-        if rule.embedding:
-            score = _cosine_similarity(query_vec, rule.embedding)
-            scored.append((score, rule))
+    try:
+        collection = GstRule.get_motor_collection()
+        pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "vector_index",
+                    "path": "embedding",
+                    "queryVector": query_vec,
+                    "numCandidates": min(top_k * 10, 200),
+                    "limit": top_k,
+                    "filter": {"is_active": True},
+                }
+            },
+            {
+                "$project": {
+                    "_id": 1,
+                    "rule_id": 1,
+                    "category": 1,
+                    "title": 1,
+                    "description": 1,
+                    "keywords": 1,
+                    "gst_section": 1,
+                    "gstr3b_table": 1,
+                    "embedding": 1,
+                    "is_active": 1,
+                    "created_at": 1,
+                    "score": {"$meta": "vectorSearchScore"},
+                }
+            },
+        ]
 
-    if not scored:
+        raw_docs = await collection.aggregate(pipeline).to_list(length=top_k)
+        rules: list[GstRule] = []
+        for doc in raw_docs:
+            doc.pop("score", None)
+            rules.append(GstRule.model_validate(doc))
+        return rules
+    except Exception as exc:
+        logger.error(
+            "[itc_rules] $vectorSearch aggregation failed: %s. "
+            "Ensure the 'vector_index' Search Index is created in the MongoDB Atlas UI "
+            "(collection: gst_rules, field: embedding, dimensions: 1536, similarity: cosine).",
+            exc,
+        )
         return []
-
-    scored.sort(key=lambda t: t[0], reverse=True)
-    return [rule for _, rule in scored[:top_k]]
 
 
 async def _keyword_search(query: str, top_k: int) -> list[GstRule]:
