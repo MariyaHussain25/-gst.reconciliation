@@ -92,7 +92,7 @@ export default function DashboardPage(): React.ReactElement {
     setChatLoading(true);
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: {

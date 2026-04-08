@@ -17,11 +17,13 @@ export default function RegisterPage(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleRegister(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
@@ -32,7 +34,8 @@ export default function RegisterPage(): React.ReactElement {
       });
 
       if (res.ok) {
-        router.push('/login');
+        setSuccess('Account created successfully! Redirecting to sign in…');
+        setTimeout(() => router.push('/login'), 1500);
       } else {
         const body = await res.json().catch(() => ({}));
         setError((body as { detail?: string }).detail ?? 'Registration failed. Please try again.');
@@ -97,6 +100,12 @@ export default function RegisterPage(): React.ReactElement {
               placeholder="••••••••"
             />
           </div>
+
+          {success && (
+            <p role="status" className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+              {success}
+            </p>
+          )}
 
           {error && (
             <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
