@@ -133,7 +133,7 @@ export default function ReportsPage(): React.ReactElement {
       const res = await fetch(
         `/api/generate-pdf/by-user/${encodeURIComponent(userId.trim())}/lookup?${params.toString()}`,
         {
-          headers: { Authorization: `Bearer ${userId.trim()}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
         },
       );
       if (!res.ok) {
@@ -157,7 +157,7 @@ export default function ReportsPage(): React.ReactElement {
       const res = await fetch(
         `/api/generate-pdf/${encodeURIComponent(item.reconciliation_id)}`,
         {
-          headers: { Authorization: `Bearer ${userId.trim()}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
         },
       );
       if (!res.ok) {
@@ -468,4 +468,3 @@ export default function ReportsPage(): React.ReactElement {
     </div>
   );
 }
-

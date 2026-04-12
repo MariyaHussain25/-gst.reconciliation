@@ -106,6 +106,7 @@ function ResultsContent(): React.ReactElement {
     try {
       const res = await fetch(`/api/process/${encodeURIComponent(uid.trim())}`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
       });
       if (!res.ok) {
         const body = (await res.json()) as { error?: string; detail?: string };

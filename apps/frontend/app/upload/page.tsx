@@ -64,7 +64,11 @@ export default function UploadPage(): React.ReactElement {
       form1.append('file', fileBooks);
       form1.append('user_id', userId.trim());
 
-      const res1 = await fetch('/api/upload-docs', { method: 'POST', body: form1 });
+      const res1 = await fetch('/api/upload-docs', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+        body: form1,
+      });
       if (!res1.ok) {
         const body = (await res1.json()) as { error?: string; detail?: string };
         throw new Error(body.error ?? body.detail ?? `Upload failed (HTTP ${res1.status})`);
@@ -78,7 +82,11 @@ export default function UploadPage(): React.ReactElement {
       form2.append('file', fileGstr2b);
       form2.append('user_id', userId.trim());
 
-      const res2 = await fetch('/api/upload-docs', { method: 'POST', body: form2 });
+      const res2 = await fetch('/api/upload-docs', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+        body: form2,
+      });
       if (!res2.ok) {
         const body = (await res2.json()) as { error?: string; detail?: string };
         throw new Error(body.error ?? body.detail ?? `Upload failed (HTTP ${res2.status})`);
@@ -90,6 +98,7 @@ export default function UploadPage(): React.ReactElement {
       appendLog('Running AI reconciliation pipeline…');
       const res3 = await fetch(`/api/process/${encodeURIComponent(userId.trim())}`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
       });
       if (!res3.ok) {
         const body = (await res3.json()) as { error?: string; detail?: string };
