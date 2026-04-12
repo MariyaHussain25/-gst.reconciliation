@@ -82,7 +82,7 @@ export default function DashboardPage(): React.ReactElement {
         }}
       >
         {/* Card 1 — Total Invoices (navy accent) */}
-        <div style={{ background: '#0a1628', borderRadius: 10, padding: '16px 18px' }}>
+        <div style={{ background: 'var(--navy)', borderRadius: 10, padding: '16px 18px' }}>
           <p
             style={{
               color: '#94a3b8',

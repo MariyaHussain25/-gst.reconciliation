@@ -173,7 +173,7 @@ export function ChatWidget(): React.ReactElement {
                 color: 'var(--text-primary)',
                 fontFamily: "'DM Sans', sans-serif",
               }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--blue-accent)'; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
             />
             <button
