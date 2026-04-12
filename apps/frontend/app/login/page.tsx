@@ -118,13 +118,48 @@ export default function LoginPage(): React.ReactElement {
   }
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-8 shadow-md">
-        <h1 className="mb-6 text-center text-2xl font-bold text-foreground">Sign In</h1>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#0a1628',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+      }}
+    >
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 12,
+          padding: '36px 40px',
+          width: '100%',
+          maxWidth: 400,
+          border: '0.5px solid #e2e8f0',
+        }}
+      >
+        {/* Card header */}
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontSize: 18, fontWeight: 700, color: '#0a1628', marginBottom: 4 }}>
+            GST Reconciliation
+          </p>
+          <p
+            style={{
+              fontSize: 11,
+              color: '#3b82f6',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            ITC Automation System
+          </p>
+        </div>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground">
+            <label
+              htmlFor="email"
+              style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 5 }}
+            >
               Email
             </label>
             <input
@@ -142,13 +177,28 @@ export default function LoginPage(): React.ReactElement {
                 e.currentTarget.setCustomValidity(getEmailValidationError(e.currentTarget.value) ?? '');
               }}
               onInput={(e) => e.currentTarget.setCustomValidity('')}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              style={{
+                width: '100%',
+                border: '0.5px solid #e2e8f0',
+                borderRadius: 6,
+                padding: '9px 12px',
+                fontSize: 13,
+                color: '#0a1628',
+                outline: 'none',
+                fontFamily: "'DM Sans', sans-serif",
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#1e40af'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground">
+            <label
+              htmlFor="password"
+              style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 5 }}
+            >
               Password
             </label>
             <input
@@ -167,13 +217,35 @@ export default function LoginPage(): React.ReactElement {
               onInput={(e) => {
                 e.currentTarget.setCustomValidity(getPasswordValidationError(e.currentTarget.value) ?? '');
               }}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              style={{
+                width: '100%',
+                border: '0.5px solid #e2e8f0',
+                borderRadius: 6,
+                padding: '9px 12px',
+                fontSize: 13,
+                color: '#0a1628',
+                outline: 'none',
+                fontFamily: "'DM Sans', sans-serif",
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#1e40af'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            <p
+              role="alert"
+              style={{
+                background: '#fef2f2',
+                color: '#dc2626',
+                fontSize: 13,
+                padding: '8px 12px',
+                borderRadius: 6,
+                border: '0.5px solid #fecaca',
+              }}
+            >
               {error}
             </p>
           )}
@@ -181,20 +253,30 @@ export default function LoginPage(): React.ReactElement {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            className="btn-primary"
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              marginTop: 4,
+              padding: '10px',
+              fontSize: 13,
+              fontWeight: 500,
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer',
+            }}
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        <p style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
           Don&apos;t have an account?{' '}
-          <a href="/register" className="font-medium text-primary hover:underline">
+          <a href="/register" style={{ color: '#1e40af', fontWeight: 500 }}>
             Register
           </a>
         </p>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
-          <a href="/recovery" className="font-medium text-primary hover:underline">
+        <p style={{ marginTop: 8, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
+          <a href="/recovery" style={{ color: '#1e40af', fontWeight: 500 }}>
             Forgot Password?
           </a>
         </p>

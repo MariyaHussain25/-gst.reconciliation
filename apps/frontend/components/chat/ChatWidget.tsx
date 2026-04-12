@@ -43,38 +43,103 @@ export function ChatWidget(): React.ReactElement {
   }
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50">
+    <>
+      {/* Chat panel */}
       <div
-        className={`pointer-events-auto absolute right-6 w-[300px] overflow-hidden rounded-[12px] border border-[color:var(--border)] bg-[var(--bg-card)] transition-[opacity,transform] duration-200 ${
-          isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'
-        }`}
-        style={{ bottom: 76, borderWidth: '0.5px' }}
+        style={{
+          position: 'fixed',
+          bottom: 82,
+          right: 24,
+          width: 300,
+          background: 'var(--bg-card)',
+          border: '0.5px solid var(--border)',
+          borderRadius: 12,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          zIndex: 50,
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'auto' : 'none',
+          transform: isOpen ? 'translateY(0)' : 'translateY(8px)',
+          transition: 'opacity 0.2s, transform 0.2s',
+        }}
       >
-        <div className="flex items-start justify-between border-b border-[color:var(--border)] px-[14px] py-[10px]" style={{ borderBottomWidth: '0.5px' }}>
+        {/* Header */}
+        <div
+          style={{
+            padding: '10px 14px',
+            borderBottom: '0.5px solid var(--border)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+          }}
+        >
           <div>
-            <p className="text-[12px] font-semibold">GST AI Assistant</p>
-            <p className="text-[10px] text-[var(--text-muted)]">Powered by Gemini</p>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+              GST AI Assistant
+            </p>
+            <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+              Powered by Gemini
+            </p>
           </div>
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="text-[var(--text-muted)]"
             aria-label="Close chat"
+            style={{
+              color: 'var(--text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 14,
+              lineHeight: 1,
+              padding: 2,
+            }}
           >
             ✕
           </button>
         </div>
 
-        <div className="flex max-h-[220px] min-h-[160px] flex-col gap-2 overflow-y-auto px-3 py-[10px]">
+        {/* Messages */}
+        <div
+          style={{
+            overflowY: 'auto',
+            maxHeight: 220,
+            minHeight: 160,
+            padding: '10px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
           {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              key={message.id}
+              style={{
+                display: 'flex',
+                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              }}
+            >
               <div
-                className={`max-w-[90%] px-[11px] py-2 text-[12px] ${
-                  message.role === 'user'
-                    ? 'rounded-[10px_10px_0_10px] bg-[#1e40af] text-white'
-                    : 'rounded-[10px_10px_10px_0] border border-[color:var(--border)] bg-[var(--bg-page)]'
-                }`}
-                style={message.role === 'bot' ? { borderWidth: '0.5px' } : undefined}
+                style={{
+                  maxWidth: '90%',
+                  padding: '8px 11px',
+                  fontSize: 12,
+                  ...(message.role === 'user'
+                    ? {
+                        background: '#1e40af',
+                        color: '#fff',
+                        borderRadius: '10px 10px 0 10px',
+                        alignSelf: 'flex-end',
+                      }
+                    : {
+                        background: 'var(--bg-page)',
+                        border: '0.5px solid var(--border)',
+                        borderRadius: '10px 10px 10px 0',
+                        color: 'var(--text-primary)',
+                        alignSelf: 'flex-start',
+                      }),
+                }}
               >
                 {message.text}
               </div>
@@ -82,23 +147,58 @@ export function ChatWidget(): React.ReactElement {
           ))}
         </div>
 
-        <div className="border-t border-[color:var(--border)] px-[10px] py-2" style={{ borderTopWidth: '0.5px' }}>
-          <form className="flex gap-2" onSubmit={handleSend}>
+        {/* Input row */}
+        <div
+          style={{
+            padding: '8px 10px',
+            borderTop: '0.5px solid var(--border)',
+          }}
+        >
+          <form style={{ display: 'flex', gap: 8 }} onSubmit={handleSend}>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="min-w-0 flex-1 rounded-md border border-[color:var(--border)] px-[10px] py-1.5 text-[12px] outline-none focus:border-[#3b82f6]"
-              style={{ borderWidth: '0.5px' }}
               placeholder="Type your message"
+              aria-label="Type your message"
+              style={{
+                flex: 1,
+                minWidth: 0,
+                border: '0.5px solid var(--border)',
+                borderRadius: 6,
+                fontSize: 12,
+                padding: '6px 10px',
+                outline: 'none',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
             />
-            <button type="submit" className="rounded-md bg-[#1e40af] px-3 py-1.5 text-[12px] text-white">
+            <button
+              type="submit"
+              style={{
+                background: '#0a1628',
+                color: '#fff',
+                borderRadius: 6,
+                padding: '6px 12px',
+                fontSize: 12,
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: "'DM Sans', sans-serif",
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#1e293b'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#0a1628'; }}
+            >
               Send
             </button>
           </form>
         </div>
       </div>
 
+      {/* FAB button */}
       <button
         type="button"
         onClick={() => {
@@ -108,19 +208,50 @@ export function ChatWidget(): React.ReactElement {
           }
           handleOpen();
         }}
-        className="pointer-events-auto fixed rounded-full border border-[#e2e8f0] bg-white text-[#1e40af] transition hover:bg-[#f8fafc]"
-        style={{ right: 24, bottom: 24, width: 44, height: 44, borderWidth: '0.5px' }}
         aria-label="Toggle chat widget"
+        style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          width: 48,
+          height: 48,
+          borderRadius: '50%',
+          background: '#ffffff',
+          border: '0.5px solid #e2e8f0',
+          boxShadow: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#f8fafc'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#ffffff'; }}
       >
         <MessageSquare size={20} color="#1e40af" />
-        {!isOpen && unread ? (
+        {!isOpen && unread && (
           <span
-            className="absolute rounded-full bg-[#dc2626]"
-            style={{ top: -3, right: -3, width: 14, height: 14 }}
             aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: -3,
+              right: -3,
+              width: 14,
+              height: 14,
+              background: '#dc2626',
+              borderRadius: '50%',
+              border: '2px solid var(--bg-page)',
+              fontSize: 9,
+              color: '#fff',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           />
-        ) : null}
+        )}
       </button>
-    </div>
+    </>
   );
 }

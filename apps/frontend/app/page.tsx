@@ -1,12 +1,7 @@
 /**
  * @file apps/frontend/app/page.tsx
  * @description Main GST Reconciliation Dashboard.
- * Displays company info and a filing status table under recent reconciliation results.
- *
- * Phase 1: Static landing page.
- * Phase 8: GST portal-style dashboard with returns calendar and sidebar links.
- * Phase 11: Replaced Quick Links sidebar with Profile Card and AI Chatbot card.
- * Phase 12: Moved chat to a floating widget available globally.
+ * Phase 12: Stats row (4 cards) + two-column grid (Returns Calendar + Recent Results).
  */
 
 'use client';
@@ -14,8 +9,6 @@
 import Link from 'next/link';
 import { FilingStatusBadge, type FilingStatus } from '../components/ui/StatusBadge';
 
-const COMPANY = 'ABC Industries Private Limited';
-const GSTIN = '29AABCI1234G1Z5';
 const FINANCIAL_YEAR = '2024-25';
 
 const PERIODS = ['Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25'] as const;
@@ -49,61 +42,214 @@ const RETURN_ROWS: ReturnRow[] = [
   },
 ];
 
-/**
- * Main dashboard page displayed at the root URL (/).
- * Shows a GST portal-style filing status summary.
- */
+interface ReconRow {
+  supplier: string;
+  status: 'Matched' | 'Fuzzy' | 'Missing 2B' | 'Value diff';
+}
+
+const RECON_ROWS: ReconRow[] = [
+  { supplier: 'Infosys BPO Ltd', status: 'Matched' },
+  { supplier: 'TCS Infrastructure', status: 'Fuzzy' },
+  { supplier: 'Wipro Enterprises', status: 'Missing 2B' },
+  { supplier: 'HCL Technologies', status: 'Matched' },
+  { supplier: 'Reliance Retail Ltd', status: 'Value diff' },
+];
+
+const STATUS_DOT: Record<ReconRow['status'], string> = {
+  Matched:     '#16a34a',
+  Fuzzy:       '#d97706',
+  'Missing 2B':'#dc2626',
+  'Value diff':'#d97706',
+};
+
+const STATUS_BADGE: Record<ReconRow['status'], { bg: string; color: string }> = {
+  Matched:      { bg: '#dcfce7', color: '#15803d' },
+  Fuzzy:        { bg: '#fef9c3', color: '#92400e' },
+  'Missing 2B': { bg: '#fee2e2', color: '#b91c1c' },
+  'Value diff': { bg: '#fef9c3', color: '#92400e' },
+};
+
 export default function DashboardPage(): React.ReactElement {
   return (
     <div>
-      {/* Company / GSTIN header strip */}
-      <div className="mb-6 rounded-xl border border-border bg-surface px-6 py-4 shadow-sm">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">{COMPANY}</h1>
-            <p className="mt-0.5 font-mono text-sm text-muted-foreground">GSTIN: {GSTIN}</p>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Financial Year:{' '}
-            <span className="font-semibold text-foreground">{FINANCIAL_YEAR}</span>
-          </div>
+      {/* Stats row — 4 cards */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 14,
+          marginBottom: 20,
+        }}
+      >
+        {/* Card 1 — Total Invoices (navy accent) */}
+        <div style={{ background: '#0a1628', borderRadius: 10, padding: '16px 18px' }}>
+          <p
+            style={{
+              color: '#94a3b8',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Total Invoices
+          </p>
+          <p style={{ color: '#fff', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>247</p>
+          <p style={{ color: '#64748b', fontSize: 11, marginTop: 4 }}>FY {FINANCIAL_YEAR}</p>
+        </div>
+
+        {/* Card 2 — Matched */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            padding: '16px 18px',
+          }}
+        >
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Matched
+          </p>
+          <p style={{ color: '#16a34a', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>198</p>
+          <p style={{ color: '#16a34a', fontSize: 11, marginTop: 4 }}>80% match rate</p>
+        </div>
+
+        {/* Card 3 — Mismatched */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            padding: '16px 18px',
+          }}
+        >
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Mismatched
+          </p>
+          <p style={{ color: '#dc2626', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>23</p>
+          <p style={{ color: '#dc2626', fontSize: 11, marginTop: 4 }}>Needs review</p>
+        </div>
+
+        {/* Card 4 — Missing */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            padding: '16px 18px',
+          }}
+        >
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Missing
+          </p>
+          <p style={{ color: '#d97706', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>26</p>
+          <p style={{ color: '#d97706', fontSize: 11, marginTop: 4 }}>Not in GSTR-2B</p>
         </div>
       </div>
 
-      <div className="min-w-0">
-        <div className="rounded-xl border border-border bg-surface shadow-sm">
-          <div className="border-b border-border px-5 py-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Recent Reconciliation Results — FY {FINANCIAL_YEAR}
-            </h2>
+      {/* Two-column grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        {/* Left — Returns Calendar */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '12px 18px',
+              borderBottom: '0.5px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+              Returns Calendar — FY {FINANCIAL_YEAR}
+            </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
-                <tr className="border-b border-border bg-muted">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Return Type
+                <tr>
+                  <th
+                    style={{
+                      padding: '8px 14px',
+                      textAlign: 'left',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      color: 'var(--text-muted)',
+                      background: 'var(--bg-page)',
+                      borderBottom: '0.5px solid var(--border)',
+                    }}
+                  >
+                    Return
                   </th>
                   {PERIODS.map((p) => (
                     <th
                       key={p}
-                      className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                      style={{
+                        padding: '8px 10px',
+                        textAlign: 'center',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        color: 'var(--text-muted)',
+                        background: 'var(--bg-page)',
+                        borderBottom: '0.5px solid var(--border)',
+                      }}
                     >
                       {p}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
-                {RETURN_ROWS.map((row) => (
-                  <tr key={row.type} className="hover:bg-muted transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-semibold text-foreground">{row.type}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">{row.description}</span>
+              <tbody>
+                {RETURN_ROWS.map((row, idx) => (
+                  <tr
+                    key={row.type}
+                    style={{
+                      borderBottom: idx < RETURN_ROWS.length - 1 ? '0.5px solid var(--border)' : 'none',
+                    }}
+                  >
+                    <td style={{ padding: '9px 14px' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 12 }}>
+                        {row.type}
+                      </span>
                     </td>
-                    {row.statuses.map((status, idx) => (
-                      <td key={idx} className="px-4 py-3 text-center">
+                    {row.statuses.map((status, i) => (
+                      <td key={i} style={{ padding: '9px 10px', textAlign: 'center' }}>
                         <FilingStatusBadge status={status} />
                       </td>
                     ))}
@@ -112,34 +258,103 @@ export default function DashboardPage(): React.ReactElement {
               </tbody>
             </table>
           </div>
+
+          {/* Action buttons */}
+          <div
+            style={{
+              padding: '12px 18px',
+              borderTop: '0.5px solid var(--border)',
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Link href="/upload" className="btn-primary">
+              Upload Files
+            </Link>
+            <Link href="/results" className="btn-secondary">
+              Run Reconciliation
+            </Link>
+            <Link href="/reports" className="btn-secondary">
+              Download Report
+            </Link>
+          </div>
         </div>
 
-        {/* Quick action buttons */}
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href="/file-returns"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        {/* Right — Recent Reconciliation Results */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '12px 18px',
+              borderBottom: '0.5px solid var(--border)',
+            }}
           >
-            File Returns
-          </Link>
-          <Link
-            href="/gstr2a"
-            className="rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            View GSTR-2A
-          </Link>
-          <Link
-            href="/itc-summary"
-            className="rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            ITC Summary
-          </Link>
-          <Link
-            href="/upload"
-            className="rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            Upload Files
-          </Link>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+              Recent Reconciliation Results
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              FY {FINANCIAL_YEAR}
+            </p>
+          </div>
+
+          <div style={{ padding: '8px 0' }}>
+            {RECON_ROWS.map((row) => {
+              const dotColor = STATUS_DOT[row.status];
+              const badge = STATUS_BADGE[row.status];
+              return (
+                <div
+                  key={row.supplier}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 18px',
+                    borderBottom: '0.5px solid var(--border)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: dotColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>
+                      {row.supplier}
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 500,
+                      background: badge.bg,
+                      color: badge.color,
+                      borderRadius: 20,
+                      padding: '2px 8px',
+                    }}
+                  >
+                    {row.status}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ padding: '12px 18px' }}>
+            <Link href="/results" className="btn-secondary" style={{ fontSize: 12 }}>
+              View all results →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

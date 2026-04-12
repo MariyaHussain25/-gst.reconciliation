@@ -1,9 +1,7 @@
 /**
  * Global CSS for the GST Reconciliation frontend.
- * Phase 7: Added Noto Sans + Fira Code font families.
- * Phase 9: Professional financial dashboard color scheme with Light/Dark mode.
- * Phase 11: Mocha Earth (#4B3935) + Vanilla Cream (#F0E7D5) luxury palette.
- *           Earthy status badges, Plus Jakarta Sans typography.
+ * Phase 12: Navy/blue design system — DM Sans + JetBrains Mono.
+ *           CSS variables + Tailwind v4 tokens. Dual dark mode support.
  * Uses Tailwind CSS v4 via @import.
  */
 
@@ -11,111 +9,106 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Enable class-based dark mode for Tailwind v4 ── */
-@variant dark (&:where(.dark, .dark *));
+/* ── Enable dark mode: supports both .dark class (Tailwind) and data-theme attr ── */
+@variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
 /* ── Font families (static tokens) ── */
 @theme {
-  --font-family-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-family-body:    'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-family-mono:    'Fira Code', ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  --font-family-heading: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-body:    'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-mono:    'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
 }
 
 /* ────────────────────────────────────────────────
    Light Mode – CSS custom properties
-   Palette: Mocha Earth #4B3935 + Vanilla Cream #F0E7D5
+   Palette: Navy + Clean White + Light Blue-Grey
    ──────────────────────────────────────────────── */
 :root {
-  /* Brand */
-  --primary:            #4B3935;   /* Mocha Earth – sidebar, table headers, primary buttons */
-  --primary-foreground: #F0E7D5;   /* Vanilla Cream text on Mocha */
-  --accent:             #7A5C57;   /* Lighter Mocha – highlights, links */
-  --accent-foreground:  #F0E7D5;
+  /* Navy palette */
+  --navy:        #0a1628;
+  --navy-mid:    #1e293b;
+  --navy-light:  #0f172a;
+  --blue-accent: #1e40af;
+  --blue-hover:  #2563eb;
 
-  /* Backgrounds & surfaces */
-  --background: #F0E7D5;   /* Vanilla Cream page background */
-  --surface:    #F8F4EC;   /* Slightly lighter Cream for cards/modals */
-  --muted:      #EDE3D3;   /* Muted Cream for hover states */
-  --muted-foreground: #6B534E;
+  /* Semantic surface colours */
+  --bg-page:     #f0f4f8;
+  --bg-card:     #ffffff;
+  --text-primary:#0a1628;
+  --text-muted:  #64748b;
+  --border:      #e2e8f0;
 
-  /* Text */
-  --foreground: #2E1F1C;   /* Deep Mocha for high contrast */
+  /* Status */
+  --green:       #16a34a;
+  --red:         #dc2626;
+  --amber:       #d97706;
 
-  /* Borders & rings */
-  --border: #D9CBBB;
-  --ring:   #4B3935;
+  /* ── Tailwind-compatible aliases ── */
+  --primary:            var(--navy);
+  --primary-foreground: #ffffff;
+  --accent:             var(--blue-accent);
+  --accent-foreground:  #ffffff;
+  --background:         var(--bg-page);
+  --surface:            var(--bg-card);
+  --foreground:         var(--text-primary);
+  --muted:              #e8edf4;
+  --muted-foreground:   var(--text-muted);
+  --ring:               var(--blue-accent);
+  --info:               var(--blue-accent);
 
-  /* Info */
-  --info:   #7A5C57;
+  /* Status badge colours – spec colours */
+  --status-success-bg:   #dcfce7;
+  --status-success-text: #15803d;
+  --status-warning-bg:   #fef9c3;
+  --status-warning-text: #92400e;
+  --status-danger-bg:    #fee2e2;
+  --status-danger-text:  #b91c1c;
 
-  /* Status badge colours – earthy muted tones */
-  --status-success-bg:   #D6E8D0;  /* Muted Sage Green background – "Filed" */
-  --status-success-text: #3A6344;  /* Dark Sage text */
-  --status-warning-bg:   #EFE0B0;  /* Muted Ochre/Mustard background – "To be Filed" */
-  --status-warning-text: #7A5A1E;  /* Dark Ochre text */
-  --status-danger-bg:    #EAD0C8;  /* Muted Terracotta background – "Not Filed" */
-  --status-danger-text:  #7A3228;  /* Dark Brick Red text */
-
-  /* Sidebar */
-  --sidebar-bg:      #4B3935;   /* Mocha Earth */
-  --sidebar-fg:      #C9B9B0;
-  --sidebar-accent:  #5E4A45;
-  --sidebar-border:  #5E4A45;
+  /* Sidebar (always navy – never changes with theme) */
+  --sidebar-bg:     #0a1628;
+  --sidebar-fg:     #94a3b8;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(10 25% 12% / 0.08);
-  --shadow-elevated: 0 8px 24px -4px hsl(10 25% 12% / 0.14);
+  --shadow-card:     0 1px 3px 0 hsl(215 50% 8% / 0.08);
+  --shadow-elevated: 0 8px 24px -4px hsl(215 50% 8% / 0.14);
 }
 
 /* ────────────────────────────────────────────────
-   Dark Mode – CSS custom properties
-   Palette: Deep Matte Black + Metallic/Champagne Gold
+   Dark Mode – supports both .dark and data-theme="dark"
    ──────────────────────────────────────────────── */
-.dark {
-  /* Brand – Metallic Gold as primary on deep black backgrounds */
-  --primary:            #C6A87C;   /* Metallic/Champagne Gold – buttons, highlights */
-  --primary-foreground: #0A0A0A;   /* Deep Black text on Gold buttons */
-  --accent:             #D4AF37;   /* Brighter Gold for hover/active states */
-  --accent-foreground:  #0A0A0A;
+.dark,
+[data-theme="dark"] {
+  --bg-page:     #0f172a;
+  --bg-card:     #1e293b;
+  --text-primary:#e2e8f0;
+  --text-muted:  #94a3b8;
+  --border:      #334155;
 
-  /* Backgrounds & surfaces */
-  --background: #0A0A0A;   /* Deep Matte Black page background */
-  --surface:    #141414;   /* Rich Charcoal for cards/modals */
-  --muted:      #1C1A16;   /* Slightly lighter for hover states */
-  --muted-foreground: #8A7A5F;   /* Muted warm grey */
+  /* Re-derive aliases */
+  --primary:            var(--navy-mid);
+  --primary-foreground: #ffffff;
+  --background:         var(--bg-page);
+  --surface:            var(--bg-card);
+  --foreground:         var(--text-primary);
+  --muted:              #1e293b;
+  --muted-foreground:   var(--text-muted);
 
-  /* Text */
-  --foreground: #E8D9BF;   /* Warm Champagne off-white for high contrast */
-
-  /* Borders & rings */
-  --border: #2A2318;   /* Very dark warm-tinted border */
-  --ring:   #C6A87C;   /* Gold ring for focus states */
-
-  /* Info */
-  --info:   #C6A87C;   /* Gold info accent */
-
-  /* Status badge colours – adjusted for deep black backgrounds */
-  --status-success-bg:   #0F2018;  /* Very dark forest green */
-  --status-success-text: #7EC89A;  /* Soft mint green */
-  --status-warning-bg:   #221500;  /* Very dark amber */
-  --status-warning-text: #D4A855;  /* Warm gold */
-  --status-danger-bg:    #200A0A;  /* Very dark crimson */
-  --status-danger-text:  #D48080;  /* Soft rose */
-
-  /* Sidebar */
-  --sidebar-bg:     #0D0C0A;   /* Near-black with warm tint */
-  --sidebar-fg:     #C6A87C;   /* Metallic Gold for sidebar text */
-  --sidebar-accent: #1C1A16;   /* Dark gold-tinted surface */
-  --sidebar-border: #2A2318;
+  /* Status badges in dark mode */
+  --status-success-bg:   #052e16;
+  --status-success-text: #86efac;
+  --status-warning-bg:   #1c1400;
+  --status-warning-text: #fcd34d;
+  --status-danger-bg:    #1c0505;
+  --status-danger-text:  #fca5a5;
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(0 0% 0% / 0.70);
-  --shadow-elevated: 0 8px 24px -4px hsl(0 0% 0% / 0.90);
+  --shadow-card:     0 1px 3px 0 hsl(0 0% 0% / 0.5);
+  --shadow-elevated: 0 8px 24px -4px hsl(0 0% 0% / 0.7);
 }
 
 /* ────────────────────────────────────────────────
-   Tailwind design tokens – @theme inline keeps these
-   as CSS variable references so dark mode changes apply
+   Tailwind design tokens – @theme inline
    ──────────────────────────────────────────────── */
 @theme inline {
   /* Brand */
@@ -151,25 +144,106 @@
   /* Sidebar */
   --color-sidebar-bg:     var(--sidebar-bg);
   --color-sidebar-fg:     var(--sidebar-fg);
-  --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
 }
 
 /* ── Base styles ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 html {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
 }
 
 body {
-  font-family: var(--font-family-body);
-  background-color: var(--background);
-  color: var(--foreground);
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s, color 0.2s;
 }
 
 /* Apply mono font to GSTIN / currency elements */
 .font-mono {
-  font-family: var(--font-family-mono);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ────────────────────────────────────────────────
+   Global button classes (Steps 8)
+   ──────────────────────────────────────────────── */
+.btn-primary {
+  background: #0a1628;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.btn-primary:hover { background: #1e293b; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.btn-secondary:hover { border-color: #1e40af; color: #1e40af; }
+
+.btn-danger {
+  background: transparent;
+  color: #dc2626;
+  border: 0.5px solid #fecaca;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-danger:hover { background: rgba(220, 38, 38, 0.05); }
+
+/* ────────────────────────────────────────────────
+   Global card style (Step 9)
+   ──────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
 }
