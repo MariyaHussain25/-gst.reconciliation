@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatCurrency } from '../../lib/utils';
 import { clearSessionAndRedirectToLogin, isTokenValid, parseJwtUserId } from '../../lib/auth';
+import { apiFetch } from '../../lib/api';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -95,19 +96,15 @@ export default function ITCSummaryPage(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [reconciliation, setReconciliation] = useState<ReconciliationLookupItem | null>(null);
 
+  // 401 redirects are centralized in apiFetch, so this callback has no router dependency.
   const fetchITCData = useCallback(async (token: string, userId: string): Promise<void> => {
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/generate-pdf/by-user/${encodeURIComponent(userId)}/lookup`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-
-      if (res.status === 401) {
-        clearSessionAndRedirectToLogin(router.push, { sessionExpired: true });
-        return;
-      }
 
       if (!res.ok) {
         const body = (await res.json()) as { detail?: string; error?: string };
@@ -128,7 +125,7 @@ export default function ITCSummaryPage(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

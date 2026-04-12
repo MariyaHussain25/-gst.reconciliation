@@ -9,8 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isTokenValid } from '../../lib/auth';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { apiFetch } from '../../lib/api';
 
 function getEmailValidationError(value: string): string | null {
   if (!value.trim()) return 'Please enter your email address.';
@@ -43,6 +42,7 @@ export default function LoginPage(): React.ReactElement {
       setError(flashMessage);
       sessionStorage.removeItem('auth_message');
     }
+    sessionStorage.removeItem('auth_redirect_in_progress');
 
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -78,7 +78,7 @@ export default function LoginPage(): React.ReactElement {
       formData.append('username', email); // OAuth2 spec uses 'username'
       formData.append('password', password);
 
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),

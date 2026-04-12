@@ -12,6 +12,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { parseJwtUserId } from '../../lib/auth';
+import { apiFetch } from '../../lib/api';
 
 /**
  * Upload page — users select and upload their GST documents.
@@ -66,7 +67,7 @@ export default function UploadPage(): React.ReactElement {
       form1.append('file', fileBooks);
       form1.append('user_id', userId);
 
-      const res1 = await fetch('/api/upload-docs', {
+      const res1 = await apiFetch('/api/upload-docs', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form1,
@@ -84,7 +85,7 @@ export default function UploadPage(): React.ReactElement {
       form2.append('file', fileGstr2b);
       form2.append('user_id', userId);
 
-      const res2 = await fetch('/api/upload-docs', {
+      const res2 = await apiFetch('/api/upload-docs', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form2,
@@ -98,7 +99,7 @@ export default function UploadPage(): React.ReactElement {
 
       // ── Step 3: Run reconciliation pipeline ──────────────────────────────
       appendLog('Running AI reconciliation pipeline…');
-      const res3 = await fetch(`/api/process/${encodeURIComponent(userId)}`, {
+      const res3 = await apiFetch(`/api/process/${encodeURIComponent(userId)}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

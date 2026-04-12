@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency, formatPeriod } from '../../lib/utils';
+import { apiFetch } from '../../lib/api';
 
 // ---------------------------------------------------------------------------
 // TypeScript interfaces
@@ -147,7 +148,7 @@ export default function ReportsPage(): React.ReactElement {
     }
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/generate-pdf/by-user/${encodeURIComponent(userId.trim())}/lookup?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -174,7 +175,7 @@ export default function ReportsPage(): React.ReactElement {
       if (!token) {
         throw new Error('Authentication required. Please log in again.');
       }
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/generate-pdf/${encodeURIComponent(item.reconciliation_id)}`,
         {
           headers: { Authorization: `Bearer ${token}` },

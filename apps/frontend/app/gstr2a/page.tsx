@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { clearSessionAndRedirectToLogin, isTokenValid, parseJwtUserId } from '../../lib/auth';
+import { apiFetch } from '../../lib/api';
 
 interface Section {
   id: string;
@@ -120,19 +121,15 @@ export default function GSTR2APage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 401 redirects are centralized in apiFetch, so this callback has no router dependency.
   const fetchReconciliationData = useCallback(async (token: string, userId: string): Promise<void> => {
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/generate-pdf/by-user/${encodeURIComponent(userId)}/lookup`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-
-      if (res.status === 401) {
-        clearSessionAndRedirectToLogin(router.push, { sessionExpired: true });
-        return;
-      }
 
       if (!res.ok) {
         const body = (await res.json()) as { detail?: string; error?: string };
@@ -152,7 +149,7 @@ export default function GSTR2APage(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

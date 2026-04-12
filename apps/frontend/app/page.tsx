@@ -13,8 +13,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { FilingStatusBadge, type FilingStatus } from '../components/ui/StatusBadge';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { apiFetch } from '../lib/api';
 
 const COMPANY = 'ABC Industries Private Limited';
 const GSTIN = '29AABCI1234G1Z5';
@@ -93,7 +92,7 @@ export default function DashboardPage(): React.ReactElement {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await apiFetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
