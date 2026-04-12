@@ -6,10 +6,10 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { parseJwtUserId } from '../../lib/auth';
+import { clearSessionAndRedirectToLogin, isTokenValid, parseJwtUserId } from '../../lib/auth';
 
 interface Section {
   id: string;
@@ -120,24 +120,7 @@ export default function GSTR2APage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    const userId = parseJwtUserId(token);
-    if (!userId) {
-      router.push('/login');
-      return;
-    }
-
-    void fetchReconciliationData(token, userId);
-  }, [router]);
-
-  async function fetchReconciliationData(token: string, userId: string): Promise<void> {
+  const fetchReconciliationData = useCallback(async (token: string, userId: string): Promise<void> => {
     try {
       const res = await fetch(
         `/api/generate-pdf/by-user/${encodeURIComponent(userId)}/lookup`,
@@ -145,6 +128,11 @@ export default function GSTR2APage(): React.ReactElement {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+
+      if (res.status === 401) {
+        clearSessionAndRedirectToLogin(router.push, { sessionExpired: true });
+        return;
+      }
 
       if (!res.ok) {
         const body = (await res.json()) as { detail?: string; error?: string };
@@ -164,7 +152,28 @@ export default function GSTR2APage(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }
+  }, [router]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    if (!isTokenValid(token)) {
+      clearSessionAndRedirectToLogin(router.push, { sessionExpired: true });
+      return;
+    }
+
+    const userId = parseJwtUserId(token);
+    if (!userId) {
+      router.push('/login');
+      return;
+    }
+
+    void fetchReconciliationData(token, userId);
+  }, [fetchReconciliationData, router]);
 
   const period = reconciliation?.period ?? '—';
   const financialYear = reconciliation?.financial_year ?? '—';

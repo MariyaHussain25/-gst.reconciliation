@@ -6,10 +6,27 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { isTokenValid } from '../../lib/auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+function getEmailValidationError(value: string): string | null {
+  if (!value.trim()) return 'Please enter your email address.';
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(value)) return 'Please enter a valid email address.';
+  return null;
+}
+
+function getPasswordValidationError(value: string): string | null {
+  if (!value) return 'Please enter your password.';
+  if (value.length < 8) return 'Password must be at least 8 characters long.';
+  if (!/[A-Z]/.test(value)) return 'Password must include at least one uppercase letter.';
+  if (!/\d/.test(value)) return 'Password must include at least one number.';
+  if (!/[^A-Za-z0-9]/.test(value)) return 'Password must include at least one special character.';
+  return null;
+}
 
 export default function LoginPage(): React.ReactElement {
   const router = useRouter();
@@ -18,9 +35,35 @@ export default function LoginPage(): React.ReactElement {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const flashMessage = sessionStorage.getItem('auth_message');
+    if (flashMessage) {
+      setError(flashMessage);
+      sessionStorage.removeItem('auth_message');
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    if (isTokenValid(token)) {
+      router.push('/');
+    } else {
+      localStorage.removeItem('token');
+    }
+  }, [router]);
+
   async function handleLogin(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setError('');
+
+    const passwordError = getPasswordValidationError(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -66,7 +109,15 @@ export default function LoginPage(): React.ReactElement {
               autoComplete="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                setEmail(value);
+                e.currentTarget.setCustomValidity(getEmailValidationError(value) ?? '');
+              }}
+              onInvalid={(e) => {
+                e.currentTarget.setCustomValidity(getEmailValidationError(e.currentTarget.value) ?? '');
+              }}
+              onInput={(e) => e.currentTarget.setCustomValidity('')}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="you@example.com"
             />
@@ -81,8 +132,17 @@ export default function LoginPage(): React.ReactElement {
               type="password"
               autoComplete="current-password"
               required
+              minLength={8}
+              pattern="^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onInvalid={(e) => {
+                const validationError = getPasswordValidationError(e.currentTarget.value);
+                e.currentTarget.setCustomValidity(validationError ?? '');
+              }}
+              onInput={(e) => {
+                e.currentTarget.setCustomValidity(getPasswordValidationError(e.currentTarget.value) ?? '');
+              }}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="••••••••"
             />
@@ -107,6 +167,11 @@ export default function LoginPage(): React.ReactElement {
           Don&apos;t have an account?{' '}
           <a href="/register" className="font-medium text-primary hover:underline">
             Register
+          </a>
+        </p>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          <a href="/recovery" className="font-medium text-primary hover:underline">
+            Forgot Password?
           </a>
         </p>
       </div>
