@@ -35,13 +35,8 @@ async def generate_reconciliation_excel(reconciliation: Reconciliation) -> io.By
     return output
 
 async def generate_gst_summary_json(reconciliation: Reconciliation) -> Dict[str, Any]:
-    gstin = reconciliation.user_id
-    if not gstin and reconciliation.results:
-        first_result = reconciliation.results[0]
-        gstin = first_result.gstr2a_vendor_gstin or first_result.gstr2b_vendor_gstin or ""
-
     return {
-        "gstin": gstin,
+        "gstin": reconciliation.user_id,
         "return_period": reconciliation.period,
         "table_4_summary": "Auto-calculated based on eligible/blocked ITC"
     }

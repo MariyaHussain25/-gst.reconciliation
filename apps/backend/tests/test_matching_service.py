@@ -314,6 +314,7 @@ class TestBuildResult:
         result = _build_result(a, b, "MATCHED", 100.0)
         assert result.itc_availability == "Yes"
         assert result.itc_claimable_amount == 18.0
+        assert result.itc_blocked_amount == 0.0
 
     def test_itc_availability_no_for_non_claimable_category(self):
         a = _make_invoice(source="GSTR_2A", id="br_a2")
@@ -321,6 +322,7 @@ class TestBuildResult:
         result = _build_result(a, b, "MATCHED", 100.0)
         assert result.itc_availability == "No"
         assert result.itc_blocked_amount == 18.0
+        assert result.itc_claimable_amount == 0.0
 
     def test_itc_availability_and_amount_yes_for_claimable_category(self):
         a = _make_invoice(source="GSTR_2A", id="br_a3")
