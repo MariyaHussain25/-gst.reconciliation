@@ -1,7 +1,7 @@
 /**
  * @file apps/frontend/app/page.tsx
  * @description Main GST Reconciliation Dashboard.
- * Displays company info and recent reconciliation results.
+ * Displays company info and a filing status table under recent reconciliation results.
  *
  * Phase 1: Static landing page.
  * Phase 8: GST portal-style dashboard with returns calendar and sidebar links.
@@ -51,7 +51,7 @@ const RETURN_ROWS: ReturnRow[] = [
 
 /**
  * Main dashboard page displayed at the root URL (/).
- * Shows a GST portal-style reconciliation summary.
+ * Shows a GST portal-style filing status summary.
  */
 export default function DashboardPage(): React.ReactElement {
   return (

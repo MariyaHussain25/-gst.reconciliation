@@ -1,20 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { MessageSquare } from 'lucide-react';
 
 interface ChatMessage {
+  id: number;
   role: 'bot' | 'user';
   text: string;
 }
 
+const INITIAL_MESSAGES: ChatMessage[] = [
+  { id: 0, role: 'bot', text: 'Hello! I can help with ITC claims, reconciliation, and GST compliance.' },
+];
+
 export function ChatWidget(): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'bot', text: 'Hello! I can help with ITC claims, reconciliation, and GST compliance.' },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [unread, setUnread] = useState(true);
   const [input, setInput] = useState('');
+  const nextMessageId = useRef(INITIAL_MESSAGES.length);
 
   function handleOpen(): void {
     setIsOpen(true);
@@ -26,7 +30,15 @@ export function ChatWidget(): React.ReactElement {
     const text = input.trim();
     if (!text) return;
 
-    setMessages((prev) => [...prev, { role: 'user', text }]);
+    const messageId = nextMessageId.current;
+    nextMessageId.current += 1;
+    const replyId = nextMessageId.current;
+    nextMessageId.current += 1;
+    setMessages((prev) => [
+      ...prev,
+      { id: messageId, role: 'user', text },
+      { id: replyId, role: 'bot', text: 'Thanks — I can help break this down further if you share more details.' },
+    ]);
     setInput('');
   }
 
@@ -54,8 +66,8 @@ export function ChatWidget(): React.ReactElement {
         </div>
 
         <div className="flex max-h-[220px] min-h-[160px] flex-col gap-2 overflow-y-auto px-3 py-[10px]">
-          {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          {messages.map((message) => (
+            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[90%] px-[11px] py-2 text-[12px] ${
                   message.role === 'user'
@@ -89,7 +101,13 @@ export function ChatWidget(): React.ReactElement {
 
       <button
         type="button"
-        onClick={() => (isOpen ? setIsOpen(false) : handleOpen())}
+        onClick={() => {
+          if (isOpen) {
+            setIsOpen(false);
+            return;
+          }
+          handleOpen();
+        }}
         className="pointer-events-auto fixed rounded-full border border-[#e2e8f0] bg-white text-[#1e40af] transition hover:bg-[#f8fafc]"
         style={{ right: 24, bottom: 24, width: 44, height: 44, borderWidth: '0.5px' }}
         aria-label="Toggle chat widget"
