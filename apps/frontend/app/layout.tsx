@@ -13,6 +13,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '../components/layout/Header';
+import { ChatWidget } from '../components/chat/ChatWidget';
 
 export const metadata: Metadata = {
   title: 'GST Reconciliation System',
@@ -53,7 +54,10 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen antialiased">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+        <main className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          {children}
+          <ChatWidget />
+        </main>
       </body>
     </html>
   );
