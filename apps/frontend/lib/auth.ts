@@ -55,6 +55,7 @@ export function clearSessionAndRedirectToLogin(
 ): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
+    document.cookie = 'token=; path=/; max-age=0';
     if (options?.sessionExpired) {
       sessionStorage.setItem('auth_message', 'Session expired. Please log in again.');
     }

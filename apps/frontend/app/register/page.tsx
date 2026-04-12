@@ -33,8 +33,7 @@ export default function RegisterPage(): React.ReactElement {
       });
 
       if (res.ok) {
-        setSuccess('Account created successfully! Redirecting to sign in…');
-        setTimeout(() => router.push('/login'), 1500);
+        router.push('/login');
       } else {
         const body = await res.json().catch(() => ({}));
         setError((body as { detail?: string }).detail ?? 'Registration failed. Please try again.');
