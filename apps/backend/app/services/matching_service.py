@@ -67,7 +67,7 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
     _itc_category = inv_2b.itc_category or "ELIGIBLE"
     _itc_category_normalized = _itc_category.strip().upper()
     _itc_availability = "Yes" if _itc_category_normalized in {"ELIGIBLE", "CLAIMABLE"} else "No"
-    _itc_claimable = _total_tax if _itc_category_normalized == "ELIGIBLE" else 0.0
+    _itc_claimable = _total_tax if _itc_category_normalized in {"ELIGIBLE", "CLAIMABLE"} else 0.0
     _itc_blocked = _total_tax if _itc_category_normalized == "BLOCKED" else 0.0
     return ReconciliationResult(
         gstr2a_record_id=str(inv_2a.id) if inv_2a.id else None,
