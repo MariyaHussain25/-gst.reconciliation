@@ -8,6 +8,7 @@ import pytest
 
 from app.services.matching_service import (
     _build_composite_string,
+    _build_result,
     _check_exact_match,
     _compute_amount_diff,
     _exact_match,
@@ -305,3 +306,18 @@ class TestClassify:
         results = _classify([], [])
         assert results == []
 
+
+class TestBuildResult:
+    def test_itc_availability_yes_for_eligible(self):
+        a = _make_invoice(source="GSTR_2A", id="br_a")
+        b = _make_invoice(source="GSTR_2B", id="br_b", itc_category="ELIGIBLE", igst=18.0, cgst=0.0, sgst=0.0)
+        result = _build_result(a, b, "MATCHED", 100.0)
+        assert result.itc_availability == "Yes"
+        assert result.itc_claimable_amount == 18.0
+
+    def test_itc_availability_no_for_non_claimable_category(self):
+        a = _make_invoice(source="GSTR_2A", id="br_a2")
+        b = _make_invoice(source="GSTR_2B", id="br_b2", itc_category="BLOCKED", igst=18.0, cgst=0.0, sgst=0.0)
+        result = _build_result(a, b, "MATCHED", 100.0)
+        assert result.itc_availability == "No"
+        assert result.itc_blocked_amount == 18.0

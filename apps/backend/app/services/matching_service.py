@@ -65,8 +65,10 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
         (_inv_for_itc.igst or 0.0) + (_inv_for_itc.cgst or 0.0) + (_inv_for_itc.sgst or 0.0), 2
     )
     _itc_category = inv_2b.itc_category or "ELIGIBLE"
-    _itc_claimable = _total_tax if _itc_category == "ELIGIBLE" else 0.0
-    _itc_blocked = _total_tax if _itc_category == "BLOCKED" else 0.0
+    _itc_category_normalized = _itc_category.strip().upper()
+    _itc_availability = "Yes" if _itc_category_normalized in {"ELIGIBLE", "CLAIMABLE"} else "No"
+    _itc_claimable = _total_tax if _itc_category_normalized == "ELIGIBLE" else 0.0
+    _itc_blocked = _total_tax if _itc_category_normalized == "BLOCKED" else 0.0
     return ReconciliationResult(
         gstr2a_record_id=str(inv_2a.id) if inv_2a.id else None,
         gstr2a_vendor_name=inv_2a.vendor_name,
@@ -90,6 +92,7 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
         match_confidence=confidence,
         mismatch_fields=mismatch_fields or [],
         mismatch_reason=mismatch_reason,
+        itc_availability=_itc_availability,
         itc_category=_itc_category,
         itc_claimable_amount=_itc_claimable,
         itc_blocked_amount=_itc_blocked,
@@ -455,6 +458,9 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         else:
             counters["unmatched"] += 1
 
+    total_eligible_itc = round(sum(r.itc_claimable_amount or 0.0 for r in all_results), 2)
+    total_blocked_itc = round(sum(r.itc_blocked_amount or 0.0 for r in all_results), 2)
+
     # Build and persist Reconciliation document
     summary = ReconciliationSummary(
         total_invoices=len(all_invoices),
@@ -465,6 +471,8 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         missing_in_2b_count=counters["missing_in_2b"],
         value_mismatch_count=counters["value_mismatch"],
         gstin_mismatch_count=counters["gstin_mismatch"],
+        total_eligible_itc=total_eligible_itc,
+        total_blocked_itc=total_blocked_itc,
     )
 
     reconciliation = Reconciliation(

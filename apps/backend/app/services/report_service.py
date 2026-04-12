@@ -27,14 +27,21 @@ async def generate_reconciliation_excel(reconciliation: Reconciliation) -> io.By
         df.to_excel(writer, sheet_name="All Invoices", index=False)
         if not df.empty:
             df[df["Match Status"] == "MATCHED"].to_excel(writer, sheet_name="Matched", index=False)
-            df[df["Match Status"] == "MISMATCH"].to_excel(writer, sheet_name="Mismatched", index=False)
+            df[df["Match Status"].isin(["VALUE_MISMATCH", "GSTIN_MISMATCH"])].to_excel(
+                writer, sheet_name="Mismatched", index=False
+            )
     
     output.seek(0)
     return output
 
 async def generate_gst_summary_json(reconciliation: Reconciliation) -> Dict[str, Any]:
+    gstin = reconciliation.user_id
+    if not gstin and reconciliation.results:
+        first_result = reconciliation.results[0]
+        gstin = first_result.gstr2a_vendor_gstin or first_result.gstr2b_vendor_gstin or ""
+
     return {
-        "gstin": "YOUR_GSTIN_HERE",
+        "gstin": gstin,
         "return_period": reconciliation.period,
         "table_4_summary": "Auto-calculated based on eligible/blocked ITC"
     }
