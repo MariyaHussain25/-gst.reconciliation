@@ -20,13 +20,42 @@ import { useRouter } from 'next/navigation';
 export default function UploadPage(): React.ReactElement {
   const router = useRouter();
 
+  function getUserIdFromToken(): string | null {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return null;
+      }
+
+      const payload = token.split('.')[1];
+      if (!payload) {
+        return null;
+      }
+
+      const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      // JWT payload is base64url encoded; convert and pad to valid base64 length.
+      const padding = '='.repeat((4 - (normalizedPayload.length % 4)) % 4);
+      const decodedPayload = atob(`${normalizedPayload}${padding}`);
+      const parsed = JSON.parse(decodedPayload) as { sub?: unknown; user_id?: unknown };
+      const userId =
+        typeof parsed.sub === 'string'
+          ? parsed.sub
+          : typeof parsed.user_id === 'string'
+            ? parsed.user_id
+            : null;
+
+      return userId?.trim() || null;
+    } catch {
+      return null;
+    }
+  }
+
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
       router.push('/login');
     }
   }, [router]);
 
-  const [userId, setUserId] = useState('');
   const [fileBooks, setFileBooks] = useState<File | null>(null);
   const [fileGstr2b, setFileGstr2b] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,8 +69,9 @@ export default function UploadPage(): React.ReactElement {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
 
-    if (!userId.trim()) {
-      setError('Please enter your User ID / GSTIN.');
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      setError('Unable to identify your account. Please log in again.');
       return;
     }
     if (!fileBooks) {
@@ -62,7 +92,7 @@ export default function UploadPage(): React.ReactElement {
       appendLog('Uploading Purchase Books (GSTR-2A)…');
       const form1 = new FormData();
       form1.append('file', fileBooks);
-      form1.append('user_id', userId.trim());
+      form1.append('user_id', userId);
 
       const res1 = await fetch('/api/upload-docs', {
         method: 'POST',
@@ -80,7 +110,7 @@ export default function UploadPage(): React.ReactElement {
       appendLog('Uploading GSTR-2B…');
       const form2 = new FormData();
       form2.append('file', fileGstr2b);
-      form2.append('user_id', userId.trim());
+      form2.append('user_id', userId);
 
       const res2 = await fetch('/api/upload-docs', {
         method: 'POST',
@@ -96,7 +126,7 @@ export default function UploadPage(): React.ReactElement {
 
       // ── Step 3: Run reconciliation pipeline ──────────────────────────────
       appendLog('Running AI reconciliation pipeline…');
-      const res3 = await fetch(`/api/process/${encodeURIComponent(userId.trim())}`, {
+      const res3 = await fetch(`/api/process/${encodeURIComponent(userId)}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
       });
@@ -109,7 +139,7 @@ export default function UploadPage(): React.ReactElement {
       appendLog('✓ Reconciliation complete! Redirecting to Results…');
 
       // ── Redirect to results ───────────────────────────────────────────────
-      router.push(`/results?user_id=${encodeURIComponent(userId.trim())}`);
+      router.push(`/results?user_id=${encodeURIComponent(userId)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {
@@ -130,21 +160,6 @@ export default function UploadPage(): React.ReactElement {
           onSubmit={(e) => void handleSubmit(e)}
           className="rounded-xl border border-border bg-surface p-8 shadow-sm"
         >
-          {/* User ID / GSTIN */}
-          <div className="mb-6">
-            <label className="mb-1 block text-sm font-medium text-foreground" htmlFor="userId">
-              User ID / GSTIN
-            </label>
-            <input
-              id="userId"
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="e.g. 27AAPFU0939F1ZV"
-              className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
           {/* Purchase Books (GSTR-2A) */}
           <div className="mb-6">
             <label
