@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Phase 7 — Gemini model for AI explanations
     # "Gemini 1.5 Pro" is the valid Google model ID closest to the requested "Gemini Pro".
     GOOGLE_API_KEY: str | None = Field(default=None, description="Google API key for Gemini AI explanations")
+    OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-3-small", description="OpenAI embedding model for vector generation")
     GEMINI_MODEL: str = Field(default="gemini-1.5-pro", description="Google Gemini chat model for AI explanations")
 
     # Phase 8 — PDF generation
