@@ -58,6 +58,12 @@ export default function LoginPage(): React.ReactElement {
     e.preventDefault();
     setError('');
 
+    const emailError = getEmailValidationError(email);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
     const passwordError = getPasswordValidationError(password);
     if (passwordError) {
       setError(passwordError);
@@ -83,8 +89,24 @@ export default function LoginPage(): React.ReactElement {
         localStorage.setItem('token', data.access_token);
         router.push('/');
       } else {
-        const body = await res.json().catch(() => ({}));
-        setError((body as { detail?: string }).detail ?? 'Login failed. Please check your credentials.');
+        const body = (await res.json().catch(() => ({}))) as {
+          detail?: string | { message?: string } | Array<{ msg?: string }>;
+        };
+        const detail =
+          typeof body.detail === 'string'
+            ? body.detail
+            : Array.isArray(body.detail)
+              ? body.detail.map((item) => item.msg).filter(Boolean).join(', ')
+              : body.detail?.message;
+
+        const normalizedDetail = detail?.toLowerCase() ?? '';
+        if (res.status === 401 || normalizedDetail.includes('incorrect') || normalizedDetail.includes('invalid')) {
+          setError('Invalid credentials');
+        } else if (res.status === 403 || normalizedDetail.includes('inactive')) {
+          setError('Account inactive');
+        } else {
+          setError(detail ?? 'Login failed. Please try again.');
+        }
       }
     } catch {
       setError('Unable to connect to the server. Please try again.');
