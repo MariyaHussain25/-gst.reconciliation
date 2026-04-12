@@ -11,6 +11,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { parseJwtUserId } from '../../lib/auth';
 
 /**
  * Upload page — users select and upload their GST documents.
@@ -19,36 +20,6 @@ import { useRouter } from 'next/navigation';
  */
 export default function UploadPage(): React.ReactElement {
   const router = useRouter();
-
-  function getUserIdFromToken(): string | null {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        return null;
-      }
-
-      const payload = token.split('.')[1];
-      if (!payload) {
-        return null;
-      }
-
-      const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
-      // JWT payload is base64url encoded; convert and pad to valid base64 length.
-      const padding = '='.repeat((4 - (normalizedPayload.length % 4)) % 4);
-      const decodedPayload = atob(`${normalizedPayload}${padding}`);
-      const parsed = JSON.parse(decodedPayload) as { sub?: unknown; user_id?: unknown };
-      const userId =
-        typeof parsed.sub === 'string'
-          ? parsed.sub
-          : typeof parsed.user_id === 'string'
-            ? parsed.user_id
-            : null;
-
-      return userId?.trim() || null;
-    } catch {
-      return null;
-    }
-  }
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
@@ -69,8 +40,9 @@ export default function UploadPage(): React.ReactElement {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
 
-    const userId = getUserIdFromToken();
-    if (!userId) {
+    const token = localStorage.getItem('token') ?? '';
+    const userId = parseJwtUserId(token)?.trim();
+    if (!token || !userId) {
       setError('Unable to identify your account. Please log in again.');
       return;
     }
@@ -96,7 +68,7 @@ export default function UploadPage(): React.ReactElement {
 
       const res1 = await fetch('/api/upload-docs', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: form1,
       });
       if (!res1.ok) {
@@ -114,7 +86,7 @@ export default function UploadPage(): React.ReactElement {
 
       const res2 = await fetch('/api/upload-docs', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: form2,
       });
       if (!res2.ok) {
@@ -128,7 +100,7 @@ export default function UploadPage(): React.ReactElement {
       appendLog('Running AI reconciliation pipeline…');
       const res3 = await fetch(`/api/process/${encodeURIComponent(userId)}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res3.ok) {
         const body = (await res3.json()) as { error?: string; detail?: string };
@@ -139,7 +111,7 @@ export default function UploadPage(): React.ReactElement {
       appendLog('✓ Reconciliation complete! Redirecting to Results…');
 
       // ── Redirect to results ───────────────────────────────────────────────
-      router.push(`/results?user_id=${encodeURIComponent(userId)}`);
+      router.push('/results');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {

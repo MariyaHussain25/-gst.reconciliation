@@ -8,6 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency, formatPeriod } from '../../lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -92,14 +93,26 @@ function StatusBadge({ status }: { status: string }): React.ReactElement {
 
 export default function ReportsPage(): React.ReactElement {
   const router = useRouter();
+  const [userId, setUserId] = useState('');
+  const [token, setToken] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken) {
       router.push('/login');
+      return;
     }
+
+    const resolvedUserId = parseJwtUserId(storedToken)?.trim() ?? '';
+    if (!resolvedUserId) {
+      setError('Unable to identify your account. Please log in again.');
+      return;
+    }
+
+    setToken(storedToken);
+    setUserId(resolvedUserId);
   }, [router]);
   const [mode, setMode] = useState<DurationMode>('fy');
-  const [userId, setUserId] = useState('');
   const [fy, setFy] = useState('2024-25');
   const [quarter, setQuarter] = useState('Full Year');
   const [fromMonth, setFromMonth] = useState(MONTH_OPTIONS[11] ?? '');
@@ -113,7 +126,11 @@ export default function ReportsPage(): React.ReactElement {
   // ---- Lookup handler ----
   async function handleFind(): Promise<void> {
     if (!userId.trim()) {
-      setError('Please enter a User ID.');
+      setError('Unable to identify your account. Please log in again.');
+      return;
+    }
+    if (!token) {
+      setError('Authentication required. Please log in again.');
       return;
     }
     setLoading(true);
@@ -133,7 +150,7 @@ export default function ReportsPage(): React.ReactElement {
       const res = await fetch(
         `/api/generate-pdf/by-user/${encodeURIComponent(userId.trim())}/lookup?${params.toString()}`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+          headers: { Authorization: `Bearer ${token}` },
         },
       );
       if (!res.ok) {
@@ -154,10 +171,13 @@ export default function ReportsPage(): React.ReactElement {
     setDownloadingId(item.reconciliation_id);
     setDownloadError(null);
     try {
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
       const res = await fetch(
         `/api/generate-pdf/${encodeURIComponent(item.reconciliation_id)}`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+          headers: { Authorization: `Bearer ${token}` },
         },
       );
       if (!res.ok) {
@@ -300,19 +320,12 @@ export default function ReportsPage(): React.ReactElement {
             </div>
           )}
 
-          {/* User ID input */}
+          {/* Account context */}
           <div className="mb-6">
-            <label className="mb-1 block text-sm font-medium text-foreground">User ID</label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Enter your User ID"
-              className="w-full max-w-sm rounded border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleFind();
-              }}
-            />
+            <p className="mb-1 block text-sm font-medium text-foreground">Account</p>
+            <p className="w-full max-w-sm rounded border border-border bg-background px-3 py-2 text-sm text-foreground">
+              {userId || 'Loading account...'}
+            </p>
           </div>
 
           {/* Find button */}

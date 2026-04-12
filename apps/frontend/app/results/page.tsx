@@ -1,7 +1,7 @@
 /**
  * @file apps/frontend/app/results/page.tsx
  * @description Reconciliation results page.
- * Reads the user_id from the URL query string (set by the Upload page),
+ * Uses the authenticated user_id from the JWT token,
  * fetches the latest reconciliation summary from the backend, and displays
  * matched/unmatched counts and ITC totals.
  *
@@ -10,14 +10,11 @@
 
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency } from '../../lib/utils';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 interface ReconciliationSummary {
   total_invoices: number;
@@ -38,10 +35,6 @@ interface ProcessResponse {
   message: string;
   summary: ReconciliationSummary;
 }
-
-// ---------------------------------------------------------------------------
-// Helper: coloured stat card
-// ---------------------------------------------------------------------------
 
 function StatCard({
   label,
@@ -72,33 +65,43 @@ function StatCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Inner component that uses useSearchParams (must be inside Suspense)
-// ---------------------------------------------------------------------------
-
-function ResultsContent(): React.ReactElement {
-  const searchParams = useSearchParams();
-  const userIdParam = searchParams.get('user_id') ?? '';
-
-  const [userId, setUserId] = useState(userIdParam);
+export default function ResultsPage(): React.ReactElement {
+  const router = useRouter();
+  const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ReconciliationSummary | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  /* Auto-fetch if user_id is available from the upload redirect */
   useEffect(() => {
-    if (userIdParam) {
-      void fetchResults(userIdParam);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userIdParam]);
-
-  async function fetchResults(uid: string): Promise<void> {
-    if (!uid.trim()) {
-      setError('Please enter your User ID.');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
       return;
     }
+
+    const resolvedUserId = parseJwtUserId(token)?.trim() ?? '';
+    if (!resolvedUserId) {
+      setError('Unable to identify your account. Please log in again.');
+      return;
+    }
+
+    setUserId(resolvedUserId);
+    void fetchResults(resolvedUserId, token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
+
+  async function fetchResults(uid: string, token?: string): Promise<void> {
+    if (!uid.trim()) {
+      setError('Unable to identify your account. Please log in again.');
+      return;
+    }
+    const authToken = token ?? localStorage.getItem('token') ?? '';
+    if (!authToken) {
+      setError('Authentication required. Please log in again.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSummary(null);
@@ -106,7 +109,7 @@ function ResultsContent(): React.ReactElement {
     try {
       const res = await fetch(`/api/process/${encodeURIComponent(uid.trim())}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!res.ok) {
         const body = (await res.json()) as { error?: string; detail?: string };
@@ -123,60 +126,18 @@ function ResultsContent(): React.ReactElement {
   }
 
   return (
-    <>
-      {/* Lookup form (for manual use when not arriving from upload) */}
-      {!userIdParam && (
-        <div className="mb-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <label
-            className="mb-1 block text-sm font-medium text-foreground"
-            htmlFor="lookupUserId"
-          >
-            User ID / GSTIN
-          </label>
-          <div className="mt-1 flex gap-3">
-            <input
-              id="lookupUserId"
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="e.g. 27AAPFU0939F1ZV"
-              className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void fetchResults(userId);
-              }}
-            />
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => void fetchResults(userId)}
-              className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
-            >
-              {loading && (
-                <svg
-                  className="h-4 w-4 animate-spin"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-              )}
-              {loading ? 'Loading…' : 'Fetch Results'}
-            </button>
-          </div>
+    <div className="py-8">
+      <h1 className="mb-2 text-3xl font-bold text-foreground">Reconciliation Results</h1>
+      <p className="mb-8 text-muted-foreground">
+        View matched invoices, discrepancies, and ITC eligibility breakdown.
+      </p>
+
+      {summary !== null && (
+        <div className="mb-6 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground">
+          Showing results for your account: <span className="font-semibold">{userId}</span>
         </div>
       )}
 
-      {/* Loading state */}
       {loading && (
         <div className="flex items-center gap-3 text-muted-foreground">
           <svg
@@ -200,21 +161,18 @@ function ResultsContent(): React.ReactElement {
         </div>
       )}
 
-      {/* Error */}
       {error !== null && (
         <div className="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      {/* Results */}
       {summary !== null && (
         <div>
           {message !== null && (
             <p className="mb-6 text-sm font-medium text-muted-foreground">{message}</p>
           )}
 
-          {/* Invoice count cards */}
           <h2 className="mb-3 text-lg font-semibold text-foreground">Invoice Summary</h2>
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             <StatCard label="Total Invoices" value={summary.total_invoices} accent />
@@ -227,7 +185,6 @@ function ResultsContent(): React.ReactElement {
             <StatCard label="GSTIN Mismatch" value={summary.gstin_mismatch_count} />
           </div>
 
-          {/* ITC summary cards */}
           <h2 className="mb-3 text-lg font-semibold text-foreground">ITC Summary</h2>
           <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard
@@ -245,67 +202,14 @@ function ResultsContent(): React.ReactElement {
             />
           </div>
 
-          {/* Link to detailed PDF reports */}
           <div className="rounded-lg border border-border bg-surface p-5 text-sm text-muted-foreground">
             Want a detailed PDF report?{' '}
-            <Link
-              href={`/reports?user_id=${encodeURIComponent(userId || userIdParam)}`}
-              className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
-            >
+            <Link href="/reports" className="font-medium text-primary underline underline-offset-2 hover:opacity-80">
               Go to Reports →
             </Link>
           </div>
         </div>
       )}
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page component — wraps inner content in Suspense (required for useSearchParams)
-// ---------------------------------------------------------------------------
-
-export default function ResultsPage(): React.ReactElement {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
-      router.push('/login');
-    }
-  }, [router]);
-  return (
-    <div className="py-8">
-      <h1 className="mb-2 text-3xl font-bold text-foreground">Reconciliation Results</h1>
-      <p className="mb-8 text-muted-foreground">
-        View matched invoices, discrepancies, and ITC eligibility breakdown.
-      </p>
-
-      <Suspense
-        fallback={
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <svg
-              className="h-5 w-5 animate-spin"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
-            Loading…
-          </div>
-        }
-      >
-        <ResultsContent />
-      </Suspense>
     </div>
   );
 }
