@@ -121,7 +121,7 @@ def get_openai_embedding(text: str) -> list[float]:
         clean_text = " ".join(text.split())[:8191]
 
         response = client.embeddings.create(
-            model="text-embedding-3-small",
+            model=settings.OPENAI_EMBEDDING_MODEL,
             input=clean_text,
         )
         return response.data[0].embedding
