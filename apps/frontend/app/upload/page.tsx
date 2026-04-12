@@ -33,6 +33,7 @@ export default function UploadPage(): React.ReactElement {
       }
 
       const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      // JWT payload is base64url encoded; convert and pad to valid base64 length.
       const padding = '='.repeat((4 - (normalizedPayload.length % 4)) % 4);
       const decodedPayload = atob(`${normalizedPayload}${padding}`);
       const parsed = JSON.parse(decodedPayload) as { sub?: unknown; user_id?: unknown };
