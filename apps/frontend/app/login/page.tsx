@@ -48,7 +48,7 @@ export default function LoginPage(): React.ReactElement {
     if (!token) return;
 
     if (isTokenValid(token)) {
-      router.push('/');
+      router.push('/upload');
     } else {
       localStorage.removeItem('token');
     }
@@ -86,8 +86,10 @@ export default function LoginPage(): React.ReactElement {
 
       if (res.ok) {
         const data: { access_token: string; token_type: string } = await res.json();
-        localStorage.setItem('token', data.access_token);
-        router.push('/');
+        const jwt = data.access_token;
+        localStorage.setItem('token', jwt);
+        document.cookie = `token=${jwt}; path=/; max-age=86400`;
+        router.push('/upload');
       } else {
         const body = (await res.json().catch(() => ({}))) as {
           detail?: string | { message?: string } | Array<{ msg?: string }>;
