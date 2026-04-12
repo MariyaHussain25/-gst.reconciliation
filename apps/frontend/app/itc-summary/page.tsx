@@ -6,11 +6,11 @@
  * backend and displays ITC available/unavailable breakdown.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatCurrency } from '../../lib/utils';
-import { parseJwtUserId } from '../../lib/auth';
+import { clearSessionAndRedirectToLogin, isTokenValid, parseJwtUserId } from '../../lib/auth';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -95,24 +95,7 @@ export default function ITCSummaryPage(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [reconciliation, setReconciliation] = useState<ReconciliationLookupItem | null>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    const userId = parseJwtUserId(token);
-    if (!userId) {
-      router.push('/login');
-      return;
-    }
-
-    void fetchITCData(token, userId);
-  }, [router]);
-
-  async function fetchITCData(token: string, userId: string): Promise<void> {
+  const fetchITCData = useCallback(async (token: string, userId: string): Promise<void> => {
     try {
       const res = await fetch(
         `/api/generate-pdf/by-user/${encodeURIComponent(userId)}/lookup`,
@@ -120,6 +103,11 @@ export default function ITCSummaryPage(): React.ReactElement {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+
+      if (res.status === 401) {
+        clearSessionAndRedirectToLogin(router.push, { sessionExpired: true });
+        return;
+      }
 
       if (!res.ok) {
         const body = (await res.json()) as { detail?: string; error?: string };
@@ -140,7 +128,28 @@ export default function ITCSummaryPage(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }
+  }, [router]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    if (!isTokenValid(token)) {
+      clearSessionAndRedirectToLogin(router.push, { sessionExpired: true });
+      return;
+    }
+
+    const userId = parseJwtUserId(token);
+    if (!userId) {
+      router.push('/login');
+      return;
+    }
+
+    void fetchITCData(token, userId);
+  }, [fetchITCData, router]);
 
   const tabClass = (key: TabKey) =>
     `px-6 py-3 text-sm font-semibold transition border-b-2 ${
