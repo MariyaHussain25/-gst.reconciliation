@@ -8,8 +8,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { apiFetch } from '../../lib/api';
 
 export default function RegisterPage(): React.ReactElement {
   const router = useRouter();
@@ -27,7 +26,7 @@ export default function RegisterPage(): React.ReactElement {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/register`, {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

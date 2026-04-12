@@ -7,8 +7,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { apiFetch } from '../../lib/api';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -42,7 +41,7 @@ export default function ChatPage(): React.ReactElement {
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await apiFetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

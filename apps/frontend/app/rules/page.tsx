@@ -9,8 +9,7 @@
 'use client';
 
 import React, { useState } from 'react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { apiFetch } from '../../lib/api';
 
 interface UploadResult {
   success: boolean;
@@ -51,7 +50,7 @@ export default function RulesUploadPage(): React.ReactElement {
       formData.append('category', category);
 
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(`${API_BASE}/api/rules/upload`, {
+      const res = await apiFetch('/api/rules/upload', {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,

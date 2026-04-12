@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency } from '../../lib/utils';
+import { apiFetch } from '../../lib/api';
 
 interface ReconciliationSummary {
   total_invoices: number;
@@ -107,7 +108,7 @@ export default function ResultsPage(): React.ReactElement {
     setSummary(null);
 
     try {
-      const res = await fetch(`/api/process/${encodeURIComponent(uid.trim())}`, {
+      const res = await apiFetch(`/api/process/${encodeURIComponent(uid.trim())}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${authToken}` },
       });

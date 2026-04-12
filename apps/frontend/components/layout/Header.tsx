@@ -72,6 +72,14 @@ export function Header(): React.ReactElement {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href="/logout"
+                className="text-sm font-medium text-muted-foreground transition hover:text-primary"
+              >
+                Logout
+              </Link>
+            </li>
 
             {/* Theme toggle */}
             <li>
