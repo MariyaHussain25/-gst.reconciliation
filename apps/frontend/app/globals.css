@@ -7,7 +7,9 @@
  * Uses Tailwind CSS v4 via @import.
  */
 
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ── Enable class-based dark mode for Tailwind v4 ── */
 @variant dark (&:where(.dark, .dark *));
