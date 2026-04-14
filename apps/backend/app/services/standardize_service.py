@@ -82,16 +82,12 @@ def normalize_invoice_number(num: str) -> str:
 
     result = str(num).strip().upper()
 
-    # Remove special chars except hyphens and alphanumeric
-    result = re.sub(r'[^A-Z0-9\-]', '', result)
+    # Remove separators/special chars (/, \, -, spaces, punctuation).
+    result = re.sub(r'[^A-Z0-9]', '', result)
 
-    # Only strip leading zeros if the entire string is purely numeric (no hyphens)
-    if result.isdigit():
-        stripped = result.lstrip('0')
-        # All zeros — keep at least one digit
-        return stripped if stripped else '0'
-
-    return result
+    # Strip leading zeros after cleanup.
+    stripped = result.lstrip('0')
+    return stripped if stripped else ('0' if result else '')
 
 
 def derive_period(date_str: str) -> str:

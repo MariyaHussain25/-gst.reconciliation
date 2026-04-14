@@ -11,7 +11,7 @@ class ReconciliationResult(BaseModel):
     gstr2a_record_id: Optional[str] = None
     gstr2a_vendor_name: Optional[str] = None
     gstr2a_vendor_gstin: Optional[str] = None
-    gstr2a_vch_no: Optional[int] = None
+    gstr2a_vch_no: Optional[str] = None
     gstr2a_invoice_amount: Optional[float] = None
     gstr2a_taxable_amount: Optional[float] = None
     gstr2a_igst: Optional[float] = None

@@ -19,7 +19,7 @@ class Gstr2ARecord(Document):
     particulars: str = ""
     party_gstin: str = ""
     vch_type: str = ""
-    vch_no: int = 0
+    vch_no: str = ""
     taxable_amount: float = 0.0
     igst: float = 0.0
     cgst: float = 0.0

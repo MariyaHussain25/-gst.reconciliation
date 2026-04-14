@@ -1,16 +1,8 @@
-"""
-3-Pass Matching Engine — Phase 5 Full Implementation (RapidFuzz)
-
-Pass 1: Exact match  (GSTIN + normalized invoice number + amounts within ₹1)
-Pass 2: Fuzzy match  (RapidFuzz token_set_ratio on composite vendor+invoice string)
-Pass 3: Classification (MISSING_IN_2B / MISSING_IN_BOOKS)
-"""
+"""3-pass matching engine for GST reconciliation."""
 
 import logging
 import uuid
 from datetime import datetime
-
-from rapidfuzz import fuzz
 
 from app.models.invoice import Invoice
 from app.models.reconciliation import Reconciliation, ReconciliationResult, ReconciliationSummary
@@ -20,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 # Matching thresholds
 EXACT_AMOUNT_TOLERANCE = 1.0        # ₹1 tolerance for exact match
-FUZZY_AMOUNT_TOLERANCE = 100.0      # ₹100 tolerance for fuzzy match
-FUZZY_MATCH_THRESHOLD = 85          # RapidFuzz score for fuzzy match
-NEEDS_REVIEW_THRESHOLD = 70         # RapidFuzz score for needs review
+FUZZY_AMOUNT_TOLERANCE = 1.0        # ₹1 tolerance for taxable fallback
+FUZZY_MATCH_THRESHOLD = 85
+NEEDS_REVIEW_THRESHOLD = 70
 
 
 # ---------------------------------------------------------------------------
@@ -66,9 +58,11 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
     )
     _itc_category = inv_2b.itc_category or "ELIGIBLE"
     _itc_category_normalized = _itc_category.strip().upper()
-    _itc_availability = "Yes" if _itc_category_normalized in {"ELIGIBLE", "CLAIMABLE"} else "No"
-    _itc_claimable = _total_tax if _itc_category_normalized in {"ELIGIBLE", "CLAIMABLE"} else 0.0
-    _itc_blocked = _total_tax if _itc_category_normalized == "BLOCKED" else 0.0
+    _is_matched_category = status in {"EXACT_MATCH", "FUZZY_MATCH", "MATCHED", "FUZZY_MATCHED", "NEEDS_REVIEW"}
+    _itc_eligible = _itc_category_normalized in {"ELIGIBLE", "CLAIMABLE"}
+    _itc_availability = "Yes" if (_is_matched_category and _itc_eligible) else "No"
+    _itc_claimable = _total_tax if (_is_matched_category and _itc_eligible) else 0.0
+    _itc_blocked = _total_tax if _itc_claimable == 0.0 else 0.0
     return ReconciliationResult(
         gstr2a_record_id=str(inv_2a.id) if inv_2a.id else None,
         gstr2a_vendor_name=inv_2a.vendor_name,
@@ -92,6 +86,7 @@ def _build_result(inv_2a: Invoice, inv_2b: Invoice, status: str, confidence: flo
         match_confidence=confidence,
         mismatch_fields=mismatch_fields or [],
         mismatch_reason=mismatch_reason,
+        ai_explanation=mismatch_reason,
         itc_availability=_itc_availability,
         itc_category=_itc_category,
         itc_claimable_amount=_itc_claimable,
@@ -139,7 +134,7 @@ def _exact_match(
     matched_2b_ids: set = set()
     remaining_2a: list[Invoice] = []
 
-    # Build a lookup for GSTR-2B by (gstin_upper, normalized_invoice_number)
+    # Build a lookup for GSTR-2B by (GSTIN, normalized invoice number)
     b_by_key: dict[tuple, list[Invoice]] = {}
     for inv in invoices_2b:
         key = (inv.gstin.upper().strip(), inv.normalized_invoice_number)
@@ -154,42 +149,22 @@ def _exact_match(
             if str(inv_2b.id) in matched_2b_ids:
                 continue
 
-            amount_diff = abs(inv_2a.total_amount - inv_2b.total_amount)
-
-            if amount_diff <= EXACT_AMOUNT_TOLERANCE:
-                # Exact match
-                inv_2a.match_status = "MATCHED"
-                inv_2a.match_confidence = 100.0
-                inv_2b.match_status = "MATCHED"
-                inv_2b.match_confidence = 100.0
-                matched_2b_ids.add(str(inv_2b.id))
-                results.append(_build_result(inv_2a, inv_2b, "MATCHED", 100.0))
-                matched = True
-                break
-
-            # VALUE_MISMATCH: same GSTIN + invoice number but amount diff > ₹1
-            mismatch_fields = []
-            if amount_diff > EXACT_AMOUNT_TOLERANCE:
-                mismatch_fields.append("total_amount")
             diffs = _compute_amount_diff(inv_2a, inv_2b)
-            if diffs["taxable_amount_diff"] != 0:
-                mismatch_fields.append("taxable_amount")
-            if diffs["igst_diff"] != 0:
-                mismatch_fields.append("igst")
-            if diffs["cgst_diff"] != 0:
-                mismatch_fields.append("cgst")
-            if diffs["sgst_diff"] != 0:
-                mismatch_fields.append("sgst")
+            mismatch_fields = [name.replace("_diff", "") for name, value in diffs.items() if value != 0]
+            is_exact = all(value == 0 for value in diffs.values())
+            status = "EXACT_MATCH" if is_exact else "FUZZY_MATCH"
+            confidence = 100.0 if is_exact else 92.0
+            reason = None if is_exact else "Invoice matched by GSTIN + invoice number with value differences."
 
-            inv_2a.match_status = "VALUE_MISMATCH"
-            inv_2a.match_confidence = 90.0
-            inv_2b.match_status = "VALUE_MISMATCH"
-            inv_2b.match_confidence = 90.0
+            inv_2a.match_status = status
+            inv_2a.match_confidence = confidence
+            inv_2b.match_status = status
+            inv_2b.match_confidence = confidence
             matched_2b_ids.add(str(inv_2b.id))
             results.append(_build_result(
-                inv_2a, inv_2b, "VALUE_MISMATCH", 90.0,
+                inv_2a, inv_2b, status, confidence,
                 mismatch_fields=mismatch_fields,
-                mismatch_reason=f"Amount difference: ₹{amount_diff:.2f}",
+                mismatch_reason=reason,
             ))
             matched = True
             break
@@ -229,71 +204,47 @@ def _fuzzy_match(
     unmatched_2a: list[Invoice],
     unmatched_2b: list[Invoice],
 ) -> tuple[list[ReconciliationResult], list[Invoice], list[Invoice]]:
-    """Core fuzzy-match logic (pure, testable).
-
-    Returns (results, still_unmatched_2a, still_unmatched_2b).
-    """
+    """Fallback pass: match by GSTIN + taxable amount within ±₹1."""
     results: list[ReconciliationResult] = []
     matched_2b_ids: set = set()
     remaining_2a: list[Invoice] = []
 
     for inv_2a in unmatched_2a:
-        composite_a = _build_composite_string(inv_2a)
-        best_score = 0.0
         best_inv_2b: Invoice | None = None
+        best_taxable_diff: float | None = None
 
         for inv_2b in unmatched_2b:
             if str(inv_2b.id) in matched_2b_ids:
                 continue
 
-            amount_diff = abs(inv_2a.total_amount - inv_2b.total_amount)
-            if amount_diff > FUZZY_AMOUNT_TOLERANCE:
+            if inv_2a.gstin.upper().strip() != inv_2b.gstin.upper().strip():
                 continue
 
-            composite_b = _build_composite_string(inv_2b)
-            score = fuzz.token_set_ratio(composite_a, composite_b)
-
-            if score > best_score:
-                best_score = score
+            taxable_diff = abs(inv_2a.taxable_amount - inv_2b.taxable_amount)
+            if taxable_diff > FUZZY_AMOUNT_TOLERANCE:
+                continue
+            if best_taxable_diff is None or taxable_diff < best_taxable_diff:
+                best_taxable_diff = taxable_diff
                 best_inv_2b = inv_2b
 
         matched = False
-
-        # Check GSTIN_MISMATCH first: same invoice number, similar amount, different GSTIN
         if best_inv_2b is not None:
-            gstin_match = inv_2a.gstin.upper().strip() == best_inv_2b.gstin.upper().strip()
-            inv_num_match = inv_2a.normalized_invoice_number == best_inv_2b.normalized_invoice_number
-            amount_diff = abs(inv_2a.total_amount - best_inv_2b.total_amount)
-            if inv_num_match and amount_diff <= FUZZY_AMOUNT_TOLERANCE and not gstin_match:
-                inv_2a.match_status = "GSTIN_MISMATCH"
-                inv_2a.match_confidence = 75.0
-                best_inv_2b.match_status = "GSTIN_MISMATCH"
-                best_inv_2b.match_confidence = 75.0
-                matched_2b_ids.add(str(best_inv_2b.id))
-                results.append(_build_result(
-                    inv_2a, best_inv_2b, "GSTIN_MISMATCH", 75.0,
-                    mismatch_fields=["gstin"],
-                    mismatch_reason=f"GSTIN mismatch: {inv_2a.gstin} vs {best_inv_2b.gstin}",
-                ))
-                matched = True
-
-        if not matched and best_inv_2b is not None:
-            if best_score >= FUZZY_MATCH_THRESHOLD:
-                inv_2a.match_status = "FUZZY_MATCHED"
-                inv_2a.match_confidence = best_score
-                best_inv_2b.match_status = "FUZZY_MATCHED"
-                best_inv_2b.match_confidence = best_score
-                matched_2b_ids.add(str(best_inv_2b.id))
-                results.append(_build_result(inv_2a, best_inv_2b, "FUZZY_MATCHED", best_score))
-                matched = True
-            elif best_score >= NEEDS_REVIEW_THRESHOLD:
-                inv_2a.match_status = "NEEDS_REVIEW"
-                inv_2a.match_confidence = best_score
-                best_inv_2b.match_status = "NEEDS_REVIEW"
-                best_inv_2b.match_confidence = best_score
-                matched_2b_ids.add(str(best_inv_2b.id))
-                results.append(_build_result(inv_2a, best_inv_2b, "NEEDS_REVIEW", best_score))
-                matched = True
+            inv_2a.match_status = "FUZZY_MATCH"
+            inv_2a.match_confidence = 85.0
+            best_inv_2b.match_status = "FUZZY_MATCH"
+            best_inv_2b.match_confidence = 85.0
+            matched_2b_ids.add(str(best_inv_2b.id))
+            results.append(
+                _build_result(
+                    inv_2a,
+                    best_inv_2b,
+                    "FUZZY_MATCH",
+                    85.0,
+                    mismatch_fields=["invoice_number"],
+                    mismatch_reason="Matched by GSTIN + taxable amount tolerance (±₹1).",
+                )
+            )
+            matched = True
 
         if not matched:
             remaining_2a.append(inv_2a)
@@ -346,6 +297,12 @@ def _classify(
             gstr2a_sgst=inv.sgst,
             match_status="MISSING_IN_2B",
             match_confidence=0.0,
+            mismatch_reason="Invoice exists in Books but not found in GSTR-2B.",
+            ai_explanation="Invoice exists in Books but not found in GSTR-2B.",
+            itc_availability="No",
+            itc_category="PENDING",
+            itc_claimable_amount=0.0,
+            itc_blocked_amount=round((inv.igst or 0.0) + (inv.cgst or 0.0) + (inv.sgst or 0.0), 2),
         ))
 
     for inv in unmatched_2b:
@@ -363,6 +320,12 @@ def _classify(
             gstr2b_itc_availability=inv.itc_category,
             match_status="MISSING_IN_BOOKS",
             match_confidence=0.0,
+            mismatch_reason="Invoice exists in GSTR-2B but not found in Books.",
+            ai_explanation="Invoice exists in GSTR-2B but not found in Books.",
+            itc_availability="No",
+            itc_category=inv.itc_category or "PENDING",
+            itc_claimable_amount=0.0,
+            itc_blocked_amount=round((inv.igst or 0.0) + (inv.cgst or 0.0) + (inv.sgst or 0.0), 2),
         ))
 
     return results
@@ -442,7 +405,9 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         status = result.match_status
         if status == "MATCHED":
             counters["matched"] += 1
-        elif status == "FUZZY_MATCHED":
+        elif status == "EXACT_MATCH":
+            counters["matched"] += 1
+        elif status in {"FUZZY_MATCHED", "FUZZY_MATCH"}:
             counters["fuzzy_matched"] += 1
         elif status == "NEEDS_REVIEW":
             counters["needs_review"] += 1
@@ -460,6 +425,7 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
 
     total_eligible_itc = round(sum(r.itc_claimable_amount or 0.0 for r in all_results), 2)
     total_blocked_itc = round(sum(r.itc_blocked_amount or 0.0 for r in all_results), 2)
+    total_ineligible_itc = total_blocked_itc
 
     # Build and persist Reconciliation document
     summary = ReconciliationSummary(
@@ -473,6 +439,7 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         gstin_mismatch_count=counters["gstin_mismatch"],
         total_eligible_itc=total_eligible_itc,
         total_blocked_itc=total_blocked_itc,
+        total_ineligible_itc=total_ineligible_itc,
     )
 
     reconciliation = Reconciliation(

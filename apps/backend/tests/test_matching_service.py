@@ -153,7 +153,7 @@ class TestExactMatch:
         b = _make_invoice(source="GSTR_2B", id="id_b1")
         results, rem_a, rem_b = _exact_match([a], [b])
         assert len(results) == 1
-        assert results[0].match_status == "MATCHED"
+        assert results[0].match_status == "EXACT_MATCH"
         assert results[0].match_confidence == 100.0
         assert len(rem_a) == 0
         assert len(rem_b) == 0
@@ -163,8 +163,8 @@ class TestExactMatch:
         b = _make_invoice(source="GSTR_2B", total_amount=1200.0, id="id_b2")
         results, rem_a, rem_b = _exact_match([a], [b])
         assert len(results) == 1
-        assert results[0].match_status == "VALUE_MISMATCH"
-        assert results[0].match_confidence == 90.0
+        assert results[0].match_status == "FUZZY_MATCH"
+        assert results[0].match_confidence == 92.0
         assert len(rem_a) == 0
         assert len(rem_b) == 0
 
@@ -188,7 +188,7 @@ class TestExactMatch:
         b1 = _make_invoice(source="GSTR_2B", invoice_number="INV001", normalized_invoice_number="INV001", id="b1")
         results, rem_a, rem_b = _exact_match([a1, a2], [b1])
         assert len(results) == 1
-        assert results[0].match_status == "MATCHED"
+        assert results[0].match_status == "EXACT_MATCH"
         assert len(rem_a) == 1  # a2 unmatched
         assert len(rem_b) == 0
 
@@ -196,7 +196,7 @@ class TestExactMatch:
         a = _make_invoice(source="GSTR_2A", taxable_amount=900.0, total_amount=1080.0, id="id_a5")
         b = _make_invoice(source="GSTR_2B", taxable_amount=1000.0, total_amount=1200.0, id="id_b5")
         results, _, _ = _exact_match([a], [b])
-        assert results[0].match_status == "VALUE_MISMATCH"
+        assert results[0].match_status == "FUZZY_MATCH"
         assert "total_amount" in results[0].mismatch_fields
 
 
@@ -223,11 +223,11 @@ class TestFuzzyMatch:
         )
         results, rem_a, rem_b = _fuzzy_match([a], [b])
         assert len(results) == 1
-        assert results[0].match_status in ("FUZZY_MATCHED", "NEEDS_REVIEW")
+        assert results[0].match_status == "FUZZY_MATCH"
         assert len(rem_a) == 0
 
     def test_gstin_mismatch_detected(self):
-        """Same invoice number + amount but different GSTIN → GSTIN_MISMATCH."""
+        """Fallback fuzzy matching does not match different GSTIN values."""
         a = _make_invoice(
             source="GSTR_2A",
             gstin="27AAAAA0000A1Z5",
@@ -243,16 +243,17 @@ class TestFuzzyMatch:
             id="gm_b",
         )
         results, rem_a, rem_b = _fuzzy_match([a], [b])
-        assert len(results) == 1
-        assert results[0].match_status == "GSTIN_MISMATCH"
-        assert results[0].match_confidence == 75.0
+        assert len(results) == 0
+        assert len(rem_a) == 1
+        assert len(rem_b) == 1
 
     def test_amount_too_different_no_fuzzy(self):
-        """Amount diff > ₹100 should prevent fuzzy matching."""
+        """Taxable diff > ₹1 should prevent fallback fuzzy matching."""
         a = _make_invoice(
             source="GSTR_2A",
             normalized_vendor_name="SHARDA DOORS AND PLYWOOD",
             normalized_invoice_number="INV001",
+            taxable_amount=1000.0,
             total_amount=1000.0,
             id="fa3",
         )
@@ -260,6 +261,7 @@ class TestFuzzyMatch:
             source="GSTR_2B",
             normalized_vendor_name="SHARDA DOORS AND PLYWOOD",
             normalized_invoice_number="INV001",
+            taxable_amount=1200.0,
             total_amount=1200.0,  # diff = 200 > 100
             id="fb3",
         )
