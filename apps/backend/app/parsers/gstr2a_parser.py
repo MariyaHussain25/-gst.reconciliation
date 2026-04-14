@@ -66,8 +66,30 @@ def safe_int(val) -> int:
 REQUIRED_COLUMNS = [
     'Date', 'Particulars', 'Party GSTIN/UIN', 'Vch Type', 'Vch No.',
     'Taxable Amount', 'IGST', 'CGST', 'SGST/UTGST', 'Cess',
-    'Tax Amount', 'Invoice Amount'
+    'Tax Amount'
 ]
+
+COLUMN_ALIASES: dict[str, list[str]] = {
+    'Party GSTIN/UIN': ['GSTIN/UIN'],
+    'Vch Type': ['Vch Typ'],
+    'IGST': ['Integrated Tax Amount'],
+    'CGST': ['Central Tax Amount'],
+    'SGST/UTGST': ['State Tax Amount'],
+    'Cess': ['Cess Amount'],
+    'Tax Amount': ['Total Tax Amount'],
+}
+
+
+def _normalize_header(value) -> str:
+    return safe_str(value).lower()
+
+
+def _resolve_column_index(col_map: dict[str, int], column: str) -> Optional[int]:
+    for alias in [column, *COLUMN_ALIASES.get(column, [])]:
+        idx = col_map.get(_normalize_header(alias))
+        if idx is not None:
+            return idx
+    return None
 
 
 def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
@@ -102,14 +124,27 @@ def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
             header_row_idx = i
             for j, cell in enumerate(row):
                 if cell is not None:
-                    col_map[safe_str(cell).strip()] = j
+                    col_map[_normalize_header(cell)] = j
             break
 
     if header_row_idx == -1:
         raise ValueError(f"Could not find header row in GSTR-2A file: {file_name}")
 
-    # Validate required columns
-    missing = [col for col in REQUIRED_COLUMNS if col not in col_map]
+    # Resolve canonical column names using aliases and validate required columns
+    resolved_col_map: dict[str, int] = {}
+    missing = []
+    for column in REQUIRED_COLUMNS:
+        idx = _resolve_column_index(col_map, column)
+        if idx is None:
+            missing.append(column)
+        else:
+            resolved_col_map[column] = idx
+
+    # Invoice Amount is optional
+    invoice_amount_idx = _resolve_column_index(col_map, 'Invoice Amount')
+    if invoice_amount_idx is not None:
+        resolved_col_map['Invoice Amount'] = invoice_amount_idx
+
     if missing:
         raise ValueError(f"Missing required columns in GSTR-2A file: {missing}")
 
@@ -120,27 +155,43 @@ def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
         if not row or all(cell is None for cell in row):
             continue
 
-        particulars = safe_str(row[col_map['Particulars']])
+        def get_cell(column: str):
+            idx = resolved_col_map.get(column)
+            if idx is None or idx >= len(row):
+                return None
+            return row[idx]
+
+        particulars = safe_str(get_cell('Particulars'))
         if "total" in particulars.lower():
             continue
 
-        date_val = row[col_map['Date']]
+        date_val = get_cell('Date')
         if date_val is None or safe_str(date_val) == "":
             continue
+
+        taxable_amount = safe_number(get_cell('Taxable Amount'))
+        tax_amount = safe_number(get_cell('Tax Amount'))
+        invoice_amount_cell = get_cell('Invoice Amount')
+        if invoice_amount_cell is not None:
+            invoice_amount = safe_number(invoice_amount_cell)
+        elif 'Taxable Amount' in resolved_col_map or 'Tax Amount' in resolved_col_map:
+            invoice_amount = taxable_amount + tax_amount
+        else:
+            invoice_amount = 0.0
 
         invoice = Gstr2AInvoice(
             date=safe_str(date_val),
             particulars=particulars,
-            party_gstin=safe_str(row[col_map['Party GSTIN/UIN']]),
-            vch_type=safe_str(row[col_map['Vch Type']]),
-            vch_no=safe_int(row[col_map['Vch No.']]),
-            taxable_amount=safe_number(row[col_map['Taxable Amount']]),
-            igst=safe_number(row[col_map['IGST']]),
-            cgst=safe_number(row[col_map['CGST']]),
-            sgst_utgst=safe_number(row[col_map['SGST/UTGST']]),
-            cess=safe_number(row[col_map['Cess']]),
-            tax_amount=safe_number(row[col_map['Tax Amount']]),
-            invoice_amount=safe_number(row[col_map['Invoice Amount']]),
+            party_gstin=safe_str(get_cell('Party GSTIN/UIN')),
+            vch_type=safe_str(get_cell('Vch Type')),
+            vch_no=safe_int(get_cell('Vch No.')),
+            taxable_amount=taxable_amount,
+            igst=safe_number(get_cell('IGST')),
+            cgst=safe_number(get_cell('CGST')),
+            sgst_utgst=safe_number(get_cell('SGST/UTGST')),
+            cess=safe_number(get_cell('Cess')),
+            tax_amount=tax_amount,
+            invoice_amount=invoice_amount,
         )
         invoices.append(invoice)
 
