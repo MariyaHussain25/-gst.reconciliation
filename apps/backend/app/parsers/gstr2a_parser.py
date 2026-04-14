@@ -174,10 +174,8 @@ def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
         invoice_amount_cell = get_cell('Invoice Amount')
         if invoice_amount_cell is not None:
             invoice_amount = safe_number(invoice_amount_cell)
-        elif 'Taxable Amount' in resolved_col_map or 'Tax Amount' in resolved_col_map:
-            invoice_amount = taxable_amount + tax_amount
         else:
-            invoice_amount = 0.0
+            invoice_amount = taxable_amount + tax_amount
 
         invoice = Gstr2AInvoice(
             date=safe_str(date_val),
