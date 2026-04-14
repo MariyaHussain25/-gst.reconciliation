@@ -1,18 +1,13 @@
 /**
  * @file apps/frontend/app/layout.tsx
  * @description Root layout for the GST Reconciliation Next.js app.
- * Applies global styles, metadata, Google Fonts (Plus Jakarta Sans + Fira Code),
- * and wraps all pages with the Header component.
- *
- * Phase 1: Basic layout with navigation.
- * Phase 7: Added Noto Sans + Fira Code font integration.
- * Phase 10: Added anti-FOUC script for Light/Dark theme persistence via localStorage.
- * Phase 11: Switched to Plus Jakarta Sans for luxury premium feel.
+ * Phase 12: Navy design system — DM Sans + JetBrains Mono.
+ *           LayoutShell handles conditional sidebar/topbar vs auth-only view.
  */
 
 import type { Metadata } from 'next';
 import './globals.css';
-import { Header } from '../components/layout/Header';
+import { LayoutShell } from '../components/layout/LayoutShell';
 
 export const metadata: Metadata = {
   title: 'GST Reconciliation System',
@@ -21,10 +16,6 @@ export const metadata: Metadata = {
   keywords: ['GST', 'reconciliation', 'ITC', 'GSTR-2A', 'GSTR-2B', 'India', 'tax'],
 };
 
-/**
- * Root layout wraps every page in the application.
- * Includes Google Fonts (Noto Sans + Fira Code) and the global Header.
- */
 export default function RootLayout({
   children,
 }: {
@@ -33,27 +24,26 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google Fonts: Plus Jakarta Sans (headings + body) and Fira Code (mono / data) */}
+        {/* Google Fonts: DM Sans (body) and JetBrains Mono (mono / data) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
         {/*
-          Anti-FOUC (Flash of Unstyled Content) script.
-          Runs synchronously before first paint to apply the stored theme class
-          so the page never flashes between light and dark modes on load.
+          Anti-FOUC script: reads stored theme and applies both .dark class
+          (Tailwind dark: utilities) and data-theme="dark" attribute (CSS variables)
+          before first paint.
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();`,
           }}
         />
       </head>
-      <body className="min-h-screen antialiased">
-        <Header />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+      <body>
+        <LayoutShell>{children}</LayoutShell>
       </body>
     </html>
   );

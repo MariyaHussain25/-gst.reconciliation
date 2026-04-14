@@ -1,22 +1,14 @@
 /**
  * @file apps/frontend/app/page.tsx
  * @description Main GST Reconciliation Dashboard.
- * Displays company info, returns filing calendar, profile card, and AI chatbot.
- *
- * Phase 1: Static landing page.
- * Phase 8: GST portal-style dashboard with returns calendar and sidebar links.
- * Phase 11: Replaced Quick Links sidebar with Profile Card and AI Chatbot card.
+ * Phase 12: Stats row (4 cards) + two-column grid (Returns Calendar + Recent Results).
  */
 
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { FilingStatusBadge, type FilingStatus } from '../components/ui/StatusBadge';
-import { apiFetch } from '../lib/api';
 
-const COMPANY = 'ABC Industries Private Limited';
-const GSTIN = '29AABCI1234G1Z5';
 const FINANCIAL_YEAR = '2024-25';
 
 const PERIODS = ['Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25'] as const;
@@ -50,270 +42,320 @@ const RETURN_ROWS: ReturnRow[] = [
   },
 ];
 
-const CHATBOT_SUGGESTIONS = [
-  'What is my ITC mismatch?',
-  'Show filing status summary',
-  'How to reconcile GSTR-2A?',
-];
-
-interface ChatMessage {
-  id: number;
-  role: 'bot' | 'user';
-  text: string;
+interface ReconRow {
+  supplier: string;
+  status: 'Matched' | 'Fuzzy' | 'Missing 2B' | 'Value diff';
 }
 
-const INITIAL_MESSAGES: ChatMessage[] = [
-  {
-    id: 0,
-    role: 'bot',
-    text: '👋 Hi! I\'m your GST AI Assistant. Ask me anything about your returns, ITC, or reconciliation!',
-  },
+const RECON_ROWS: ReconRow[] = [
+  { supplier: 'Infosys BPO Ltd', status: 'Matched' },
+  { supplier: 'TCS Infrastructure', status: 'Fuzzy' },
+  { supplier: 'Wipro Enterprises', status: 'Missing 2B' },
+  { supplier: 'HCL Technologies', status: 'Matched' },
+  { supplier: 'Reliance Retail Ltd', status: 'Value diff' },
 ];
 
-/**
- * Main dashboard page displayed at the root URL (/).
- * Shows a GST portal-style returns calendar, profile card, and AI chatbot.
- */
+const STATUS_DOT: Record<ReconRow['status'], string> = {
+  Matched:     '#16a34a',
+  Fuzzy:       '#d97706',
+  'Missing 2B':'#dc2626',
+  'Value diff':'#d97706',
+};
+
+const STATUS_BADGE: Record<ReconRow['status'], { bg: string; color: string }> = {
+  Matched:      { bg: '#dcfce7', color: '#15803d' },
+  Fuzzy:        { bg: '#fef9c3', color: '#92400e' },
+  'Missing 2B': { bg: '#fee2e2', color: '#b91c1c' },
+  'Value diff': { bg: '#fef9c3', color: '#92400e' },
+};
+
 export default function DashboardPage(): React.ReactElement {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
-  const [input, setInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-
-  async function sendMessage(text?: string): Promise<void> {
-    const msg = text ?? input;
-    if (!msg.trim() || chatLoading) return;
-
-    setInput('');
-    setMessages((prev) => [
-      ...prev,
-      { id: prev.length, role: 'user' as const, text: msg },
-    ]);
-    setChatLoading(true);
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await apiFetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ query: msg }),
-      });
-
-      if (res.ok) {
-        const data: { reply: string } = await res.json();
-        setMessages((prev) => [
-          ...prev,
-          { id: prev.length, role: 'bot' as const, text: data.reply },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { id: prev.length, role: 'bot' as const, text: 'Sorry, I encountered an error. Please try again.' },
-        ]);
-      }
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { id: prev.length, role: 'bot' as const, text: 'Unable to connect to the server. Please try again.' },
-      ]);
-    } finally {
-      setChatLoading(false);
-    }
-  }
-
   return (
     <div>
-      {/* Company / GSTIN header strip */}
-      <div className="mb-6 rounded-xl border border-border bg-surface px-6 py-4 shadow-sm">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">{COMPANY}</h1>
-            <p className="mt-0.5 font-mono text-sm text-muted-foreground">GSTIN: {GSTIN}</p>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Financial Year:{' '}
-            <span className="font-semibold text-foreground">{FINANCIAL_YEAR}</span>
-          </div>
+      {/* Stats row — 4 cards */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 14,
+          marginBottom: 20,
+        }}
+      >
+        {/* Card 1 — Total Invoices (navy accent) */}
+        <div style={{ background: 'var(--navy)', borderRadius: 10, padding: '16px 18px' }}>
+          <p
+            style={{
+              color: '#94a3b8',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Total Invoices
+          </p>
+          <p style={{ color: '#fff', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>247</p>
+          <p style={{ color: '#64748b', fontSize: 11, marginTop: 4 }}>FY {FINANCIAL_YEAR}</p>
+        </div>
+
+        {/* Card 2 — Matched */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            padding: '16px 18px',
+          }}
+        >
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Matched
+          </p>
+          <p style={{ color: '#16a34a', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>198</p>
+          <p style={{ color: '#16a34a', fontSize: 11, marginTop: 4 }}>80% match rate</p>
+        </div>
+
+        {/* Card 3 — Mismatched */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            padding: '16px 18px',
+          }}
+        >
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Mismatched
+          </p>
+          <p style={{ color: '#dc2626', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>23</p>
+          <p style={{ color: '#dc2626', fontSize: 11, marginTop: 4 }}>Needs review</p>
+        </div>
+
+        {/* Card 4 — Missing */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            padding: '16px 18px',
+          }}
+        >
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: 6,
+            }}
+          >
+            Missing
+          </p>
+          <p style={{ color: '#d97706', fontSize: 26, fontWeight: 600, lineHeight: 1 }}>26</p>
+          <p style={{ color: '#d97706', fontSize: 11, marginTop: 4 }}>Not in GSTR-2B</p>
         </div>
       </div>
 
-      {/* Main content + right sidebar */}
-      <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Returns Calendar table */}
-        <div className="min-w-0 flex-1">
-          <div className="rounded-xl border border-border bg-surface shadow-sm">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Returns Calendar — FY {FINANCIAL_YEAR}
-              </h2>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Return Type
-                    </th>
-                    {PERIODS.map((p) => (
-                      <th
-                        key={p}
-                        className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                      >
-                        {p}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {RETURN_ROWS.map((row) => (
-                    <tr key={row.type} className="hover:bg-muted transition-colors">
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-semibold text-foreground">{row.type}</span>
-                        <span className="mt-0.5 block text-xs text-muted-foreground">{row.description}</span>
-                      </td>
-                      {row.statuses.map((status, idx) => (
-                        <td key={idx} className="px-4 py-3 text-center">
-                          <FilingStatusBadge status={status} />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      {/* Two-column grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        {/* Left — Returns Calendar */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '12px 18px',
+              borderBottom: '0.5px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+              Returns Calendar — FY {FINANCIAL_YEAR}
+            </p>
           </div>
 
-          {/* Quick action buttons */}
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link
-              href="/file-returns"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              File Returns
-            </Link>
-            <Link
-              href="/gstr2a"
-              className="rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-            >
-              View GSTR-2A
-            </Link>
-            <Link
-              href="/itc-summary"
-              className="rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-            >
-              ITC Summary
-            </Link>
-            <Link
-              href="/upload"
-              className="rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-            >
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      padding: '8px 14px',
+                      textAlign: 'left',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      color: 'var(--text-muted)',
+                      background: 'var(--bg-page)',
+                      borderBottom: '0.5px solid var(--border)',
+                    }}
+                  >
+                    Return
+                  </th>
+                  {PERIODS.map((p) => (
+                    <th
+                      key={p}
+                      style={{
+                        padding: '8px 10px',
+                        textAlign: 'center',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        color: 'var(--text-muted)',
+                        background: 'var(--bg-page)',
+                        borderBottom: '0.5px solid var(--border)',
+                      }}
+                    >
+                      {p}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {RETURN_ROWS.map((row, idx) => (
+                  <tr
+                    key={row.type}
+                    style={{
+                      borderBottom: idx < RETURN_ROWS.length - 1 ? '0.5px solid var(--border)' : 'none',
+                    }}
+                  >
+                    <td style={{ padding: '9px 14px' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 12 }}>
+                        {row.type}
+                      </span>
+                    </td>
+                    {row.statuses.map((status, i) => (
+                      <td key={i} style={{ padding: '9px 10px', textAlign: 'center' }}>
+                        <FilingStatusBadge status={status} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Action buttons */}
+          <div
+            style={{
+              padding: '12px 18px',
+              borderTop: '0.5px solid var(--border)',
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Link href="/upload" className="btn-primary">
               Upload Files
+            </Link>
+            <Link href="/results" className="btn-secondary">
+              Run Reconciliation
+            </Link>
+            <Link href="/reports" className="btn-secondary">
+              Download Report
             </Link>
           </div>
         </div>
 
-        {/* Right sidebar – Profile Card + Chatbot */}
-        <aside className="flex w-full flex-col gap-5 lg:w-64 lg:flex-shrink-0">
-
-          {/* ── Profile Card ── */}
-          <div className="rounded-xl border border-border bg-surface shadow-sm">
-            <div className="border-b border-border px-5 py-3">
-              <h2 className="text-base font-semibold text-foreground">Profile</h2>
-            </div>
-            <div className="flex flex-col items-center gap-3 px-5 py-5">
-              {/* Avatar placeholder */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow">
-                A
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-foreground">ABC Industries</p>
-                <p className="mt-0.5 font-mono text-xs text-muted-foreground">{GSTIN}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Regular Taxpayer</p>
-              </div>
-              <button
-                type="button"
-                className="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-              >
-                Edit Profile
-              </button>
-            </div>
+        {/* Right — Recent Reconciliation Results */}
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 10,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '12px 18px',
+              borderBottom: '0.5px solid var(--border)',
+            }}
+          >
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+              Recent Reconciliation Results
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              FY {FINANCIAL_YEAR}
+            </p>
           </div>
 
-          {/* ── GST AI Chatbot Card ── */}
-          <div className="flex flex-col rounded-xl border border-border bg-surface shadow-sm">
-            <div className="border-b border-border px-5 py-3">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🤖</span>
-                <h2 className="text-base font-semibold text-foreground">GST AI Assistant</h2>
-              </div>
-            </div>
-
-            {/* Message list */}
-            <div className="flex max-h-52 flex-col gap-2 overflow-y-auto px-4 py-3">
-              {messages.map((m) => (
+          <div style={{ padding: '8px 0' }}>
+            {RECON_ROWS.map((row) => {
+              const dotColor = STATUS_DOT[row.status];
+              const badge = STATUS_BADGE[row.status];
+              return (
                 <div
-                  key={m.id}
-                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  key={row.supplier}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 18px',
+                    borderBottom: '0.5px solid var(--border)',
+                  }}
                 >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: dotColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>
+                      {row.supplier}
+                    </span>
+                  </div>
                   <span
-                    className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
-                      m.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground'
-                    }`}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 500,
+                      background: badge.bg,
+                      color: badge.color,
+                      borderRadius: 20,
+                      padding: '2px 8px',
+                    }}
                   >
-                    {m.text}
+                    {row.status}
                   </span>
                 </div>
-              ))}
-            </div>
-
-            {/* Quick suggestions */}
-            <div className="flex flex-wrap gap-1.5 border-t border-border px-4 py-2">
-              {CHATBOT_SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => void sendMessage(s)}
-                  className="rounded-full border border-border bg-transparent px-2 py-0.5 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-
-            {/* Input row */}
-            <div className="border-t border-border px-3 py-3">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void sendMessage();
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask anything…"
-                  aria-label="Chat with GST AI Assistant"
-                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder-muted-foreground outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button
-                  type="submit"
-                  disabled={chatLoading || !input.trim()}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
-                >
-                  {chatLoading ? '…' : 'Send'}
-                </button>
-              </form>
-            </div>
+              );
+            })}
           </div>
 
-        </aside>
+          <div style={{ padding: '12px 18px' }}>
+            <Link href="/results" className="btn-secondary" style={{ fontSize: 12 }}>
+              View all results →
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
