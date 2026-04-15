@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { ChatWidget } from '../chat/ChatWidget';
+import { clearSessionAndRedirectToLogin, isTokenValid } from '../../lib/auth';
 
 const AUTH_ROUTES = ['/login', '/register'];
 
@@ -26,8 +27,8 @@ export function LayoutShell({
     }
 
     const token = localStorage.getItem('token');
-    if (!token) {
-      router.replace('/login');
+    if (!token || !isTokenValid(token)) {
+      clearSessionAndRedirectToLogin(router.replace, { sessionExpired: Boolean(token) });
       return;
     }
 

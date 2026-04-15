@@ -51,7 +51,9 @@ export default function LoginPage(): React.ReactElement {
 
       const payload = (await response.json()) as { access_token: string };
       localStorage.setItem('token', payload.access_token);
-      document.cookie = `token=${payload.access_token}; path=/; max-age=${remember ? 604800 : 86400}`;
+      document.cookie = `token=${payload.access_token}; path=/; max-age=${remember ? 604800 : 86400}; samesite=lax${
+        window.location.protocol === 'https:' ? '; secure' : ''
+      }`;
       router.replace('/dashboard');
     } catch {
       setError('Unable to connect to the server. Please try again.');
