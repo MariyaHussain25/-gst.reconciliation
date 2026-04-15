@@ -17,15 +17,19 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+# Fixed code
 def get_password_hash(password: str) -> str:
-    """Hash a plain-text password using bcrypt."""
-    return pwd_context.hash(password)
+    # bcrypt has a 72-byte hard limit — truncate safely
+    password_bytes = password.encode("utf-8")[:72]
+    password_truncated = password_bytes.decode("utf-8", errors="ignore")
+    return pwd_context.hash(password_truncated)
 
 
+# Fixed verify — must truncate the same way
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain-text password against its bcrypt hash."""
-    return pwd_context.verify(plain_password, hashed_password)
-
+    password_bytes = plain_password.encode("utf-8")[:72]
+    password_truncated = password_bytes.decode("utf-8", errors="ignore")
+    return pwd_context.verify(password_truncated, hashed_password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a signed JWT access token."""
