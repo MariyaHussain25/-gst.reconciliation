@@ -1,118 +1,74 @@
 'use client';
 
-/**
- * @file components/layout/TopBar.tsx
- * @description Top bar shown on all authenticated pages.
- * Shows page title (derived from pathname), company name, GSTIN chip, and dark mode toggle.
- * Phase 12: Navy design system.
- */
-
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-
-const COMPANY = 'ABC Industries Pvt Ltd';
-const GSTIN = '29AABCI1234G1Z5';
+import { Bell, Menu } from 'lucide-react';
+import { parseJwtUserId } from '../../lib/auth';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/':             'Dashboard',
-  '/upload':       'Upload Documents',
-  '/results':      'Reconciliation Results',
-  '/reports':      'Reports',
-  '/rules':        'Rules Engine',
-  '/itc-summary':  'ITC Summary',
+  '/': 'Dashboard',
+  '/dashboard': 'Dashboard',
+  '/upload': 'Upload Report',
+  '/results': 'GSTR-2B Reconciliation',
+  '/gstr2a': 'GSTR-2A Reconciliation',
+  '/reports': 'Reports',
+  '/rules': 'Rules Engine',
+  '/itc-summary': 'ITC Summary',
   '/file-returns': 'File Returns',
-  '/gstr2a':       'GSTR-2A',
-  '/chat':         'Chat Assistant',
-  '/logout':       'Sign Out',
+  '/chat': 'Help & Support',
 };
 
 function getPageTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
-  // Match prefix (e.g. /file-returns/returns)
-  const match = Object.keys(PAGE_TITLES).find(
-    (key) => key !== '/' && pathname.startsWith(key + '/'),
-  );
-  return match ? PAGE_TITLES[match] : 'GST Reconciliation';
+  const match = Object.keys(PAGE_TITLES).find((key) => key !== '/' && pathname.startsWith(`${key}/`));
+  return match ? PAGE_TITLES[match] : 'Dashboard';
 }
 
-export function TopBar(): React.ReactElement {
+interface TopBarProps {
+  onToggleSidebar: () => void;
+}
+
+export function TopBar({ onToggleSidebar }: TopBarProps): React.ReactElement {
   const pathname = usePathname();
-  const [isDark, setIsDark] = useState(false);
+  const [userName, setUserName] = useState('User');
 
   useEffect(() => {
-    const el = document.documentElement;
-    setIsDark(el.classList.contains('dark') || el.getAttribute('data-theme') === 'dark');
+    const token = localStorage.getItem('token') ?? '';
+    const userId = parseJwtUserId(token);
+    if (userId) {
+      setUserName(`Account ${userId.slice(0, 8)}`);
+    }
   }, []);
 
-  function toggleTheme(): void {
-    const el = document.documentElement;
-    const dark = el.classList.contains('dark') || el.getAttribute('data-theme') === 'dark';
-    if (dark) {
-      el.classList.remove('dark');
-      el.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'light');
-      setIsDark(false);
-    } else {
-      el.classList.add('dark');
-      el.setAttribute('data-theme', 'dark');
-      localStorage.setItem('theme', 'dark');
-      setIsDark(true);
-    }
-  }
-
   return (
-    <header
-      style={{
-        height: 52,
-        background: 'var(--bg-card)',
-        borderBottom: '0.5px solid var(--border)',
-        padding: '0 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-      }}
-    >
-      {/* Page title */}
-      <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
-        {getPageTitle(pathname)}
-      </span>
-
-      {/* Right: company, GSTIN chip, theme toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>
-          {COMPANY}
-        </span>
-        <span
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 11,
-            background: 'var(--bg-page)',
-            padding: '3px 8px',
-            borderRadius: 4,
-            color: 'var(--text-muted)',
-            border: '0.5px solid var(--border)',
-          }}
-        >
-          {GSTIN}
-        </span>
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6">
+      <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={toggleTheme}
-          aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          style={{
-            background: 'var(--bg-page)',
-            border: '0.5px solid var(--border)',
-            borderRadius: 6,
-            padding: '5px 10px',
-            fontSize: 12,
-            color: 'var(--text-primary)',
-            cursor: 'pointer',
-            fontFamily: "'DM Sans', sans-serif",
-          }}
+          onClick={onToggleSidebar}
+          aria-label="Toggle sidebar"
+          className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
         >
-          {isDark ? 'Light mode' : 'Dark mode'}
+          <Menu size={18} />
         </button>
+        <h1 className="text-lg font-semibold text-slate-900">{getPageTitle(pathname)}</h1>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          aria-label="Notifications"
+          className="rounded-md border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"
+        >
+          <Bell size={16} />
+        </button>
+        <div className="text-right">
+          <p className="text-sm font-medium text-slate-900">{userName}</p>
+          <span className="rounded-full bg-[#2563eb]/10 px-2 py-0.5 text-xs font-semibold text-[#1e40af]">Admin</span>
+        </div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1a3a6b] text-sm font-semibold text-white">
+          {userName.charAt(0).toUpperCase()}
+        </div>
       </div>
     </header>
   );
