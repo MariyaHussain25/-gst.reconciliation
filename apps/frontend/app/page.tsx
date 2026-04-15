@@ -111,6 +111,7 @@ export default function DashboardPage(): React.ReactElement {
       const parts = item.period.split('-');
       if (parts.length !== 2) return;
       const [yearText, monthText] = parts;
+      if (!/^\d{4}$/.test(yearText) || !/^\d{2}$/.test(monthText)) return;
       const year = Number(yearText);
       const monthIndex = Number(monthText) - 1;
       if (Number.isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) return;
