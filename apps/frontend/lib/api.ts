@@ -24,3 +24,20 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
   }
   return response;
 }
+
+/**
+ * API helper for authenticated calls that always appends Bearer token header.
+ */
+export async function apiFetchWithAuth(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (typeof window === 'undefined') {
+    throw new Error('Authenticated API calls must run in the browser.');
+  }
+  const token = localStorage.getItem('token') ?? '';
+  return apiFetch(input, {
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

@@ -1,7 +1,9 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageCircle, Minimize2, Send, X } from 'lucide-react';
+import { parseJwtUserId } from '../../lib/auth';
+import { apiFetchWithAuth } from '../../lib/api';
 
 interface ChatMessage {
   id: number;
@@ -9,249 +11,148 @@ interface ChatMessage {
   text: string;
 }
 
-const INITIAL_MESSAGES: ChatMessage[] = [
-  { id: 0, role: 'bot', text: 'Hello! I can help with ITC claims, reconciliation, and GST compliance.' },
+const SUGGESTED_QUESTIONS = [
+  'How do I reconcile GSTR-2A with GSTR-2B?',
+  'Why is there a difference in my report?',
+  'How to upload GSTR files?',
+  'What are common reconciliation errors?',
 ];
 
 export function ChatWidget(): React.ReactElement {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
-  const [unread, setUnread] = useState(true);
+  const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
-  const nextMessageId = useRef(INITIAL_MESSAGES.length);
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: 1, role: 'bot', text: 'Hi! Ask me anything about GST reconciliation.' },
+  ]);
+  const nextIdRef = useRef(2);
 
-  function handleOpen(): void {
-    setIsOpen(true);
-    setUnread(false);
-  }
+  async function sendMessage(text: string): Promise<void> {
+    const token = localStorage.getItem('token') ?? '';
+    const userId = parseJwtUserId(token);
+    if (!text.trim() || !userId) return;
 
-  function handleSend(e: React.FormEvent<HTMLFormElement>): void {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text) return;
-
-    const messageId = nextMessageId.current;
-    nextMessageId.current += 1;
-    const replyId = nextMessageId.current;
-    nextMessageId.current += 1;
-    setMessages((prev) => [
-      ...prev,
-      { id: messageId, role: 'user', text },
-      { id: replyId, role: 'bot', text: 'Thanks — I can help break this down further if you share more details.' },
-    ]);
+    const userMessage: ChatMessage = { id: nextIdRef.current, role: 'user', text };
+    nextIdRef.current += 1;
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    setLoading(true);
+
+    try {
+      const response = await apiFetchWithAuth('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, user_id: userId, query: text }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { detail?: string };
+        throw new Error(payload.detail ?? 'Unable to get response from assistant.');
+      }
+
+      const payload = (await response.json()) as { reply?: string };
+      setMessages((prev) => [
+        ...prev,
+        { id: nextIdRef.current, role: 'bot', text: payload.reply ?? 'I could not generate a response.' },
+      ]);
+      nextIdRef.current += 1;
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextIdRef.current,
+          role: 'bot',
+          text: error instanceof Error ? error.message : 'Unable to get response from assistant.',
+        },
+      ]);
+      nextIdRef.current += 1;
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <>
-      {/* Chat panel */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 82,
-          right: 24,
-          width: 300,
-          background: 'var(--bg-card)',
-          border: '0.5px solid var(--border)',
-          borderRadius: 12,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          zIndex: 50,
-          opacity: isOpen ? 1 : 0,
-          pointerEvents: isOpen ? 'auto' : 'none',
-          transform: isOpen ? 'translateY(0)' : 'translateY(8px)',
-          transition: 'opacity 0.2s, transform 0.2s',
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            padding: '10px 14px',
-            borderBottom: '0.5px solid var(--border)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
-              GST AI Assistant
-            </p>
-            <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-              Powered by Gemini
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close chat"
-            style={{
-              color: 'var(--text-muted)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 14,
-              lineHeight: 1,
-              padding: 2,
-            }}
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div
-          style={{
-            overflowY: 'auto',
-            maxHeight: 220,
-            minHeight: 160,
-            padding: '10px 12px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              style={{
-                display: 'flex',
-                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-              }}
-            >
-              <div
-                style={{
-                  maxWidth: '90%',
-                  padding: '8px 11px',
-                  fontSize: 12,
-                  ...(message.role === 'user'
-                    ? {
-                        background: '#1e40af',
-                        color: '#fff',
-                        borderRadius: '10px 10px 0 10px',
-                        alignSelf: 'flex-end',
-                      }
-                    : {
-                        background: 'var(--bg-page)',
-                        border: '0.5px solid var(--border)',
-                        borderRadius: '10px 10px 10px 0',
-                        color: 'var(--text-primary)',
-                        alignSelf: 'flex-start',
-                      }),
-                }}
-              >
-                {message.text}
-              </div>
+    <div className="fixed bottom-5 right-5 z-50">
+      {open ? (
+        <div className="flex w-[340px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-200 bg-[#f8fafc] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-slate-900">GST Assistant</p>
+              <span className="rounded-full bg-[#2563eb]/10 px-2 py-0.5 text-xs font-semibold text-[#2563eb]">Beta</span>
             </div>
-          ))}
-        </div>
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => setOpen(false)} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Minimize chat">
+                <Minimize2 size={14} />
+              </button>
+              <button type="button" onClick={() => setOpen(false)} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Close chat">
+                <X size={14} />
+              </button>
+            </div>
+          </div>
 
-        {/* Input row */}
-        <div
-          style={{
-            padding: '8px 10px',
-            borderTop: '0.5px solid var(--border)',
-          }}
-        >
-          <form style={{ display: 'flex', gap: 8 }} onSubmit={handleSend}>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message"
-              aria-label="Type your message"
-              style={{
-                flex: 1,
-                minWidth: 0,
-                border: '0.5px solid var(--border)',
-                borderRadius: 6,
-                fontSize: 12,
-                padding: '6px 10px',
-                outline: 'none',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontFamily: "'DM Sans', sans-serif",
+          <div className="max-h-[280px] space-y-3 overflow-y-auto bg-[#f8fafc] p-3">
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                    message.role === 'user'
+                      ? 'rounded-br-none bg-[#2563eb] text-white'
+                      : 'rounded-bl-none border border-slate-200 bg-white text-slate-800'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              </div>
+            ))}
+            {loading && <p className="text-xs text-slate-500">Assistant is typing...</p>}
+          </div>
+
+          <div className="border-t border-slate-200 p-3">
+            <div className="mb-3 flex flex-wrap gap-2">
+              {SUGGESTED_QUESTIONS.map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  onClick={() => void sendMessage(question)}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+
+            <form
+              className="flex items-center gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void sendMessage(input);
               }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--blue-accent)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-            />
-            <button
-              type="submit"
-              style={{
-                background: '#0a1628',
-                color: '#fff',
-                borderRadius: 6,
-                padding: '6px 12px',
-                fontSize: 12,
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: "'DM Sans', sans-serif",
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#1e293b'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#0a1628'; }}
             >
-              Send
-            </button>
-          </form>
-        </div>
-      </div>
+              <input
+                type="text"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Type your question..."
+                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#2563eb]"
+              />
+              <button type="submit" className="rounded-lg bg-[#2563eb] p-2 text-white hover:bg-[#1e40af]" aria-label="Send message">
+                <Send size={14} />
+              </button>
+            </form>
 
-      {/* FAB button */}
-      <button
-        type="button"
-        onClick={() => {
-          if (isOpen) {
-            setIsOpen(false);
-            return;
-          }
-          handleOpen();
-        }}
-        aria-label="Toggle chat widget"
-        style={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          background: '#ffffff',
-          border: '0.5px solid #e2e8f0',
-          boxShadow: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 50,
-          transition: 'background 0.15s',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#f8fafc'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#ffffff'; }}
-      >
-        <MessageSquare size={20} color="#1e40af" />
-        {!isOpen && unread && (
-          <span
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: -3,
-              right: -3,
-              width: 14,
-              height: 14,
-              background: '#dc2626',
-              borderRadius: '50%',
-              border: '2px solid var(--bg-page)',
-              fontSize: 9,
-              color: '#fff',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          />
-        )}
-      </button>
-    </>
+            <p className="mt-2 text-center text-xs text-slate-500">Powered by AI</p>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-lg hover:bg-[#1e40af]"
+          aria-label="Open chat assistant"
+        >
+          <MessageCircle size={22} />
+        </button>
+      )}
+    </div>
   );
 }
