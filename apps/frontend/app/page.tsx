@@ -108,9 +108,12 @@ export default function DashboardPage(): React.ReactElement {
   const lineData = useMemo(() => {
     const monthAgg = new Map<string, { matched: number; mismatched: number }>();
     records.forEach((item) => {
-      const monthIndex = Number(item.period.split('-')[1]) - 1;
+      const [yearText, monthText] = item.period.split('-');
+      const year = Number(yearText);
+      const monthIndex = Number(monthText) - 1;
       if (Number.isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) return;
-      const monthLabel = new Date(2026, monthIndex, 1).toLocaleString('en-US', { month: 'short' });
+      if (Number.isNaN(year)) return;
+      const monthLabel = new Date(year, monthIndex, 1).toLocaleString('en-US', { month: 'short' });
       if (!MONTH_LABELS.includes(monthLabel)) return;
 
       const existing = monthAgg.get(monthLabel) ?? { matched: 0, mismatched: 0 };

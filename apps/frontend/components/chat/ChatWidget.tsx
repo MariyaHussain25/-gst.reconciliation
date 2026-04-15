@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useRef, useState } from 'react';
 import { MessageCircle, Minimize2, Send, X } from 'lucide-react';
 import { parseJwtUserId } from '../../lib/auth';
 import { apiFetchWithAuth } from '../../lib/api';
@@ -25,15 +25,15 @@ export function ChatWidget(): React.ReactElement {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 1, role: 'bot', text: 'Hi! Ask me anything about GST reconciliation.' },
   ]);
-
-  const nextId = useMemo(() => messages.length + 1, [messages.length]);
+  const nextIdRef = useRef(2);
 
   async function sendMessage(text: string): Promise<void> {
     const token = localStorage.getItem('token') ?? '';
     const userId = parseJwtUserId(token);
     if (!text.trim() || !userId) return;
 
-    const userMessage: ChatMessage = { id: nextId, role: 'user', text };
+    const userMessage: ChatMessage = { id: nextIdRef.current, role: 'user', text };
+    nextIdRef.current += 1;
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
@@ -53,17 +53,19 @@ export function ChatWidget(): React.ReactElement {
       const payload = (await response.json()) as { reply?: string };
       setMessages((prev) => [
         ...prev,
-        { id: prev.length + 2, role: 'bot', text: payload.reply ?? 'I could not generate a response.' },
+        { id: nextIdRef.current, role: 'bot', text: payload.reply ?? 'I could not generate a response.' },
       ]);
+      nextIdRef.current += 1;
     } catch (error) {
       setMessages((prev) => [
         ...prev,
         {
-          id: prev.length + 2,
+          id: nextIdRef.current,
           role: 'bot',
           text: error instanceof Error ? error.message : 'Unable to get response from assistant.',
         },
       ]);
+      nextIdRef.current += 1;
     } finally {
       setLoading(false);
     }
