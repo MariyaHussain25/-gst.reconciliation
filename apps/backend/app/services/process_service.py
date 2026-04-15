@@ -65,6 +65,33 @@ def _gstr2b_period_to_yyyy_mm(tax_period: str, financial_year: str) -> str:
         return ""
 
 
+def _resolve_effective_period(requested_period: str, all_2a_records: list[Gstr2ARecord], all_2b_records: list[Gstr2BRecord]) -> str:
+    """Resolve the period when client doesn't provide one."""
+    if requested_period:
+        return requested_period
+
+    periods_2a: set[str] = set()
+    for rec in all_2a_records:
+        try:
+            if rec.date:
+                periods_2a.add(to_period(parse_gst_date(rec.date)))
+        except (ValueError, TypeError):
+            continue
+
+    periods_2b: set[str] = set()
+    for rec in all_2b_records:
+        period = _gstr2b_period_to_yyyy_mm(rec.tax_period, rec.financial_year)
+        if period:
+            periods_2b.add(period)
+
+    common = sorted(periods_2a & periods_2b, reverse=True)
+    if common:
+        return common[0]
+
+    fallback = sorted(periods_2a | periods_2b, reverse=True)
+    return fallback[0] if fallback else ""
+
+
 async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
     """Run the full reconciliation pipeline for a user and period.
 
@@ -74,13 +101,19 @@ async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
     """
     logger.info(f"[Process] Starting reconciliation for user={user_id}, period={period}")
 
-    financial_year = derive_financial_year(period)
-
-    # Step 1: Fetch GSTR-2A records for user
-    # Filter by period derived from each record's date
+    # Step 1: Fetch records for user
     all_2a_records = await Gstr2ARecord.find(
         Gstr2ARecord.user_id == user_id
     ).to_list()
+    all_2b_records = await Gstr2BRecord.find(
+        Gstr2BRecord.user_id == user_id
+    ).to_list()
+
+    period = _resolve_effective_period(period, all_2a_records, all_2b_records)
+    if not period:
+        raise ValueError("No invoices found for reconciliation. Please upload Books and GSTR-2B files.")
+
+    financial_year = derive_financial_year(period)
 
     gstr2a_records = []
     for rec in all_2a_records:
@@ -92,11 +125,7 @@ async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
             # Cannot verify period for records with unparseable dates — skip them
             logger.warning(f"[Process] Skipping GSTR-2A record with unparseable date: {rec.date!r}")
 
-    # Step 2: Fetch GSTR-2B records — filter by FY + tax_period → YYYY-MM
-    all_2b_records = await Gstr2BRecord.find(
-        Gstr2BRecord.user_id == user_id
-    ).to_list()
-
+    # Step 2: Filter GSTR-2B records by FY + tax_period → YYYY-MM
     gstr2b_records = []
     for rec in all_2b_records:
         rec_period = _gstr2b_period_to_yyyy_mm(rec.tax_period, rec.financial_year)
@@ -120,7 +149,7 @@ async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
             source="GSTR_2A",
             gstin=rec.party_gstin or "",
             vendor_name=rec.particulars or "",
-            invoice_number=str(rec.vch_no) if rec.vch_no else "",
+            invoice_number=(rec.vch_no or ""),
             invoice_date=invoice_date,
             period=period,
             taxable_amount=round(rec.taxable_amount, 2),
@@ -154,6 +183,7 @@ async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
             sgst=round(rec.state_ut_tax, 2),
             cess=round(rec.cess, 2),
             total_amount=round(rec.invoice_value, 2),
+            itc_category=(rec.itc_availability or "ELIGIBLE"),
         )
         gstr2b_invoices.append(inv)
 

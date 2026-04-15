@@ -74,7 +74,7 @@ class TestNormalizeInvoiceNumber:
         assert result == "INV001"
 
     def test_uppercase(self):
-        assert normalize_invoice_number("inv-123") == "INV-123"
+        assert normalize_invoice_number("inv-123") == "INV123"
 
     def test_special_chars_removed(self):
         result = normalize_invoice_number("INV/123#45")

@@ -113,32 +113,42 @@ def build_html(reconciliation: Reconciliation, generated_at: datetime) -> str:
         + "</table></div>"
     )
 
-    # Results table rows
-    if reconciliation.results:
+    def _result_tax_total(result) -> float:
+        if result.gstr2b_igst is not None or result.gstr2b_cgst is not None or result.gstr2b_sgst is not None:
+            return round((result.gstr2b_igst or 0.0) + (result.gstr2b_cgst or 0.0) + (result.gstr2b_sgst or 0.0), 2)
+        return round((result.gstr2a_igst or 0.0) + (result.gstr2a_cgst or 0.0) + (result.gstr2a_sgst or 0.0), 2)
+
+    report_1_rows = [
+        r
+        for r in reconciliation.results
+        if r.match_status in {"MISSING_IN_2B", "MISSING_IN_BOOKS", "FUZZY_MATCH"}
+    ]
+
+    # Report 1 table rows (Accountant view)
+    if report_1_rows:
         rows_html = ""
-        for i, r in enumerate(reconciliation.results):
+        for i, r in enumerate(report_1_rows):
             bg = "#ffffff" if i % 2 == 0 else "#f5f4f2"
             rows_html += (
                 f'<tr style="background:{bg};">'
                 f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{i + 1}</td>'
                 f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{_badge(r.match_status)}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.gstr2a_vendor_name or "—"}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.gstr2b_vendor_name or "—"}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.gstr2b_invoice_number or "—"}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.total_amount_diff)}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.taxable_amount_diff)}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.igst_diff)}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.cgst_diff)}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.sgst_diff)}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.itc_category}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.itc_availability}</td>'
+                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.gstr2a_vendor_gstin or r.gstr2b_vendor_gstin or "—"}</td>'
+                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.gstr2b_invoice_number or r.gstr2a_vch_no or "—"}</td>'
+                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.gstr2a_invoice_amount)}</td>'
+                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(r.gstr2b_invoice_value)}</td>'
+                f'<td style="padding:5px 8px;border-bottom:1px solid #eeede9;">{r.ai_explanation or r.mismatch_reason or "Review required."}</td>'
                 f"</tr>"
             )
     else:
         rows_html = (
-            '<tr><td colspan="12" style="padding:20px;text-align:center;'
+            '<tr><td colspan="8" style="padding:20px;text-align:center;'
             'color:#6e7175;font-style:italic;">No reconciliation results found.</td></tr>'
         )
+
+    table_4a = round(sum(_result_tax_total(r) for r in reconciliation.results if r.match_status in {"EXACT_MATCH", "FUZZY_MATCH"}), 2)
+    table_4b = round(sum(_result_tax_total(r) for r in reconciliation.results if r.match_status in {"MISSING_IN_2B", "MISSING_IN_BOOKS"}), 2)
+    table_4c = round(table_4a - table_4b, 2)
 
     th_style = (
         'style="padding:8px;background:#182844;color:#fff;text-align:left;'
@@ -272,27 +282,51 @@ table.results td {{
   {card3}
 </div>
 
-<!-- Section B: Results Table -->
-<div class="section-title">Reconciliation Results</div>
+<!-- Report 1: Accountant View -->
+<div class="section-title">Report 1: Reconciliation Report (Accountant View)</div>
 <table class="results">
   <thead>
     <tr>
       <th {th_style}>#</th>
       <th {th_style}>Match Status</th>
-      <th {th_style}>GSTR-2A Vendor</th>
-      <th {th_style}>GSTR-2B Vendor</th>
+      <th {th_style}>GSTIN</th>
       <th {th_style}>Invoice No.</th>
-      <th {th_style}>Total Diff (₹)</th>
-      <th {th_style}>Taxable Diff (₹)</th>
-      <th {th_style}>IGST Diff</th>
-      <th {th_style}>CGST Diff</th>
-      <th {th_style}>SGST Diff</th>
-      <th {th_style}>ITC Category</th>
-      <th {th_style}>ITC Availability</th>
+      <th {th_style}>Books Value (₹)</th>
+      <th {th_style}>2B Value (₹)</th>
+      <th {th_style}>AI Explanation / Reason</th>
     </tr>
   </thead>
   <tbody>
     {rows_html}
+  </tbody>
+</table>
+
+<!-- Report 2: Portal View -->
+<div class="section-title">Report 2: GST-Ready Summary (Portal View)</div>
+<table class="results" style="max-width:520px;">
+  <thead>
+    <tr>
+      <th {th_style}>GSTR-3B Table</th>
+      <th {th_style}>Description</th>
+      <th {th_style}>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;">4(A)</td>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;">ITC Available</td>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(table_4a)}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;">4(B)</td>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;">ITC Reversed</td>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;text-align:right;">{_fmt_inr(table_4b)}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;font-weight:700;">4(C)</td>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;font-weight:700;">Net ITC Available</td>
+      <td style="padding:8px;border-bottom:1px solid #eeede9;text-align:right;font-weight:700;">{_fmt_inr(table_4c)}</td>
+    </tr>
   </tbody>
 </table>
 

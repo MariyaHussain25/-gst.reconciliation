@@ -60,3 +60,25 @@ def test_parse_gstr2a_uses_invoice_amount_when_column_present():
 
     assert len(result.invoices) == 1
     assert result.invoices[0].invoice_amount == 1500
+
+
+def test_parse_gstr2a_detects_header_with_newlines_and_skips_incomplete_rows():
+    file_bytes = _build_workbook_bytes([
+        ["Voucher Register Export"],
+        ["Generated", "2026-03-15"],
+        [
+            "Invoice\nDate", "Particulars", "GSTIN/UIN", "Invoice No.",
+            "Taxable\nAmount", "Integrated Tax", "Central Tax", "State/UT Tax", "Total Tax",
+        ],
+        ["15-03-2026", "Vendor C", "27ABCDE1234F1Z5", "INV/0005", 1000, 100, 40, 40, 180],
+        ["16-03-2026", "Vendor D", "", "INV/0006", 500, 50, 25, 25, 100],   # no GSTIN -> skip
+        ["17-03-2026", "Vendor E", "27ABCDE1234F1Z5", "", 500, 50, 25, 25, 100],  # no invoice -> skip
+    ])
+
+    result = parse_gstr2a(file_bytes, "dynamic.xlsx")
+
+    assert len(result.invoices) == 1
+    invoice = result.invoices[0]
+    assert invoice.vch_no == "INV/0005"
+    assert invoice.tax_amount == 180
+    assert invoice.invoice_amount == 1180

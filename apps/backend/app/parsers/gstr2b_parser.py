@@ -3,6 +3,7 @@ GSTR-2B Excel parser using openpyxl.
 Rewrite of gstr2b.parser.ts with identical logic.
 """
 
+import re
 from io import BytesIO
 from typing import Optional
 import openpyxl
@@ -56,21 +57,43 @@ class Gstr2BParseResult(BaseModel):
     itc_not_available_summary: ItcSummary
 
 
-B2B_REQUIRED_COLUMNS = [
-    'GSTIN of supplier', 'Trade/Legal name', 'Invoice number', 'Invoice type',
-    'Invoice date', 'Invoice Value(₹)', 'Place of supply',
-    'Supply Attracts Reverse Charge', 'Rate(%)', 'Taxable value',
-    'Integrated Tax', 'Central Tax', 'State/UT tax', 'Cess',
-    'GSTR-1/IFF/GSTR-5 Period', 'GSTR-1/IFF/GSTR-5 Filing Date',
-    'ITC Availability', 'Reason', 'Applicable % of Tax Rate',
-    'Source', 'IRN', 'IRN date'
-]
+CORE_COLUMNS = ("party_gstin", "invoice_number", "invoice_date", "taxable_amount")
+
+GST_HEADER_KEYWORDS = ("gstin", "tax", "invoice", "amount", "date", "particulars", "supplier")
+
+COLUMN_ALIASES: dict[str, list[str]] = {
+    "party_gstin": ["GSTIN of supplier", "Supplier GSTIN", "GSTIN/UIN"],
+    "supplier_name": ["Trade/Legal name", "Supplier Trade Name", "Particulars"],
+    "invoice_number": ["Invoice number", "Invoice No.", "Vch No."],
+    "invoice_type": ["Invoice type", "Vch Type"],
+    "invoice_date": ["Invoice date", "Invoice Date", "Date"],
+    "invoice_value": ["Invoice Value(₹)", "Invoice Value", "Invoice Amount"],
+    "place_of_supply": ["Place of supply"],
+    "reverse_charge": ["Supply Attracts Reverse Charge", "Reverse Charge"],
+    "tax_rate": ["Rate(%)", "Tax Rate"],
+    "taxable_amount": ["Taxable value", "Taxable Value", "Taxable Amount", "Taxable Income"],
+    "igst": ["Integrated Tax", "IGST"],
+    "cgst": ["Central Tax", "CGST"],
+    "sgst": ["State/UT tax", "State/UT Tax", "State Tax", "SGST", "SGST/UTGST"],
+    "cess": ["Cess", "Cess Amount"],
+    "gstr1_period": ["GSTR-1/IFF/GSTR-5 Period"],
+    "gstr1_filing_date": ["GSTR-1/IFF/GSTR-5 Filing Date"],
+    "itc_availability": ["ITC Availability"],
+    "reason": ["Reason"],
+    "applicable_tax_rate_percent": ["Applicable % of Tax Rate"],
+    "source": ["Source"],
+    "irn": ["IRN"],
+    "irn_date": ["IRN date"],
+}
 
 
 def safe_number(val) -> float:
     if val is None or val == "":
         return 0.0
     try:
+        if isinstance(val, str):
+            cleaned = val.replace("₹", "").replace(",", "").strip()
+            return float(cleaned) if cleaned else 0.0
         return float(val)
     except (ValueError, TypeError):
         return 0.0
@@ -95,6 +118,47 @@ def safe_optional_str(val) -> Optional[str]:
     if val is None or safe_str(val) == "":
         return None
     return str(val).strip()
+
+
+def _normalize_header(value) -> str:
+    text = safe_str(value).replace("\n", " ").replace("\r", " ")
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+def _detect_header_row(all_rows: list[tuple]) -> int:
+    best_idx = -1
+    best_score = -1
+    for i, row in enumerate(all_rows[:15]):
+        if not row:
+            continue
+        score = 0
+        for cell in row:
+            normalized = _normalize_header(cell)
+            if not normalized:
+                continue
+            if any(keyword in normalized for keyword in GST_HEADER_KEYWORDS):
+                score += 1
+        if score > best_score:
+            best_score = score
+            best_idx = i
+    return best_idx if best_score > 0 else -1
+
+
+def _build_column_map(header_row: tuple) -> dict[str, int]:
+    alias_lookup: dict[str, str] = {}
+    for canonical, aliases in COLUMN_ALIASES.items():
+        for alias in aliases:
+            alias_lookup[_normalize_header(alias)] = canonical
+
+    resolved: dict[str, int] = {}
+    for idx, cell in enumerate(header_row):
+        normalized = _normalize_header(cell)
+        if not normalized:
+            continue
+        canonical = alias_lookup.get(normalized)
+        if canonical and canonical not in resolved:
+            resolved[canonical] = idx
+    return resolved
 
 
 def _extract_readme_metadata(ws) -> Gstr2BMetadata:
@@ -123,64 +187,64 @@ def _extract_readme_metadata(ws) -> Gstr2BMetadata:
 def _parse_b2b_sheet(ws) -> list[Gstr2BInvoice]:
     """Parse the B2B sheet into invoice records."""
     all_rows = list(ws.iter_rows(values_only=True))
-    header_row_idx = -1
-    col_map: dict[str, int] = {}
-
-    # Find header row by looking for "GSTIN of supplier" in any cell
-    for i, row in enumerate(all_rows):
-        if not row:
-            continue
-        for j, cell in enumerate(row):
-            if cell is not None and "GSTIN of supplier" in safe_str(cell):
-                header_row_idx = i
-                for k, h in enumerate(row):
-                    if h is not None:
-                        col_map[safe_str(h).strip()] = k
-                break
-        if header_row_idx != -1:
-            break
+    header_row_idx = _detect_header_row(all_rows)
 
     if header_row_idx == -1:
+        return []
+    col_map = _build_column_map(all_rows[header_row_idx])
+    if any(column not in col_map for column in CORE_COLUMNS):
         return []
 
     invoices: list[Gstr2BInvoice] = []
     for row in all_rows[header_row_idx + 1:]:
-        if not row:
-            continue
-        supplier_gstin = safe_str(row[col_map.get('GSTIN of supplier', -1)] if col_map.get('GSTIN of supplier', -1) >= 0 and col_map.get('GSTIN of supplier', -1) < len(row) else None)
-        if not supplier_gstin:
+        if not row or all(cell is None for cell in row):
             continue
 
         def get_cell(col_name: str):
-            idx = col_map.get(col_name, -1)
-            if idx < 0 or idx >= len(row):
+            idx = col_map.get(col_name)
+            if idx is None or idx >= len(row):
                 return None
             return row[idx]
+
+        supplier_gstin = safe_str(get_cell("party_gstin")).upper().replace(" ", "")
+        invoice_number = safe_str(get_cell("invoice_number"))
+        invoice_date = safe_str(get_cell("invoice_date"))
+        if not supplier_gstin or not invoice_number or not invoice_date:
+            continue
+
+        taxable_value = safe_number(get_cell("taxable_amount"))
+        integrated_tax = safe_number(get_cell("igst"))
+        central_tax = safe_number(get_cell("cgst"))
+        state_ut_tax = safe_number(get_cell("sgst"))
+        cess = safe_number(get_cell("cess"))
+        invoice_value = safe_number(get_cell("invoice_value"))
+        if invoice_value == 0.0:
+            invoice_value = round(taxable_value + integrated_tax + central_tax + state_ut_tax + cess, 2)
 
         invoice = Gstr2BInvoice(
             sheet_name="B2B",
             supplier_gstin=supplier_gstin,
-            supplier_trade_name=safe_str(get_cell('Trade/Legal name')),
-            invoice_number=safe_str(get_cell('Invoice number')),
-            invoice_type=safe_str(get_cell('Invoice type')),
-            invoice_date=safe_str(get_cell('Invoice date')),
-            invoice_value=safe_number(get_cell('Invoice Value(₹)')),
-            place_of_supply=safe_str(get_cell('Place of supply')),
-            supply_attracts_reverse_charge=safe_str(get_cell('Supply Attracts Reverse Charge')),
-            tax_rate=safe_optional_number(get_cell('Rate(%)')),
-            taxable_value=safe_number(get_cell('Taxable value')),
-            integrated_tax=safe_number(get_cell('Integrated Tax')),
-            central_tax=safe_number(get_cell('Central Tax')),
-            state_ut_tax=safe_number(get_cell('State/UT tax')),
-            cess=safe_number(get_cell('Cess')),
-            gstr1_period=safe_optional_str(get_cell('GSTR-1/IFF/GSTR-5 Period')),
-            gstr1_filing_date=safe_optional_str(get_cell('GSTR-1/IFF/GSTR-5 Filing Date')),
-            itc_availability=safe_str(get_cell('ITC Availability')),
-            itc_unavailable_reason=safe_optional_str(get_cell('Reason')),
-            applicable_tax_rate_percent=safe_optional_number(get_cell('Applicable % of Tax Rate')),
-            source=safe_str(get_cell('Source')),
-            irn=safe_optional_str(get_cell('IRN')),
-            irn_date=safe_optional_str(get_cell('IRN date')),
+            supplier_trade_name=safe_str(get_cell("supplier_name")),
+            invoice_number=invoice_number,
+            invoice_type=safe_str(get_cell("invoice_type")),
+            invoice_date=invoice_date,
+            invoice_value=invoice_value,
+            place_of_supply=safe_str(get_cell("place_of_supply")),
+            supply_attracts_reverse_charge=safe_str(get_cell("reverse_charge")),
+            tax_rate=safe_optional_number(get_cell("tax_rate")),
+            taxable_value=taxable_value,
+            integrated_tax=integrated_tax,
+            central_tax=central_tax,
+            state_ut_tax=state_ut_tax,
+            cess=cess,
+            gstr1_period=safe_optional_str(get_cell("gstr1_period")),
+            gstr1_filing_date=safe_optional_str(get_cell("gstr1_filing_date")),
+            itc_availability=safe_str(get_cell("itc_availability")),
+            itc_unavailable_reason=safe_optional_str(get_cell("reason")),
+            applicable_tax_rate_percent=safe_optional_number(get_cell("applicable_tax_rate_percent")),
+            source=safe_str(get_cell("source")),
+            irn=safe_optional_str(get_cell("irn")),
+            irn_date=safe_optional_str(get_cell("irn_date")),
         )
         invoices.append(invoice)
 
@@ -227,6 +291,9 @@ def parse_gstr2b(file_bytes: bytes, file_name: str) -> Gstr2BParseResult:
         if sheet_name.strip().upper() == "B2B":
             b2b_invoices = _parse_b2b_sheet(wb[sheet_name])
             break
+    if not b2b_invoices and wb.sheetnames:
+        # Graceful fallback for ERP exports where sheet is not literally named "B2B".
+        b2b_invoices = _parse_b2b_sheet(wb[wb.sheetnames[0]])
 
     # Parse ITC summary sheets
     itc_available_summary = ItcSummary()
