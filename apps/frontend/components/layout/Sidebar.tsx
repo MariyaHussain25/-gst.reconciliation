@@ -2,9 +2,9 @@
 
 /**
  * @file components/layout/Sidebar.tsx
- * @description Global sidebar navigation. Background is always #0a1628 (navy) — never changes.
- * Uses usePathname() for active state. Lucide React icons.
- * Phase 12: Full rebuild — navy design system.
+ * @description Collapsible sidebar navigation.
+ * Desktop: collapsed to 64px (icons only) by default, expands to 220px on hover.
+ * Mobile: full-width slide-in drawer via .app-sidebar.open class.
  */
 
 import Link from 'next/link';
@@ -18,12 +18,13 @@ import {
   Calculator,
   FilePlus,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 
 interface NavItem {
   href: string;
   label: string;
-  Icon: React.ComponentType<{ size?: number; color?: string }>;
+  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
   exact?: boolean;
 }
 
@@ -35,6 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/rules',        label: 'Rules',        Icon: BookOpen },
   { href: '/itc-summary',  label: 'ITC Summary',  Icon: Calculator },
   { href: '/file-returns', label: 'File Returns', Icon: FilePlus },
+  { href: '/chat',         label: 'Chat',         Icon: MessageSquare },
 ];
 
 export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactElement {
@@ -45,7 +47,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
     localStorage.removeItem('token');
     document.cookie = 'token=; path=/; max-age=0';
     onClose?.();
-    router.push('/login');
+    void router.push('/login');
   }
 
   function isActive(item: NavItem): boolean {
@@ -55,72 +57,89 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
 
   return (
     <aside
-      className="app-sidebar"
       style={{
-        width: 220,
-        minWidth: 220,
+        width: '100%',
+        height: '100%',
         background: '#0a0a0a',
-        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        flexShrink: 0,
+        overflow: 'hidden',
         borderRight: '1px solid rgba(255,255,255,0.06)',
       }}
     >
       {/* ── Logo / Brand ── */}
       <div
         style={{
-          padding: '22px 18px 18px',
+          height: 58,
+          display: 'flex',
+          alignItems: 'center',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
+          overflow: 'hidden',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Icon always centered in the 64px column */}
+        <div
+          style={{
+            width: 64,
+            minWidth: 64,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
           <div
             style={{
               width: 30,
               height: 30,
-              borderRadius: 7,
+              borderRadius: 8,
               background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: 700,
               color: '#fff',
               flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(229,62,62,0.35)',
+              boxShadow: '0 2px 10px rgba(229,62,62,0.4)',
             }}
           >
             G
           </div>
-          <div>
-            <p style={{ color: '#f0f0f0', fontSize: 13, fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.01em' }}>
-              GST Recon
-            </p>
-            <p
-              style={{
-                color: '#3b82f6',
-                fontSize: 10,
-                fontFamily: "'JetBrains Mono', monospace",
-                marginTop: 2,
-                letterSpacing: '0.02em',
-              }}
-            >
-              ITC Automation
-            </p>
-          </div>
+        </div>
+
+        {/* Text — hidden when collapsed */}
+        <div className="sidebar-logo-text" style={{ overflow: 'hidden' }}>
+          <p style={{ color: '#f0f0f0', fontSize: 13, fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
+            GST Recon
+          </p>
+          <p
+            style={{
+              color: '#3b82f6',
+              fontSize: 10,
+              fontFamily: "'JetBrains Mono', monospace",
+              marginTop: 2,
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            ITC Automation
+          </p>
         </div>
       </div>
 
       {/* ── Nav section label ── */}
-      <div style={{ padding: '16px 18px 8px' }}>
+      <div style={{ paddingTop: 14, paddingBottom: 4, paddingLeft: 16, overflow: 'hidden', flexShrink: 0 }}>
         <span
+          className="sidebar-section-label"
           style={{
             fontSize: 10,
             fontWeight: 600,
-            color: '#444444',
+            color: '#3a3a3a',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
           }}
         >
           Navigation
@@ -128,7 +147,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
       </div>
 
       {/* ── Nav items ── */}
-      <nav style={{ flex: 1, paddingBottom: 8 }} aria-label="Sidebar navigation">
+      <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 8 }} aria-label="Sidebar navigation">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item);
           return (
@@ -136,74 +155,106 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
               key={item.href}
               href={item.href}
               onClick={onClose}
+              title={item.label}
+              className={`sidebar-nav-item${active ? ' active' : ''}`}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
-                padding: '9px 18px',
-                fontSize: 13,
-                fontWeight: active ? 500 : 400,
-                color: active ? '#f0f0f0' : '#666666',
-                background: active ? 'rgba(229,62,62,0.1)' : 'transparent',
-                borderLeft: active ? '2px solid #e53e3e' : '2px solid transparent',
                 textDecoration: 'none',
-                transition: 'background 0.15s, color 0.15s',
-                letterSpacing: '-0.005em',
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)';
-                  (e.currentTarget as HTMLAnchorElement).style.color = '#c0c0c0';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
-                  (e.currentTarget as HTMLAnchorElement).style.color = '#666666';
-                }
+                position: 'relative',
+                borderLeft: active ? '2px solid #e53e3e' : '2px solid transparent',
+                background: active ? 'rgba(229,62,62,0.08)' : 'transparent',
+                transition: 'background 0.15s, border-color 0.15s',
               }}
             >
-              <item.Icon size={15} color={active ? '#e53e3e' : '#555555'} />
-              {item.label}
+              {/* Icon — always visible, centered */}
+              <span
+                style={{
+                  width: 62,
+                  minWidth: 62,
+                  height: 38,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'color 0.15s',
+                }}
+              >
+                <item.Icon
+                  size={16}
+                  strokeWidth={active ? 2.2 : 1.8}
+                  color={active ? '#e53e3e' : '#556'}
+                />
+              </span>
+
+              {/* Label — fades in when expanded */}
+              <span
+                className="sidebar-label"
+                style={{
+                  fontSize: 13,
+                  fontWeight: active ? 500 : 400,
+                  color: active ? '#f0f0f0' : '#888',
+                  whiteSpace: 'nowrap',
+                  letterSpacing: '-0.005em',
+                }}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
       </nav>
 
-      {/* ── Logout ── */}
-      <div style={{ padding: '14px 18px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* ── User / Logout ── */}
+      <div
+        style={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
+          overflow: 'hidden',
+        }}
+      >
         <button
           type="button"
           onClick={handleLogout}
+          title="Sign out"
+          className="sidebar-nav-item"
           style={{
             width: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            color: '#888888',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 7,
             background: 'transparent',
-            padding: '8px 12px',
-            fontSize: 13,
+            border: 'none',
             cursor: 'pointer',
             fontFamily: "'DM Sans', sans-serif",
-            transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+            borderLeft: '2px solid transparent',
+            transition: 'background 0.15s',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(229,62,62,0.08)';
-            (e.currentTarget as HTMLButtonElement).style.color = '#e53e3e';
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(229,62,62,0.3)';
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(229,62,62,0.07)';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            (e.currentTarget as HTMLButtonElement).style.color = '#888888';
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)';
           }}
         >
-          <LogOut size={14} />
-          Sign out
+          <span
+            style={{
+              width: 62,
+              minWidth: 62,
+              height: 46,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <LogOut size={15} color="#666" strokeWidth={1.8} />
+          </span>
+          <span
+            className="sidebar-label"
+            style={{ fontSize: 13, color: '#888', whiteSpace: 'nowrap' }}
+          >
+            Sign out
+          </span>
         </button>
       </div>
     </aside>

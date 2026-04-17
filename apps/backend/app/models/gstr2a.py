@@ -1,6 +1,6 @@
 """GSTR-2A record document model - replaces gstr2a.model.ts"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from beanie import Document
 from pydantic import Field
 
@@ -28,7 +28,7 @@ class Gstr2ARecord(Document):
     tax_amount: float = 0.0
     invoice_amount: float = 0.0
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "gstr2a_records"

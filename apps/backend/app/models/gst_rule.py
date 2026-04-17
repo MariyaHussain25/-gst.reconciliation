@@ -1,6 +1,6 @@
 """GST Rule document model - replaces rules.model.ts"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from beanie import Document, Indexed
 from pydantic import Field
 
@@ -15,7 +15,7 @@ class GstRule(Document):
     gstr3b_table: str | None = None
     embedding: list[float] = Field(default_factory=list)  # 1536 dimensions for Phase 6
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "gst_rules"

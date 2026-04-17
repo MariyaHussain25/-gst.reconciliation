@@ -4,8 +4,12 @@ All required environment variables are validated on startup.
 The application will raise a validation error if any required variable is missing.
 """
 
+from pathlib import Path
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
+
+# Always resolve .env relative to the backend root, not the cwd
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent  # apps/backend/
 
 
 class Settings(BaseSettings):
@@ -30,19 +34,28 @@ class Settings(BaseSettings):
         default=["http://localhost:3000"],
         description="CORS allowed origins"
     )
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v: object) -> list[str]:
+        """Accept either a JSON array or a comma-separated string from .env."""
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v  # type: ignore[return-value]
+
     SECRET_KEY: str = Field(default="change-me-in-production", description="JWT signing secret key")
 
     # Phase 7 — Gemini model for AI explanations
     # "Gemini 1.5 Pro" is the valid Google model ID closest to the requested "Gemini Pro".
     GOOGLE_API_KEY: str | None = Field(default=None, description="Google API key for Gemini AI explanations")
     OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-3-small", description="OpenAI embedding model for vector generation")
-    GEMINI_MODEL: str = Field(default="gemini-1.5-pro", description="Google Gemini chat model for AI explanations")
+    GEMINI_MODEL: str = Field(default="gemini-2.0-flash", description="Google Gemini chat model for AI explanations")
 
     # Phase 8 — PDF generation
     PDF_BACKEND: str = Field(default="weasy", description="PDF backend: 'weasy' or 'chromium'")
 
     model_config = {
-        "env_file": ".env",
+        "env_file": str(_BACKEND_ROOT / ".env"),
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
     }

@@ -1,6 +1,6 @@
 """GSTR-2B record document model - replaces gstr2b.model.ts"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from beanie import Document
 from pydantic import Field
@@ -42,7 +42,7 @@ class Gstr2BRecord(Document):
     irn: Optional[str] = None
     irn_date: Optional[str] = None
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "gstr2b_records"

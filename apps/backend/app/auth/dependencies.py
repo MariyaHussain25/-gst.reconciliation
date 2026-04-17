@@ -18,18 +18,15 @@ from app.services.auth_service import decode_access_token
 
 async def get_current_user_id(
     authorization: Optional[str] = Header(default=None),
-    x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
 ) -> str:
     """
     Extract and return the user_id from an incoming request.
 
-    Priority:
-    1. `Authorization: Bearer <token>` — JWT token is decoded and the ``sub``
-       claim is used as the user_id.
-    2. `X-User-Id: <user_id>` — development fallback header.
+    Reads the ``Authorization: Bearer <token>`` header, decodes the JWT,
+    and returns the ``sub`` claim as the user_id.
 
     Raises:
-        HTTPException(401): If neither header is present or the token is invalid.
+        HTTPException(401): If the header is absent or the token is invalid/expired.
     """
     if authorization:
         parts = authorization.split(" ", 1)
@@ -39,9 +36,6 @@ async def get_current_user_id(
             if not user_id:
                 raise HTTPException(status_code=401, detail="Invalid or expired token")
             return user_id
-
-    if x_user_id:
-        return x_user_id.strip()
 
     raise HTTPException(status_code=401, detail="Authentication required")
 

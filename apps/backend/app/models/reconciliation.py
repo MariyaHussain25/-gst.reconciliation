@@ -1,6 +1,6 @@
 """Reconciliation document model - replaces reconciliation.model.ts"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from beanie import Document, Indexed
 from pydantic import BaseModel, Field
@@ -75,8 +75,8 @@ class Reconciliation(Document):
     status: str = "PENDING"  # PENDING, PROCESSING, COMPLETED, FAILED
     results: list[ReconciliationResult] = Field(default_factory=list)
     summary: ReconciliationSummary = Field(default_factory=ReconciliationSummary)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "reconciliations"

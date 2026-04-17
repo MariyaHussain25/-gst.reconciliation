@@ -1,6 +1,6 @@
 """Invoice document model - replaces invoice.model.ts with NEW duplicate tracking fields"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal, Optional
 from beanie import Document, Indexed
 from pydantic import Field
@@ -34,7 +34,7 @@ class Invoice(Document):
     duplicate_status: Optional[str] = None  # FLAGGED, CONFIRMED, DISMISSED
     duplicate_reason: Optional[str] = None
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "invoices"

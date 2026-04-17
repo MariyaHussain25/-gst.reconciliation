@@ -49,190 +49,250 @@ export default function RegisterPage(): React.ReactElement {
     <div
       style={{
         minHeight: '100vh',
-        background: '#0a1628',
+        background: '#111111',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px 16px',
+        padding: '32px 16px',
+        fontFamily: "'DM Sans', sans-serif",
       }}
     >
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: 12,
-          padding: '36px 40px',
-          width: '100%',
-          maxWidth: 400,
-          border: '0.5px solid #e2e8f0',
-        }}
-      >
-        {/* Card header */}
-        <div style={{ marginBottom: 24 }}>
-          <p style={{ fontSize: 18, fontWeight: 700, color: '#0a1628', marginBottom: 4 }}>
-            GST Reconciliation
-          </p>
-          <p
+      <div style={{ width: '100%', maxWidth: 420 }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32, justifyContent: 'center' }}>
+          <div
             style={{
-              fontSize: 11,
-              color: '#3b82f6',
-              fontFamily: "'JetBrains Mono', monospace",
+              width: 30,
+              height: 30,
+              borderRadius: 7,
+              background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 15,
+              fontWeight: 700,
+              color: '#fff',
+              boxShadow: '0 2px 8px rgba(229,62,62,0.35)',
             }}
           >
-            ITC Automation System
-          </p>
+            G
+          </div>
+          <span style={{ color: '#f0f0f0', fontSize: 14, fontWeight: 600, letterSpacing: '-0.01em' }}>
+            GST Reconciliation
+          </span>
         </div>
 
-        <form onSubmit={(e) => void handleRegister(e)} className="flex flex-col gap-4">
-          <div>
-            <label
-              htmlFor="name"
-              style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 5 }}
-            >
-              Full Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{
-                width: '100%',
-                border: '0.5px solid #e2e8f0',
-                borderRadius: 6,
-                padding: '9px 12px',
-                fontSize: 13,
-                color: '#0a1628',
-                outline: 'none',
-                fontFamily: "'DM Sans', sans-serif",
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#1e40af'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
-              placeholder="Your full name"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 5 }}
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                border: '0.5px solid #e2e8f0',
-                borderRadius: 6,
-                padding: '9px 12px',
-                fontSize: 13,
-                color: '#0a1628',
-                outline: 'none',
-                fontFamily: "'DM Sans', sans-serif",
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#1e40af'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 5 }}
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                border: '0.5px solid #e2e8f0',
-                borderRadius: 6,
-                padding: '9px 12px',
-                fontSize: 13,
-                color: '#0a1628',
-                outline: 'none',
-                fontFamily: "'DM Sans', sans-serif",
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#1e40af'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
-              placeholder="••••••••"
-            />
-          </div>
-
-          {success && (
-            <p
-              role="status"
-              style={{
-                background: '#f0fdf4',
-                color: '#16a34a',
-                fontSize: 13,
-                padding: '8px 12px',
-                borderRadius: 6,
-                border: '0.5px solid #bbf7d0',
-              }}
-            >
-              {success}
+        {/* Card */}
+        <div
+          style={{
+            background: '#1a1a1a',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 14,
+            padding: '36px 40px',
+          }}
+        >
+          <div style={{ marginBottom: 28 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', letterSpacing: '-0.02em', marginBottom: 6 }}>
+              Create your account
+            </h2>
+            <p style={{ fontSize: 14, color: '#666666' }}>
+              Start reconciling GST returns in minutes
             </p>
-          )}
+          </div>
 
-          {error && (
-            <p
-              role="alert"
+          <form onSubmit={(e) => void handleRegister(e)} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Full Name */}
+            <div>
+              <label htmlFor="name" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#c0c0c0', marginBottom: 7 }}>
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#e53e3e';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                style={{
+                  width: '100%',
+                  background: '#111111',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  padding: '11px 14px',
+                  fontSize: 14,
+                  color: '#f0f0f0',
+                  outline: 'none',
+                  fontFamily: "'DM Sans', sans-serif",
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                }}
+                placeholder="Your full name"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#c0c0c0', marginBottom: 7 }}>
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#e53e3e';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                style={{
+                  width: '100%',
+                  background: '#111111',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  padding: '11px 14px',
+                  fontSize: 14,
+                  color: '#f0f0f0',
+                  outline: 'none',
+                  fontFamily: "'DM Sans', sans-serif",
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                }}
+                placeholder="you@company.com"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#c0c0c0', marginBottom: 7 }}>
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#e53e3e';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                style={{
+                  width: '100%',
+                  background: '#111111',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  padding: '11px 14px',
+                  fontSize: 14,
+                  color: '#f0f0f0',
+                  outline: 'none',
+                  fontFamily: "'DM Sans', sans-serif",
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                }}
+                placeholder="••••••••"
+              />
+            </div>
+
+            {/* Success */}
+            {success && (
+              <div
+                role="status"
+                style={{
+                  background: 'rgba(34,197,94,0.1)',
+                  border: '1px solid rgba(34,197,94,0.25)',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  fontSize: 13,
+                  color: '#4ade80',
+                }}
+              >
+                {success}
+              </div>
+            )}
+
+            {/* Error */}
+            {error && (
+              <div
+                role="alert"
+                style={{
+                  background: 'rgba(229,62,62,0.1)',
+                  border: '1px solid rgba(229,62,62,0.3)',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <circle cx="8" cy="8" r="7" stroke="#e53e3e" strokeWidth="1.5" />
+                  <path d="M8 5v3.5M8 10.5v.5" stroke="#e53e3e" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <p style={{ fontSize: 13, color: '#e53e3e', lineHeight: 1.4 }}>{error}</p>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
               style={{
-                background: '#fef2f2',
-                color: '#dc2626',
-                fontSize: 13,
-                padding: '8px 12px',
-                borderRadius: 6,
-                border: '0.5px solid #fecaca',
+                width: '100%',
+                background: loading ? '#7a1d1d' : '#e53e3e',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '12px',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: "'DM Sans', sans-serif",
+                transition: 'background 0.15s',
+                letterSpacing: '0.01em',
+                marginTop: 2,
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#c53030';
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#e53e3e';
               }}
             >
-              {error}
-            </p>
-          )}
+              {loading ? 'Creating account…' : 'Create account'}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary"
-            style={{
-              width: '100%',
-              justifyContent: 'center',
-              marginTop: 4,
-              padding: '10px',
-              fontSize: 13,
-              fontWeight: 500,
-              opacity: loading ? 0.6 : 1,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {loading ? 'Creating account…' : 'Register'}
-          </button>
-        </form>
-
-        <p style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
-          Already have an account?{' '}
-          <a href="/login" style={{ color: '#1e40af', fontWeight: 500 }}>
-            Sign In
-          </a>
-        </p>
+          <p style={{ marginTop: 22, textAlign: 'center', fontSize: 13, color: '#666666' }}>
+            Already have an account?{' '}
+            <a
+              href="/login"
+              style={{ color: '#3b82f6', fontWeight: 500, textDecoration: 'none' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#60a5fa'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#3b82f6'; }}
+            >
+              Sign in
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

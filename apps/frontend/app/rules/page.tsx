@@ -9,6 +9,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Loader2, Upload, BookOpen } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 
 interface UploadResult {
@@ -75,72 +76,80 @@ export default function RulesUploadPage(): React.ReactElement {
     }
   }
 
+  const inputSt: React.CSSProperties = {
+    width: '100%', background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+    padding: '9px 12px', color: '#e0e0e0', fontSize: 13, outline: 'none', fontFamily: "'DM Sans', sans-serif",
+    boxSizing: 'border-box',
+  };
+
   return (
-    <div className="py-8">
-      <h1 className="mb-2 text-3xl font-bold text-foreground">GST Rules Knowledge Base</h1>
-      <p className="mb-8 text-muted-foreground">
-        Upload text or PDF files containing GST rules. The system will chunk the document,
-        generate vector embeddings, and store them in MongoDB so the AI chatbot can retrieve
-        relevant rules when answering user questions.
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>GST Rules Knowledge Base</h1>
+      <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+        Upload text or PDF files containing GST rules. The system chunks the document, generates vector
+        embeddings, and stores them in MongoDB so the AI chatbot can retrieve relevant rules.
       </p>
 
-      <div className="mx-auto max-w-2xl">
-        <form
-          onSubmit={(e) => void handleSubmit(e)}
-          className="rounded-xl border border-border bg-surface p-8 shadow-sm"
-        >
-          {/* File upload */}
-          <div className="mb-6">
-            <label
-              className="mb-1 block text-sm font-medium text-foreground"
-              htmlFor="ruleFile"
+      <div style={{ maxWidth: 600 }}>
+        <form onSubmit={(e) => void handleSubmit(e)} style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '24px' }}>
+
+          {/* File drop zone */}
+          <div style={{ marginBottom: 22 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#666', marginBottom: 8 }}>GST Rules Document — .txt or .pdf</label>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => document.getElementById('ruleFile')?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('ruleFile')?.click(); }}
+              style={{
+                border: `2px dashed ${file ? 'rgba(34,197,94,0.45)' : 'rgba(255,255,255,0.1)'}`,
+                borderRadius: 12, padding: '28px 20px', textAlign: 'center', cursor: 'pointer',
+                background: file ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.02)',
+                transition: 'border-color 0.2s, background 0.2s',
+                outline: 'none',
+              }}
             >
-              GST Rules Document &mdash;{' '}
-              <span className="text-muted-foreground">.txt or .pdf</span>
-            </label>
-            <input
-              id="ruleFile"
-              type="file"
-              accept=".txt,.pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="block w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground file:mr-4 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary-foreground hover:file:opacity-90"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Maximum file size: 10 MB. Larger documents will be chunked automatically.
-            </p>
+              <input id="ruleFile" type="file" accept=".txt,.pdf" style={{ display: 'none' }}
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              />
+              {file ? (
+                <>
+                  <BookOpen size={26} color="#4ade80" style={{ marginBottom: 8 }} />
+                  <p style={{ color: '#4ade80', fontSize: 13, fontWeight: 500 }}>{file.name}</p>
+                  <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>{(file.size / 1024).toFixed(1)} KB · Click to replace</p>
+                </>
+              ) : (
+                <>
+                  <Upload size={22} color="#444" style={{ marginBottom: 10 }} />
+                  <p style={{ color: '#888', fontSize: 13 }}>Click to select a .txt or .pdf file</p>
+                  <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>Maximum 10 MB · Larger documents are chunked automatically</p>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* GST Section label */}
-          <div className="mb-6">
-            <label
-              className="mb-1 block text-sm font-medium text-foreground"
-              htmlFor="section"
-            >
-              GST Section <span className="text-muted-foreground">(optional)</span>
+          {/* Section label */}
+          <div style={{ marginBottom: 18 }}>
+            <label htmlFor="section" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#666', marginBottom: 7 }}>
+              GST Section <span style={{ color: '#444' }}>(optional)</span>
             </label>
             <input
-              id="section"
-              type="text"
-              value={section}
+              id="section" type="text" value={section}
               onChange={(e) => setSection(e.target.value)}
               placeholder="e.g. Section 16, Rule 36, Schedule II"
-              className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              style={{ ...inputSt, color: section ? '#e0e0e0' : undefined }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
             />
           </div>
 
-          {/* Category selector */}
-          <div className="mb-6">
-            <label
-              className="mb-1 block text-sm font-medium text-foreground"
-              htmlFor="category"
-            >
-              Category
-            </label>
+          {/* Category */}
+          <div style={{ marginBottom: 24 }}>
+            <label htmlFor="category" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#666', marginBottom: 7 }}>Category</label>
             <select
-              id="category"
-              value={category}
+              id="category" value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              style={{ ...inputSt, cursor: 'pointer' }}
             >
               <option value="GENERAL">General</option>
               <option value="ITC_ELIGIBILITY">ITC Eligibility</option>
@@ -151,85 +160,48 @@ export default function RulesUploadPage(): React.ReactElement {
             </select>
           </div>
 
-          {/* Error banner */}
+          {/* Error */}
           {error !== null && (
-            <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '11px 14px', color: '#f87171', fontSize: 13, marginBottom: 18 }}>
               {error}
             </div>
           )}
 
-          {/* Success banner */}
+          {/* Success */}
           {result !== null && result.success && (
-            <div className="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-              <p className="font-semibold">✓ Ingestion complete</p>
-              <p className="mt-1">{result.message}</p>
+            <div style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.22)', borderRadius: 8, padding: '11px 14px', fontSize: 13, marginBottom: 18 }}>
+              <p style={{ color: '#4ade80', fontWeight: 600, margin: '0 0 4px' }}>✓ Ingestion complete</p>
+              <p style={{ color: '#86efac', margin: 0 }}>{result.message}</p>
               {result.chunks_saved !== undefined && (
-                <p className="mt-1 text-xs text-green-600">
-                  {result.chunks_saved} chunk(s) saved to MongoDB.
-                </p>
+                <p style={{ color: '#555', fontSize: 11, margin: '4px 0 0' }}>{result.chunks_saved} chunk(s) saved to MongoDB.</p>
               )}
             </div>
           )}
 
-          {/* Submit button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading || !file}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn-primary"
+            style={{ width: '100%', justifyContent: 'center', padding: '12px 20px', fontSize: 14, opacity: (loading || !file) ? 0.45 : 1, cursor: (loading || !file) ? 'not-allowed' : 'pointer', pointerEvents: (loading || !file) ? 'none' : 'auto' }}
           >
-            {loading && (
-              <svg
-                className="h-4 w-4 animate-spin"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8H4z"
-                />
-              </svg>
-            )}
-            {loading ? 'Ingesting document…' : 'Upload & Ingest Rules'}
+            {loading ? <><Loader2 size={15} className="animate-spin" /> Ingesting document…</> : <><Upload size={15} /> Upload &amp; Ingest Rules</>}
           </button>
         </form>
 
         {/* How it works */}
-        <div className="mt-8 rounded-xl border border-border bg-surface p-6 text-sm text-muted-foreground">
-          <h2 className="mb-3 text-base font-semibold text-foreground">How it works</h2>
-          <ol className="list-decimal space-y-2 pl-5">
-            <li>Your document is uploaded securely to the backend.</li>
-            <li>
-              The text is extracted (PDF pages are merged) and split into overlapping
-              chunks of ~500 characters to preserve context.
-            </li>
-            <li>
-              Each chunk is converted into a 1,536-dimensional vector using{' '}
-              <span className="font-medium text-foreground">OpenAI text-embedding-3-small</span>.
-            </li>
-            <li>
-              All chunks are stored in{' '}
-              <span className="font-medium text-foreground">MongoDB Atlas</span> ready for
-              semantic retrieval.
-            </li>
-            <li>
-              When a user asks a question in the{' '}
-              <a href="/chat" className="text-primary underline hover:opacity-80">
-                Chat
-              </a>{' '}
-              tab, the system retrieves the most relevant chunks and passes them to the AI
-              as context.
-            </li>
+        <div style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '20px 22px', marginTop: 20 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#e0e0e0', marginBottom: 14 }}>How it works</p>
+          <ol style={{ paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 10, margin: 0 }}>
+            {[
+              'Your document is uploaded securely to the backend.',
+              'The text is extracted and split into overlapping ~500-character chunks.',
+              'Each chunk is converted into a 1,536-dimensional vector using OpenAI text-embedding-3-small.',
+              'All chunks are stored in MongoDB Atlas ready for semantic retrieval.',
+              'When a user asks a question in the Chat tab, the most relevant chunks are retrieved as context.',
+            ].map((step, i) => (
+              <li key={i} style={{ fontSize: 13, color: '#555', lineHeight: 1.6 }}>{step}</li>
+            ))}
           </ol>
         </div>
       </div>

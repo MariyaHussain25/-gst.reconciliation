@@ -13,6 +13,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency } from '../../lib/utils';
 import { apiFetch } from '../../lib/api';
@@ -31,10 +32,19 @@ interface ReconciliationSummary {
   total_ineligible_itc: number;
 }
 
-interface ProcessResponse {
-  success: boolean;
-  message: string;
+interface ReconciliationLookupItem {
+  reconciliation_id: string;
+  period: string;
+  financial_year: string;
+  status: string;
+  created_at: string;
   summary: ReconciliationSummary;
+}
+
+interface ReconciliationLookupResponse {
+  success: boolean;
+  user_id: string;
+  reconciliations: ReconciliationLookupItem[];
 }
 
 function StatCard({
@@ -48,27 +58,25 @@ function StatCard({
 }): React.ReactElement {
   return (
     <div
-      className={`rounded-lg border p-5 ${
-        accent
-          ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border bg-surface text-foreground'
-      }`}
+      style={{
+        background: accent ? 'rgba(229,62,62,0.07)' : '#1a1a1a',
+        border: `1px solid ${accent ? 'rgba(229,62,62,0.22)' : 'rgba(255,255,255,0.07)'}`,
+        borderRadius: 10,
+        padding: '16px 18px',
+      }}
     >
-      <p
-        className={`text-xs font-medium uppercase tracking-wide ${
-          accent ? 'opacity-80' : 'text-muted-foreground'
-        }`}
-      >
+      <p style={{ fontSize: 10, fontWeight: 600, color: accent ? '#e53e3e' : '#444', letterSpacing: '0.09em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
+      <p style={{ fontSize: 21, fontWeight: 700, color: '#f0f0f0', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+        {value}
+      </p>
     </div>
   );
 }
 
 export default function ResultsPage(): React.ReactElement {
   const router = useRouter();
-  const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ReconciliationSummary | null>(null);
@@ -77,7 +85,7 @@ export default function ResultsPage(): React.ReactElement {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login');
+      void router.push('/login');
       return;
     }
 
@@ -87,7 +95,6 @@ export default function ResultsPage(): React.ReactElement {
       return;
     }
 
-    setUserId(resolvedUserId);
     void fetchResults(resolvedUserId, token);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
@@ -108,17 +115,25 @@ export default function ResultsPage(): React.ReactElement {
     setSummary(null);
 
     try {
-      const res = await apiFetch(`/api/process/${encodeURIComponent(uid.trim())}`, {
-        method: 'POST',
+      const res = await apiFetch(`/api/generate-pdf/by-user/${encodeURIComponent(uid.trim())}/lookup`, {
+        method: 'GET',
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!res.ok) {
         const body = (await res.json()) as { error?: string; detail?: string };
         throw new Error(body.error ?? body.detail ?? `Request failed (HTTP ${res.status})`);
       }
-      const data = (await res.json()) as ProcessResponse;
-      setSummary(data.summary as ReconciliationSummary);
-      setMessage(data.message);
+      const data = (await res.json()) as ReconciliationLookupResponse;
+      if (!data.reconciliations || data.reconciliations.length === 0) {
+        setError('No reconciliation results found. Please upload your files and run reconciliation first.');
+        return;
+      }
+      // Show the most recent reconciliation
+      const latest = data.reconciliations.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0];
+      setSummary(latest.summary);
+      setMessage(`Reconciliation for period ${latest.period} (FY ${latest.financial_year}) — ${latest.status}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {
@@ -127,43 +142,23 @@ export default function ResultsPage(): React.ReactElement {
   }
 
   return (
-    <div className="py-8">
-      <h1 className="mb-2 text-3xl font-bold text-foreground">Reconciliation Results</h1>
-      <p className="mb-8 text-muted-foreground">
-        View matched invoices, discrepancies, and ITC eligibility breakdown.
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>
+        Reconciliation Results
+      </h1>
+      <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+        Matched invoices, discrepancies, and ITC eligibility breakdown.
       </p>
 
-      {summary !== null && (
-        <div className="mb-6 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground">
-          Showing results for your account: <span className="font-semibold">{userId}</span>
-        </div>
-      )}
-
       {loading && (
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <svg
-            className="h-5 w-5 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-          Running reconciliation…
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#555', fontSize: 14, padding: '20px 0' }}>
+          <Loader2 size={18} className="animate-spin" />
+          Loading results…
         </div>
       )}
 
       {error !== null && (
-        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '12px 16px', color: '#f87171', fontSize: 13, marginBottom: 24 }}>
           {error}
         </div>
       )}
@@ -171,11 +166,15 @@ export default function ResultsPage(): React.ReactElement {
       {summary !== null && (
         <div>
           {message !== null && (
-            <p className="mb-6 text-sm font-medium text-muted-foreground">{message}</p>
+            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '9px 14px', fontSize: 12, color: '#555', marginBottom: 28, fontFamily: "'JetBrains Mono', monospace" }}>
+              {message}
+            </div>
           )}
 
-          <h2 className="mb-3 text-lg font-semibold text-foreground">Invoice Summary</h2>
-          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 14 }}>
+            Invoice Summary
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 10, marginBottom: 32 }}>
             <StatCard label="Total Invoices" value={summary.total_invoices} accent />
             <StatCard label="Matched" value={summary.matched_count} />
             <StatCard label="Fuzzy Match" value={summary.fuzzy_match_count} />
@@ -186,26 +185,23 @@ export default function ResultsPage(): React.ReactElement {
             <StatCard label="GSTIN Mismatch" value={summary.gstin_mismatch_count} />
           </div>
 
-          <h2 className="mb-3 text-lg font-semibold text-foreground">ITC Summary</h2>
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard
-              label="Eligible ITC (₹)"
-              value={formatCurrency(summary.total_eligible_itc)}
-              accent
-            />
-            <StatCard
-              label="Blocked ITC (₹)"
-              value={formatCurrency(summary.total_blocked_itc)}
-            />
-            <StatCard
-              label="Ineligible ITC (₹)"
-              value={formatCurrency(summary.total_ineligible_itc)}
-            />
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 14 }}>
+            ITC Summary
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10, marginBottom: 32 }}>
+            <StatCard label="Eligible ITC (₹)" value={formatCurrency(summary.total_eligible_itc)} accent />
+            <StatCard label="Blocked ITC (₹)" value={formatCurrency(summary.total_blocked_itc)} />
+            <StatCard label="Ineligible ITC (₹)" value={formatCurrency(summary.total_ineligible_itc)} />
           </div>
 
-          <div className="rounded-lg border border-border bg-surface p-5 text-sm text-muted-foreground">
-            Want a detailed PDF report?{' '}
-            <Link href="/reports" className="font-medium text-primary underline underline-offset-2 hover:opacity-80">
+          <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '14px 18px', fontSize: 13, color: '#555' }}>
+            Want the detailed PDF report?{' '}
+            <Link
+              href="/reports"
+              style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 500 }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'none'; }}
+            >
               Go to Reports →
             </Link>
           </div>

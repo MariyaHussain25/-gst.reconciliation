@@ -5,8 +5,9 @@ Files are pushed to S3/R2 when credentials are configured; otherwise
 metadata is stored in MongoDB only.
 """
 
+import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from app.config.settings import settings
 from app.parsers.gstr2a_parser import parse_gstr2a
 from app.parsers.gstr2b_parser import parse_gstr2b
@@ -26,29 +27,28 @@ def _detect_file_type(file_bytes: bytes) -> str:
     import openpyxl
     try:
         wb = openpyxl.load_workbook(BytesIO(file_bytes), read_only=True, data_only=True)
-        # Check for GSTR-2B by looking for "Read me" sheet
-        sheet_names_lower = [s.lower().strip() for s in wb.sheetnames]
-        if "read me" in sheet_names_lower:
+        try:
+            # Check for GSTR-2B by looking for "Read me" sheet
+            sheet_names_lower = [s.lower().strip() for s in wb.sheetnames]
+            if "read me" in sheet_names_lower:
+                return "GSTR_2B"
+            # Check first sheet for GSTR-2A indicators
+            ws = wb.worksheets[0]
+            for row in ws.iter_rows(max_row=10, values_only=True):
+                for cell in row:
+                    if cell and isinstance(cell, str):
+                        cell_upper = cell.upper()
+                        if "GSTR-2A" in cell_upper or "VOUCHER REGISTER" in cell_upper:
+                            return "GSTR_2A"
+            return "GSTR_2A"  # default
+        finally:
             wb.close()
-            return "GSTR_2B"
-        # Check first sheet for GSTR-2A indicators
-        ws = wb.worksheets[0]
-        for row in ws.iter_rows(max_row=10, values_only=True):
-            for cell in row:
-                if cell and isinstance(cell, str):
-                    cell_upper = cell.upper()
-                    if "GSTR-2A" in cell_upper or "VOUCHER REGISTER" in cell_upper:
-                        wb.close()
-                        return "GSTR_2A"
-        wb.close()
-        return "GSTR_2A"  # default
     except Exception:
         return "GSTR_2A"
 
 
 async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> UploadResponse:
     """Handle file upload: validate, detect type, parse, and store."""
-    import os
     ext = os.path.splitext(file_name)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise ValueError(f"Invalid file type '{ext}'. Only .xlsx and .xls are allowed.")
@@ -61,7 +61,6 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
     file_id = f"{file_type.lower()}_{user_id}_{int(time.time())}"
 
     # Push raw file to S3 / R2 (no-op when credentials are absent)
-    import os
     s3_key = f"gstr_uploads/{user_id}/{file_id}{os.path.splitext(file_name)[1].lower()}"
     s3_service.upload_file(file_bytes, s3_key)
 
@@ -98,10 +97,10 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
             file_id=file_id,
             file_name=file_name,
             period=f"{result.metadata.period_start} to {result.metadata.period_end}",
-            uploaded_at=datetime.utcnow(),
+            uploaded_at=datetime.now(timezone.utc),
         )
         await User.find_one(User.user_id == user_id).update(
-            {"$push": {"gstr2a_files": file_ref.model_dump()}, "$set": {"updated_at": datetime.utcnow()}}
+            {"$push": {"gstr2a_files": file_ref.model_dump()}, "$set": {"updated_at": datetime.now(timezone.utc)}}
         )
 
         return UploadResponse(
@@ -160,10 +159,10 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
             file_name=file_name,
             tax_period=result.metadata.tax_period,
             financial_year=result.metadata.financial_year,
-            uploaded_at=datetime.utcnow(),
+            uploaded_at=datetime.now(timezone.utc),
         )
         await User.find_one(User.user_id == user_id).update(
-            {"$push": {"gstr2b_files": file_ref.model_dump()}, "$set": {"updated_at": datetime.utcnow()}}
+            {"$push": {"gstr2b_files": file_ref.model_dump()}, "$set": {"updated_at": datetime.now(timezone.utc)}}
         )
 
         return UploadResponse(
