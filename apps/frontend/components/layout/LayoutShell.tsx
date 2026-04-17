@@ -3,9 +3,10 @@
 /**
  * @file components/layout/LayoutShell.tsx
  * @description Conditional layout shell.
- * Auth pages (/login, /register): renders children only — no Sidebar, TopBar, ChatWidget.
- * All other pages: renders the full authenticated layout (Sidebar + TopBar + content + ChatWidget).
- * Mobile: sidebar hidden by default, toggled via hamburger button in TopBar.
+ * Auth pages (/login, /register, /recovery): renders children only.
+ * All other pages: renders sidebar + top bar + main content + chat widget.
+ * Mobile: sidebar hidden by default, toggled via hamburger.
+ * Desktop: sidebar collapses to 64px icons, expands to 220px on hover (CSS-only).
  */
 
 import { useState } from 'react';
@@ -13,8 +14,9 @@ import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { ChatWidget } from '../chat/ChatWidget';
+import { ToastProvider } from '../ui/Toast';
 
-const AUTH_ROUTES = ['/login', '/register'];
+const AUTH_ROUTES = ['/login', '/register', '/recovery'];
 
 export function LayoutShell({
   children,
@@ -26,37 +28,39 @@ export function LayoutShell({
   const isAuthPage = AUTH_ROUTES.includes(pathname);
 
   if (isAuthPage) {
-    return <>{children}</>;
+    return <ToastProvider>{children}</ToastProvider>;
   }
 
   return (
-    <div className="app-shell">
-      {/* Mobile overlay — tap to close sidebar */}
-      <div
-        className={`sidebar-overlay${sidebarOpen ? ' open' : ''}`}
-        onClick={() => setSidebarOpen(false)}
-        aria-hidden="true"
-      />
+    <ToastProvider>
+      <div className="app-shell">
+        {/* Mobile overlay — tap to close sidebar */}
+        <div
+          className={`sidebar-overlay${sidebarOpen ? ' open' : ''}`}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
 
-      {/* Sidebar */}
-      <div className={`app-sidebar${sidebarOpen ? ' open' : ''}`}>
-        <Sidebar onClose={() => setSidebarOpen(false)} />
-      </div>
+        {/* Sidebar wrapper — CSS controls width on desktop; class .open on mobile */}
+        <div className={`app-sidebar${sidebarOpen ? ' open' : ''}`}>
+          <Sidebar onClose={() => setSidebarOpen(false)} />
+        </div>
 
-      <div className="app-content">
-        <TopBar onMenuClick={() => setSidebarOpen((v) => !v)} />
-        <main
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '28px',
-            background: '#111111',
-          }}
-        >
-          {children}
-        </main>
+        <div className="app-content">
+          <TopBar onMenuClick={() => setSidebarOpen((v) => !v)} />
+          <main
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '28px',
+              background: '#111111',
+            }}
+          >
+            {children}
+          </main>
+        </div>
+        <ChatWidget />
       </div>
-      <ChatWidget />
-    </div>
+    </ToastProvider>
   );
 }

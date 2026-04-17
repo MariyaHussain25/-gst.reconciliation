@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { clearSessionAndRedirectToLogin, isTokenValid, parseJwtUserId } from '../../lib/auth';
 import { apiFetch } from '../../lib/api';
@@ -64,20 +65,19 @@ function StatCard({
 }): React.ReactElement {
   return (
     <div
-      className={`rounded-lg border p-5 ${
-        accent
-          ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border bg-surface text-foreground'
-      }`}
+      style={{
+        background: accent ? 'rgba(229,62,62,0.07)' : '#1a1a1a',
+        border: `1px solid ${accent ? 'rgba(229,62,62,0.22)' : 'rgba(255,255,255,0.07)'}`,
+        borderRadius: 10,
+        padding: '16px 18px',
+      }}
     >
-      <p
-        className={`text-xs font-medium uppercase tracking-wide ${
-          accent ? 'opacity-80' : 'text-muted-foreground'
-        }`}
-      >
+      <p style={{ fontSize: 10, fontWeight: 600, color: accent ? '#e53e3e' : '#444', letterSpacing: '0.09em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
+      <p style={{ fontSize: 21, fontWeight: 700, color: '#f0f0f0', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -148,117 +148,103 @@ export default function ITCSummaryPage(): React.ReactElement {
     void fetchITCData(token, userId);
   }, [fetchITCData, router]);
 
-  const tabClass = (key: TabKey) =>
-    `px-6 py-3 text-sm font-semibold transition border-b-2 ${
-      activeTab === key
-        ? 'border-primary text-primary'
-        : 'border-transparent text-muted-foreground hover:text-foreground'
-    }`;
-
   const summary = reconciliation?.summary ?? null;
   const period = reconciliation?.period ?? '—';
   const financialYear = reconciliation?.financial_year ?? '—';
 
   return (
     <div>
-      {/* Page header strip */}
-      <div className="mb-6 rounded-lg bg-primary px-6 py-4">
-        <nav className="mb-1 flex items-center gap-1 text-xs text-primary-foreground/70">
-          <Link href="/" className="transition hover:text-primary-foreground">
-            Home
-          </Link>
-          <span>›</span>
-          <span className="text-primary-foreground">ITC Summary</span>
-        </nav>
-        <h1 className="text-lg font-bold text-primary-foreground">Input Tax Credit (ITC) Summary</h1>
-        <p className="mt-0.5 text-sm text-primary-foreground/70">
-          Period: {period} · FY {financialYear}
-        </p>
-      </div>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>ITC Summary</h1>
+      <p style={{ color: '#666', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>Input Tax Credit breakdown from your latest reconciliation.</p>
 
-      {/* Loading state */}
+      {/* Loading */}
       {loading && (
-        <div className="flex items-center gap-3 py-8 text-muted-foreground">
-          <svg
-            className="h-5 w-5 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-          Loading ITC data…
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '32px 0', color: '#555' }}>
+          <Loader2 size={18} className="animate-spin" />
+          <span style={{ fontSize: 14 }}>Loading ITC data…</span>
         </div>
       )}
 
       {/* Error */}
-      {error !== null && (
-        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {error !== null && !loading && (
+        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '14px 18px', color: '#f87171', fontSize: 13, marginBottom: 20 }}>
           {error}
         </div>
       )}
 
+      {/* Empty */}
       {!loading && reconciliation === null && error === null && (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-muted-foreground">
+        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '40px 24px', textAlign: 'center', color: '#555', fontSize: 14 }}>
           No reconciliation data found. Please{' '}
-          <Link href="/upload" className="font-medium text-primary hover:underline">
+          <Link href="/upload" style={{ color: '#3b82f6', textDecoration: 'none' }}>
             upload your GST files
           </Link>{' '}
           to run reconciliation first.
         </div>
       )}
 
+      {/* Data */}
       {!loading && summary !== null && (
         <>
-          {/* Tabs */}
-          <div className="mb-4 flex border-b border-border">
-            <button onClick={() => setActiveTab('available')} className={tabClass('available')}>
-              ITC Available
-            </button>
-            <button
-              onClick={() => setActiveTab('not-available')}
-              className={tabClass('not-available')}
-            >
-              ITC Not Available
-            </button>
+          {/* Period info */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+            <span style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: '#888' }}>
+              Period: <strong style={{ color: '#ccc' }}>{period}</strong>
+            </span>
+            <span style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: '#888' }}>
+              FY: <strong style={{ color: '#ccc' }}>{financialYear}</strong>
+            </span>
           </div>
 
-          {/* Tab panels */}
-          {activeTab === 'available' ? (
-            <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
+            {(['available', 'not-available'] as TabKey[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '10px 18px', fontSize: 13, fontWeight: 600,
+                  color: activeTab === tab ? '#f87171' : '#555',
+                  borderBottom: activeTab === tab ? '2px solid #e53e3e' : '2px solid transparent',
+                  marginBottom: -1, transition: 'color 0.15s',
+                }}
+              >
+                {tab === 'available' ? 'ITC Available' : 'ITC Not Available'}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab: Available */}
+          {activeTab === 'available' && (
+            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '22px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 18 }}>
                 Part A — ITC Available: Credit claimable in GSTR-3B
               </p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <StatCard
-                  label="Total Eligible ITC (₹)"
-                  value={formatCurrency(summary.total_eligible_itc)}
-                  accent
-                />
-                <StatCard
-                  label="Total Invoices"
-                  value={summary.total_invoices}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
+                <StatCard label="Total Eligible ITC (₹)" value={formatCurrency(summary.total_eligible_itc)} accent />
+                <StatCard label="Total Invoices" value={summary.total_invoices} />
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 12 }}>
                 <StatCard label="Matched" value={summary.matched_count} />
                 <StatCard label="Fuzzy Match" value={summary.fuzzy_match_count} />
                 <StatCard label="Needs Review" value={summary.needs_review_count} />
                 <StatCard label="Value Mismatch" value={summary.value_mismatch_count} />
               </div>
             </div>
-          ) : (
-            <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                ITC Not Available — Blocked &amp; Ineligible
+          )}
+
+          {/* Tab: Not Available */}
+          {activeTab === 'not-available' && (
+            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '22px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 18 }}>
+                Part B — ITC Not Available / Blocked
               </p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <StatCard label="Blocked ITC (₹)" value={formatCurrency(summary.total_blocked_itc)} />
-                <StatCard label="Ineligible ITC (₹)" value={formatCurrency(summary.total_ineligible_itc)} />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
+                <StatCard label="Total Blocked ITC (₹)" value={formatCurrency(summary.total_blocked_itc)} accent />
+                <StatCard label="Total Ineligible ITC (₹)" value={formatCurrency(summary.total_ineligible_itc)} />
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 12 }}>
                 <StatCard label="Missing in 2A" value={summary.missing_in_2a_count} />
                 <StatCard label="Missing in 2B" value={summary.missing_in_2b_count} />
                 <StatCard label="GSTIN Mismatch" value={summary.gstin_mismatch_count} />
@@ -266,16 +252,16 @@ export default function ITCSummaryPage(): React.ReactElement {
             </div>
           )}
 
-          {/* Link to detailed report */}
-          <div className="mt-6 rounded-lg border border-border bg-surface p-5 text-sm text-muted-foreground">
-            Want a detailed reconciliation report?{' '}
-            <Link
-              href="/reports"
-              className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+          {/* Go to Reports */}
+          <p style={{ marginTop: 24, fontSize: 13, color: '#555' }}>
+            View the full reconciliation report in{' '}
+            <Link href="/reports" style={{ color: '#3b82f6', textDecoration: 'none' }}
+              onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
             >
-              Go to Reports →
-            </Link>
-          </div>
+              Reports
+            </Link>.
+          </p>
         </>
       )}
     </div>

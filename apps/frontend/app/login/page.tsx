@@ -20,10 +20,6 @@ function getEmailValidationError(value: string): string | null {
 
 function getPasswordValidationError(value: string): string | null {
   if (!value) return 'Please enter your password.';
-  if (value.length < 8) return 'Password must be at least 8 characters long.';
-  if (!/[A-Z]/.test(value)) return 'Password must include at least one uppercase letter.';
-  if (!/\d/.test(value)) return 'Password must include at least one number.';
-  if (!/[^A-Za-z0-9]/.test(value)) return 'Password must include at least one special character.';
   return null;
 }
 
@@ -422,17 +418,8 @@ export default function LoginPage(): React.ReactElement {
                 type="password"
                 autoComplete="current-password"
                 required
-                minLength={8}
-                pattern="^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onInvalid={(e) => {
-                  const validationError = getPasswordValidationError(e.currentTarget.value);
-                  e.currentTarget.setCustomValidity(validationError ?? '');
-                }}
-                onInput={(e) => {
-                  e.currentTarget.setCustomValidity(getPasswordValidationError(e.currentTarget.value) ?? '');
-                }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = '#e53e3e';
                   e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';

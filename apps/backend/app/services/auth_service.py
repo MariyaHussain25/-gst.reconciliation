@@ -3,7 +3,7 @@ Authentication service — password hashing and JWT token creation.
 Uses passlib/bcrypt for password hashing and python-jose for JWT signing.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from jose import JWTError, jwt
@@ -17,7 +17,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-# Fixed code
 def get_password_hash(password: str) -> str:
     # bcrypt has a 72-byte hard limit — truncate safely
     password_bytes = password.encode("utf-8")[:72]
@@ -25,16 +24,16 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password_truncated)
 
 
-# Fixed verify — must truncate the same way
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     password_bytes = plain_password.encode("utf-8")[:72]
     password_truncated = password_bytes.decode("utf-8", errors="ignore")
     return pwd_context.verify(password_truncated, hashed_password)
 
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a signed JWT access token."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 

@@ -277,38 +277,39 @@ def _parse_itc_summary_sheet(ws) -> ItcSummary:
 def parse_gstr2b(file_bytes: bytes, file_name: str) -> Gstr2BParseResult:
     """Parse GSTR-2B Excel file and return structured data."""
     wb = openpyxl.load_workbook(BytesIO(file_bytes), read_only=True, data_only=True)
+    try:
+        # Extract metadata from "Read me" sheet
+        metadata = Gstr2BMetadata()
+        for sheet_name in wb.sheetnames:
+            if sheet_name.lower().strip() == "read me":
+                metadata = _extract_readme_metadata(wb[sheet_name])
+                break
 
-    # Extract metadata from "Read me" sheet
-    metadata = Gstr2BMetadata()
-    for sheet_name in wb.sheetnames:
-        if sheet_name.lower().strip() == "read me":
-            metadata = _extract_readme_metadata(wb[sheet_name])
-            break
+        # Parse B2B invoices
+        b2b_invoices: list[Gstr2BInvoice] = []
+        for sheet_name in wb.sheetnames:
+            if sheet_name.strip().upper() == "B2B":
+                b2b_invoices = _parse_b2b_sheet(wb[sheet_name])
+                break
+        if not b2b_invoices and wb.sheetnames:
+            # Graceful fallback for ERP exports where sheet is not literally named "B2B".
+            b2b_invoices = _parse_b2b_sheet(wb[wb.sheetnames[0]])
 
-    # Parse B2B invoices
-    b2b_invoices: list[Gstr2BInvoice] = []
-    for sheet_name in wb.sheetnames:
-        if sheet_name.strip().upper() == "B2B":
-            b2b_invoices = _parse_b2b_sheet(wb[sheet_name])
-            break
-    if not b2b_invoices and wb.sheetnames:
-        # Graceful fallback for ERP exports where sheet is not literally named "B2B".
-        b2b_invoices = _parse_b2b_sheet(wb[wb.sheetnames[0]])
+        # Parse ITC summary sheets
+        itc_available_summary = ItcSummary()
+        itc_not_available_summary = ItcSummary()
+        for sheet_name in wb.sheetnames:
+            name_lower = sheet_name.lower().strip()
+            if "itc available" in name_lower and "not" not in name_lower:
+                itc_available_summary = _parse_itc_summary_sheet(wb[sheet_name])
+            elif "itc not available" in name_lower:
+                itc_not_available_summary = _parse_itc_summary_sheet(wb[sheet_name])
 
-    # Parse ITC summary sheets
-    itc_available_summary = ItcSummary()
-    itc_not_available_summary = ItcSummary()
-    for sheet_name in wb.sheetnames:
-        name_lower = sheet_name.lower().strip()
-        if "itc available" in name_lower and "not" not in name_lower:
-            itc_available_summary = _parse_itc_summary_sheet(wb[sheet_name])
-        elif "itc not available" in name_lower:
-            itc_not_available_summary = _parse_itc_summary_sheet(wb[sheet_name])
-
-    wb.close()
-    return Gstr2BParseResult(
-        metadata=metadata,
-        b2b_invoices=b2b_invoices,
-        itc_available_summary=itc_available_summary,
-        itc_not_available_summary=itc_not_available_summary,
-    )
+        return Gstr2BParseResult(
+            metadata=metadata,
+            b2b_invoices=b2b_invoices,
+            itc_available_summary=itc_available_summary,
+            itc_not_available_summary=itc_not_available_summary,
+        )
+    finally:
+        wb.close()

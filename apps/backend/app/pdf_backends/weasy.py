@@ -25,9 +25,16 @@ class WeasyPrintBackend(PdfBackend):
     def render(self, html: str) -> bytes:
         try:
             from weasyprint import HTML
-        except ImportError as exc:
+        except (ImportError, OSError, Exception) as exc:
             raise RuntimeError(
-                "WeasyPrint is not installed. Run: pip install weasyprint>=62.0. "
-                "System dependencies also required — see apps/backend/README.md."
+                "WeasyPrint could not load required system libraries (Cairo/Pango/GObject). "
+                "On Windows, install the GTK3 runtime: https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer. "
+                "On Linux: apt-get install libcairo2 libpango-1.0-0 libpangocairo-1.0-0. "
+                f"Original error: {exc}"
             ) from exc
-        return HTML(string=html).write_pdf()
+        try:
+            return HTML(string=html).write_pdf()
+        except OSError as exc:
+            raise RuntimeError(
+                f"WeasyPrint PDF rendering failed (system library error): {exc}"
+            ) from exc

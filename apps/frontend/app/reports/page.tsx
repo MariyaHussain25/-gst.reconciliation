@@ -8,6 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency, formatPeriod } from '../../lib/utils';
 import { apiFetch } from '../../lib/api';
@@ -74,15 +75,15 @@ const MONTH_OPTIONS = last24Months();
 // ---------------------------------------------------------------------------
 
 function StatusBadge({ status }: { status: string }): React.ReactElement {
-  const colourMap: Record<string, string> = {
-    COMPLETED: 'bg-status-success-bg text-status-success-text',
-    PROCESSING: 'bg-status-warning-bg text-status-warning-text',
-    PENDING: 'bg-muted text-muted-foreground',
-    FAILED: 'bg-status-danger-bg text-status-danger-text',
+  const map: Record<string, { bg: string; color: string }> = {
+    COMPLETED: { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
+    PROCESSING: { bg: 'rgba(245,158,11,0.12)',  color: '#fbbf24' },
+    PENDING:    { bg: 'rgba(255,255,255,0.05)', color: '#555' },
+    FAILED:     { bg: 'rgba(229,62,62,0.12)',   color: '#f87171' },
   };
-  const cls = colourMap[status] ?? 'bg-muted text-muted-foreground';
+  const s = map[status] ?? { bg: 'rgba(255,255,255,0.05)', color: '#555' };
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${cls}`}>
+    <span style={{ background: s.bg, color: s.color, borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
       {status}
     </span>
   );
@@ -201,284 +202,163 @@ export default function ReportsPage(): React.ReactElement {
     }
   }
 
-  // ---- Tab button helper ----
-  function TabButton({
-    id,
-    label,
-  }: {
-    id: DurationMode;
-    label: string;
-  }): React.ReactElement {
-    const active = mode === id;
-    return (
-      <button
-        type="button"
-        onClick={() => setMode(id)}
-        className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-          active
-            ? 'bg-primary text-primary-foreground'
-            : 'border border-border bg-surface text-foreground hover:bg-muted'
-        }`}
-      >
-        {label}
-      </button>
-    );
-  }
+  const selectSt: React.CSSProperties = {
+    background: '#0d0d0d',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    padding: '8px 10px',
+    color: '#e0e0e0',
+    fontSize: 13,
+    outline: 'none',
+    fontFamily: "'DM Sans', sans-serif",
+    cursor: 'pointer',
+    minWidth: 160,
+  };
 
   return (
     <div>
-      {/* Page header strip */}
-      <div className="bg-primary px-8 py-6">
-        <h1 className="text-2xl font-bold text-primary-foreground">PDF Reports</h1>
-        <p className="mt-1 text-sm text-primary-foreground/70">
-          Generate and download GST Reconciliation Reports
-        </p>
-      </div>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>PDF Reports</h1>
+      <p style={{ color: '#666', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>Look up and download GST reconciliation PDF reports.</p>
 
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        {/* Card */}
-        <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
+      {/* Filter card */}
+      <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '20px 22px', marginBottom: 24 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 12 }}>Filter by</p>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+          {(['fy', 'daterange', 'all'] as DurationMode[]).map((id) => {
+            const active = mode === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setMode(id)}
+                style={{
+                  padding: '6px 14px', fontSize: 12, fontWeight: 500, borderRadius: 7,
+                  border: `1px solid ${active ? 'rgba(229,62,62,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  background: active ? 'rgba(229,62,62,0.1)' : 'transparent',
+                  color: active ? '#f87171' : '#666',
+                  cursor: 'pointer', transition: 'all 0.15s ease', fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                {id === 'fy' ? 'Financial Year + Quarter' : id === 'daterange' ? 'Date Range' : 'All Records'}
+              </button>
+            );
+          })}
+        </div>
 
-          {/* Duration Mode Tabs */}
-          <div className="mb-6">
-            <p className="mb-2 text-sm font-medium text-foreground">Filter by</p>
-            <div className="flex gap-2">
-              <TabButton id="fy" label="Financial Year + Quarter" />
-              <TabButton id="daterange" label="Date Range" />
-              <TabButton id="all" label="All Records" />
+        {mode === 'fy' && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>Financial Year</label>
+              <select value={fy} onChange={(e) => setFy(e.target.value)} style={selectSt}>
+                {['2023-24', '2024-25', '2025-26'].map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>Quarter</label>
+              <select value={quarter} onChange={(e) => setQuarter(e.target.value)} style={selectSt}>
+                {['Full Year', 'Q1 (Apr-Jun)', 'Q2 (Jul-Sep)', 'Q3 (Oct-Dec)', 'Q4 (Jan-Mar)'].map((q) => <option key={q} value={q}>{q}</option>)}
+              </select>
             </div>
           </div>
+        )}
 
-          {/* FY + Quarter filters */}
-          {mode === 'fy' && (
-            <div className="mb-6 flex flex-wrap gap-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Financial Year
-                </label>
-                <select
-                  value={fy}
-                  onChange={(e) => setFy(e.target.value)}
-                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {['2023-24', '2024-25', '2025-26'].map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">Quarter</label>
-                <select
-                  value={quarter}
-                  onChange={(e) => setQuarter(e.target.value)}
-                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {['Full Year', 'Q1 (Apr-Jun)', 'Q2 (Jul-Sep)', 'Q3 (Oct-Dec)', 'Q4 (Jan-Mar)'].map(
-                    (q) => (
-                      <option key={q} value={q}>
-                        {q}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </div>
+        {mode === 'daterange' && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>From</label>
+              <select value={fromMonth} onChange={(e) => setFromMonth(e.target.value)} style={selectSt}>
+                {MONTH_OPTIONS.map((m) => <option key={m} value={m}>{formatPeriod(m)}</option>)}
+              </select>
             </div>
-          )}
-
-          {/* Date Range filters */}
-          {mode === 'daterange' && (
-            <div className="mb-6 flex flex-wrap gap-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">From</label>
-                <select
-                  value={fromMonth}
-                  onChange={(e) => setFromMonth(e.target.value)}
-                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {MONTH_OPTIONS.map((m) => (
-                    <option key={m} value={m}>
-                      {formatPeriod(m)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">To</label>
-                <select
-                  value={toMonth}
-                  onChange={(e) => setToMonth(e.target.value)}
-                  className="rounded border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {MONTH_OPTIONS.map((m) => (
-                    <option key={m} value={m}>
-                      {formatPeriod(m)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>To</label>
+              <select value={toMonth} onChange={(e) => setToMonth(e.target.value)} style={selectSt}>
+                {MONTH_OPTIONS.map((m) => <option key={m} value={m}>{formatPeriod(m)}</option>)}
+              </select>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Account context */}
-          <div className="mb-6">
-            <p className="mb-1 block text-sm font-medium text-foreground">Account</p>
-            <p className="w-full max-w-sm rounded border border-border bg-background px-3 py-2 text-sm text-foreground">
-              {userId || 'Loading account...'}
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: 'wrap' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>Account</label>
+            <p style={{ fontSize: 12, color: '#666', fontFamily: "'JetBrains Mono', monospace", background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 12px', margin: 0 }}>
+              {userId || 'Loading\u2026'}
             </p>
           </div>
-
-          {/* Find button */}
           <button
             type="button"
             onClick={() => void handleFind()}
             disabled={loading}
-            className="flex items-center gap-2 rounded bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="btn-primary"
+            style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
           >
-            {loading && (
-              <svg
-                className="h-4 w-4 animate-spin"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8H4z"
-                />
-              </svg>
-            )}
-            {loading ? 'Searching…' : 'Find Reports'}
+            {loading ? <><Loader2 size={14} className="animate-spin" /> Searching\u2026</> : 'Find Reports'}
           </button>
         </div>
-
-        {/* Error alert */}
-        {error && (
-          <div className="mt-4 rounded-lg border border-status-danger-bg bg-status-danger-bg/20 px-4 py-3 text-sm text-status-danger-text">
-            {error}
-          </div>
-        )}
-
-        {/* Download error */}
-        {downloadError && (
-          <div className="mt-4 rounded-lg border border-status-danger-bg bg-status-danger-bg/20 px-4 py-3 text-sm text-status-danger-text">
-            Download error: {downloadError}
-          </div>
-        )}
-
-        {/* Empty state */}
-        {results !== null && results.length === 0 && (
-          <div className="mt-6 rounded-lg border border-border bg-surface p-10 text-center shadow-sm">
-            <p className="text-muted-foreground">No reconciliation reports found for the selected period.</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Try selecting &quot;All Records&quot; to see all available reports.
-            </p>
-          </div>
-        )}
-
-        {/* Results table */}
-        {results !== null && results.length > 0 && (
-          <div className="mt-6 overflow-auto rounded-lg border border-border bg-surface shadow-sm">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-primary text-primary-foreground">
-                  {[
-                    'Period',
-                    'Financial Year',
-                    'Status',
-                    'Created At',
-                    'Total Invoices',
-                    'Eligible ITC',
-                    'Blocked ITC',
-                    'Download',
-                  ].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((item, idx) => (
-                  <tr
-                    key={item.reconciliation_id}
-                    className={idx % 2 === 0 ? 'bg-surface' : 'bg-muted'}
-                  >
-                    <td className="px-4 py-3 text-foreground">{formatPeriod(item.period)}</td>
-                    <td className="px-4 py-3 text-foreground">{item.financial_year}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={item.status} />
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {new Date(item.created_at).toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                      {item.summary.total_invoices}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                      {formatCurrency(item.summary.total_eligible_itc)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                      {formatCurrency(item.summary.total_blocked_itc)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        disabled={
-                          item.status !== 'COMPLETED' ||
-                          downloadingId === item.reconciliation_id
-                        }
-                        onClick={() => void handleDownload(item)}
-                        className="flex items-center gap-1 rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {downloadingId === item.reconciliation_id ? (
-                          <svg
-                            className="h-3 w-3 animate-spin"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8v8H4z"
-                            />
-                          </svg>
-                        ) : (
-                          '📥'
-                        )}
-                        Download PDF
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
+
+      {(error !== null || downloadError !== null) && (
+        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '12px 16px', color: '#f87171', fontSize: 13, marginBottom: 20 }}>
+          {error ?? downloadError}
+        </div>
+      )}
+
+      {results !== null && results.length === 0 && (
+        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '40px 24px', textAlign: 'center' }}>
+          <p style={{ color: '#555', fontSize: 14 }}>No reconciliation reports found for the selected period.</p>
+          <p style={{ color: '#444', fontSize: 12, marginTop: 6 }}>Try &quot;All Records&quot; to see everything.</p>
+        </div>
+      )}
+
+      {results !== null && results.length > 0 && (
+        <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                {['Period', 'FY', 'Status', 'Date', 'Invoices', 'Eligible ITC', 'Blocked ITC', ''].map((h) => (
+                  <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#444', letterSpacing: '0.08em', textTransform: 'uppercase', background: '#141414', whiteSpace: 'nowrap' }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((item, idx) => (
+                <tr
+                  key={item.reconciliation_id}
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: idx % 2 === 0 ? '#1a1a1a' : 'transparent', transition: 'background 0.12s' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.03)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = idx % 2 === 0 ? '#1a1a1a' : 'transparent'; }}
+                >
+                  <td style={{ padding: '11px 14px', color: '#e0e0e0', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{formatPeriod(item.period)}</td>
+                  <td style={{ padding: '11px 14px', color: '#666', fontSize: 12 }}>{item.financial_year}</td>
+                  <td style={{ padding: '11px 14px' }}><StatusBadge status={item.status} /></td>
+                  <td style={{ padding: '11px 14px', color: '#555', fontSize: 12, whiteSpace: 'nowrap' }}>
+                    {new Date(item.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </td>
+                  <td style={{ padding: '11px 14px', textAlign: 'right', color: '#ccc', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{item.summary.total_invoices}</td>
+                  <td style={{ padding: '11px 14px', textAlign: 'right', color: '#4ade80', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{formatCurrency(item.summary.total_eligible_itc)}</td>
+                  <td style={{ padding: '11px 14px', textAlign: 'right', color: '#f87171', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{formatCurrency(item.summary.total_blocked_itc)}</td>
+                  <td style={{ padding: '11px 14px' }}>
+                    <button
+                      type="button"
+                      disabled={item.status !== 'COMPLETED' || downloadingId === item.reconciliation_id}
+                      onClick={() => void handleDownload(item)}
+                      className="btn-primary"
+                      style={{ padding: '5px 12px', fontSize: 11, borderRadius: 7, display: 'flex', alignItems: 'center', gap: 4, opacity: (item.status !== 'COMPLETED' || downloadingId === item.reconciliation_id) ? 0.4 : 1, pointerEvents: (item.status !== 'COMPLETED' || downloadingId === item.reconciliation_id) ? 'none' : 'auto' }}
+                    >
+                      {downloadingId === item.reconciliation_id
+                        ? <><Loader2 size={11} className="animate-spin" /> Downloading\u2026</>
+                        : <>\u2193 PDF</>}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

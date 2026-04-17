@@ -15,6 +15,7 @@ import io
 from datetime import datetime, timezone
 from typing import Annotated, Optional
 
+from beanie.operators import In
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -147,7 +148,7 @@ async def lookup_reconciliations(
 
     query = Reconciliation.user_id == user_id
     if periods:
-        query = query & (Reconciliation.period.in_(periods))  # type: ignore[operator]
+        query = query & (In(Reconciliation.period, periods))  # type: ignore[operator]
 
     docs = await Reconciliation.find(query).to_list()
 
@@ -191,7 +192,7 @@ async def download_pdf_by_user(
 
     query = Reconciliation.user_id == user_id
     if periods:
-        query = query & (Reconciliation.period.in_(periods))  # type: ignore[operator]
+        query = query & (In(Reconciliation.period, periods))  # type: ignore[operator]
 
     docs = await Reconciliation.find(query).to_list()
 
@@ -242,6 +243,11 @@ async def download_pdf_by_user(
                 message="PDF generation started",
                 poll_url=f"/api/reports/{job.job_id}/status",
             ).model_dump(),
+        )
+    except RuntimeError as exc:
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "error": "PDF generation unavailable", "detail": str(exc)},
         )
 
     filename = (
@@ -298,6 +304,11 @@ async def generate_pdf_sync(
                 message="PDF generation started",
                 poll_url=f"/api/reports/{job.job_id}/status",
             ).model_dump(),
+        )
+    except RuntimeError as exc:
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "error": "PDF generation unavailable", "detail": str(exc)},
         )
 
     filename = (

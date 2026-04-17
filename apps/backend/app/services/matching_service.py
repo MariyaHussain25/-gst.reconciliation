@@ -2,7 +2,7 @@
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.invoice import Invoice
 from app.models.reconciliation import Reconciliation, ReconciliationResult, ReconciliationSummary
@@ -450,7 +450,7 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         status="COMPLETED",
         results=all_results,
         summary=summary,
-        updated_at=datetime.utcnow(),
+        updated_at=datetime.now(timezone.utc),
     )
     await reconciliation.insert()
     logger.info(
