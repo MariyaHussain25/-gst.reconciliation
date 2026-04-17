@@ -28,16 +28,18 @@ def _detect_file_type(file_bytes: bytes) -> str:
     try:
         wb = openpyxl.load_workbook(BytesIO(file_bytes), read_only=True, data_only=True)
         try:
-            # Check for GSTR-2B by looking for "Read me" sheet
+            # Check for GSTR-2B by looking for "Read me" sheet (government JSON export)
             sheet_names_lower = [s.lower().strip() for s in wb.sheetnames]
             if "read me" in sheet_names_lower:
                 return "GSTR_2B"
-            # Check first sheet for GSTR-2A indicators
+            # Check first sheet for GSTR-2B / GSTR-2A indicators in cell content
             ws = wb.worksheets[0]
             for row in ws.iter_rows(max_row=10, values_only=True):
                 for cell in row:
                     if cell and isinstance(cell, str):
                         cell_upper = cell.upper()
+                        if "GSTR-2B" in cell_upper:
+                            return "GSTR_2B"
                         if "GSTR-2A" in cell_upper or "VOUCHER REGISTER" in cell_upper:
                             return "GSTR_2A"
             return "GSTR_2A"  # default

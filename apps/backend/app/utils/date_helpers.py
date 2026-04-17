@@ -3,14 +3,15 @@
 from datetime import datetime
 
 
-# All 6 GST date formats tried in order; flag indicates 2-digit year
+# All 7 GST date formats tried in order; flag indicates 2-digit year
 _GST_DATE_FORMATS = [
-    ("%d-%b-%y", True),   # 15-Mar-23  (GSTR-2A Tally)
-    ("%d/%m/%Y", False),  # 25/03/2023 (GSTR-2B govt portal)
-    ("%Y-%m-%d", False),  # 2023-03-25 (ISO)
-    ("%d-%m-%Y", False),  # 25-03-2023 (GSTR-2B variants)
-    ("%d-%m-%y", True),   # 15-03-23   (numeric short, dashes)
-    ("%d.%m.%y", True),   # 15.03.23   (numeric short, dots)
+    ("%d-%b-%y", True),          # 15-Mar-23           (GSTR-2A Tally)
+    ("%d/%m/%Y", False),         # 25/03/2023          (GSTR-2B govt portal)
+    ("%Y-%m-%d %H:%M:%S", False),# 2023-03-25 00:00:00 (openpyxl datetime str)
+    ("%Y-%m-%d", False),         # 2023-03-25          (ISO)
+    ("%d-%m-%Y", False),         # 25-03-2023          (GSTR-2B variants)
+    ("%d-%m-%y", True),          # 15-03-23            (numeric short, dashes)
+    ("%d.%m.%y", True),          # 15.03.23            (numeric short, dots)
 ]
 
 

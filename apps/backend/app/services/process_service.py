@@ -81,6 +81,12 @@ def _resolve_effective_period(requested_period: str, all_2a_records: list[Gstr2A
     periods_2b: set[str] = set()
     for rec in all_2b_records:
         period = _gstr2b_period_to_yyyy_mm(rec.tax_period, rec.financial_year)
+        if not period and rec.invoice_date:
+            # Fallback: derive period from individual invoice_date when metadata absent
+            try:
+                period = to_period(parse_gst_date(rec.invoice_date))
+            except (ValueError, TypeError):
+                pass
         if period:
             periods_2b.add(period)
 
@@ -126,9 +132,15 @@ async def run_reconciliation(user_id: str, period: str) -> ProcessResponse:
             logger.warning(f"[Process] Skipping GSTR-2A record with unparseable date: {rec.date!r}")
 
     # Step 2: Filter GSTR-2B records by FY + tax_period → YYYY-MM
+    # Falls back to invoice_date when file metadata is absent (no 'Read me' sheet)
     gstr2b_records = []
     for rec in all_2b_records:
         rec_period = _gstr2b_period_to_yyyy_mm(rec.tax_period, rec.financial_year)
+        if not rec_period and rec.invoice_date:
+            try:
+                rec_period = to_period(parse_gst_date(rec.invoice_date))
+            except (ValueError, TypeError):
+                rec_period = ""
         if rec_period == period:
             gstr2b_records.append(rec)
 

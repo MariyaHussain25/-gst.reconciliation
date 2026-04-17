@@ -184,6 +184,42 @@ def _extract_readme_metadata(ws) -> Gstr2BMetadata:
     return metadata
 
 
+def _merge_b2b_split_header(all_rows: list[tuple], header_row_idx: int) -> tuple:
+    """
+    The government GSTR-2B portal export uses a two-row merged header:
+      Row N:   ['GSTIN of supplier', ..., 'Invoice Details', None, None, 'Taxable Value', 'Tax Amount', ...]
+      Row N+1: [None, None, 'Invoice number', 'Invoice Date', 'Invoice Value', None, None, 'Integrated Tax', ...]
+    Strategy: for each column prefer the sub-row (N+1) value when present, else use row N.
+    Only apply when the next row contains only short strings (no data values).
+    """
+    header_row = all_rows[header_row_idx]
+    if header_row_idx + 1 >= len(all_rows):
+        return header_row
+
+    next_row = all_rows[header_row_idx + 1]
+    continuation_cells = 0
+    for cell in next_row:
+        if cell is None or cell == "":
+            continue
+        if not isinstance(cell, str):
+            return header_row
+        if len(cell.strip()) > 40:
+            return header_row
+        continuation_cells += 1
+
+    if continuation_cells == 0:
+        return header_row
+
+    merged = []
+    for i, top_cell in enumerate(header_row):
+        sub_cell = next_row[i] if i < len(next_row) else None
+        if sub_cell and isinstance(sub_cell, str) and sub_cell.strip():
+            merged.append(sub_cell.strip())
+        else:
+            merged.append(top_cell)
+    return tuple(merged)
+
+
 def _parse_b2b_sheet(ws) -> list[Gstr2BInvoice]:
     """Parse the B2B sheet into invoice records."""
     all_rows = list(ws.iter_rows(values_only=True))
@@ -191,12 +227,17 @@ def _parse_b2b_sheet(ws) -> list[Gstr2BInvoice]:
 
     if header_row_idx == -1:
         return []
-    col_map = _build_column_map(all_rows[header_row_idx])
+
+    merged_header = _merge_b2b_split_header(all_rows, header_row_idx)
+    col_map = _build_column_map(merged_header)
+    has_split = merged_header != all_rows[header_row_idx]
+    data_start_idx = header_row_idx + (2 if has_split else 1)
+
     if any(column not in col_map for column in CORE_COLUMNS):
         return []
 
     invoices: list[Gstr2BInvoice] = []
-    for row in all_rows[header_row_idx + 1:]:
+    for row in all_rows[data_start_idx:]:
         if not row or all(cell is None for cell in row):
             continue
 

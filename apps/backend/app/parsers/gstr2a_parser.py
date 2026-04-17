@@ -119,6 +119,43 @@ def _build_column_map(header_row: tuple) -> dict[str, int]:
     return resolved
 
 
+def _merge_split_header(all_rows: list[tuple], header_row_idx: int) -> tuple:
+    """
+    Some Tally exports split long column headers across two rows, e.g.:
+      Row N:   [..., 'Invoice', 'Invoice', 'Taxable',  ...]
+      Row N+1: [..., 'No.',     'Date',    'Amount',   ...]
+    Merge them into one row when the following row contains only short
+    label-like strings (no numbers or date objects).
+    """
+    header_row = all_rows[header_row_idx]
+    if header_row_idx + 1 >= len(all_rows):
+        return header_row
+
+    next_row = all_rows[header_row_idx + 1]
+    continuation_cells = 0
+    for cell in next_row:
+        if cell is None or cell == "":
+            continue
+        # If any cell is a non-string (number, date) it is a data row, not a header continuation
+        if not isinstance(cell, str):
+            return header_row
+        if len(cell.strip()) > 25:
+            return header_row
+        continuation_cells += 1
+
+    if continuation_cells == 0:
+        return header_row
+
+    merged = []
+    for i, cell in enumerate(header_row):
+        next_cell = next_row[i] if i < len(next_row) else None
+        if next_cell and isinstance(next_cell, str) and next_cell.strip():
+            merged.append((safe_str(cell) + " " + next_cell.strip()).strip())
+        else:
+            merged.append(cell)
+    return tuple(merged)
+
+
 def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
     """Parse GSTR-2A Excel file and return structured data."""
     wb = openpyxl.load_workbook(BytesIO(file_bytes), read_only=True, data_only=True)
@@ -144,13 +181,27 @@ def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
                     metadata.period_end = parts[1].strip()
             elif left.startswith("gst registration") and right:
                 metadata.gstin = right
+            # Tally Voucher Register format: company name is the first non-empty
+            # standalone cell (no label prefix) and period is "D-Mon-YY to D-Mon-YY"
+            elif not metadata.company_name and row[1] is None and left and not left.startswith("voucher"):
+                metadata.company_name = safe_str(row[0])
+            elif not metadata.period_start and " to " in left:
+                parts = left.split(" to ", 1)
+                metadata.period_start = parts[0].strip()
+                metadata.period_end = parts[1].strip()
 
         header_row_idx = _detect_header_row(all_rows)
 
         if header_row_idx == -1:
             raise ValueError(f"Could not find header row in GSTR-2A file: {file_name}")
 
-        resolved_col_map = _build_column_map(all_rows[header_row_idx])
+        # Merge split two-row headers (e.g. Tally Voucher Register export)
+        merged_header = _merge_split_header(all_rows, header_row_idx)
+        resolved_col_map = _build_column_map(merged_header)
+        # Data rows start after the (possibly two-row) header
+        has_split_header = merged_header != all_rows[header_row_idx]
+        data_start_idx = header_row_idx + (2 if has_split_header else 1)
+
         missing_core = [column for column in CORE_COLUMNS if column not in resolved_col_map]
         if missing_core:
             raise ValueError(
@@ -161,7 +212,7 @@ def parse_gstr2a(file_bytes: bytes, file_name: str) -> Gstr2AParseResult:
         invoices: list[Gstr2AInvoice] = []
 
         # Parse data rows after header
-        for row in all_rows[header_row_idx + 1:]:
+        for row in all_rows[data_start_idx:]:
             if not row or all(cell is None for cell in row):
                 continue
 
