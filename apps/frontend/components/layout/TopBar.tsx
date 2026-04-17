@@ -35,7 +35,11 @@ function getPageTitle(pathname: string): string {
   return match ? PAGE_TITLES[match] : 'GST Reconciliation';
 }
 
-export function TopBar(): React.ReactElement {
+export function TopBar({
+  onMenuClick,
+}: {
+  onMenuClick?: () => void;
+}): React.ReactElement {
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
 
@@ -63,9 +67,9 @@ export function TopBar(): React.ReactElement {
   return (
     <header
       style={{
-        height: 52,
-        background: 'var(--bg-card)',
-        borderBottom: '0.5px solid var(--border)',
+        height: 54,
+        background: '#111111',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
         padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
@@ -73,25 +77,55 @@ export function TopBar(): React.ReactElement {
         flexShrink: 0,
       }}
     >
-      {/* Page title */}
-      <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
-        {getPageTitle(pathname)}
-      </span>
+      {/* Page title + hamburger */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Hamburger — only visible on mobile via CSS */}
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="mobile-menu-btn"
+          aria-label="Open navigation"
+          style={{
+            background: '#1a1a1a',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 6,
+            padding: '6px 8px',
+            cursor: 'pointer',
+            color: '#c0c0c0',
+            lineHeight: 1,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+        <span
+          style={{
+            fontSize: 15,
+            fontWeight: 600,
+            color: '#f0f0f0',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {getPageTitle(pathname)}
+        </span>
+      </div>
 
       {/* Right: company, GSTIN chip, theme toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: '#888888' }}>
           {COMPANY}
         </span>
         <span
           style={{
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: 11,
-            background: 'var(--bg-page)',
-            padding: '3px 8px',
-            borderRadius: 4,
-            color: 'var(--text-muted)',
-            border: '0.5px solid var(--border)',
+            background: '#1a1a1a',
+            padding: '4px 10px',
+            borderRadius: 6,
+            color: '#3b82f6',
+            border: '1px solid rgba(59,130,246,0.2)',
+            letterSpacing: '0.02em',
           }}
         >
           {GSTIN}
@@ -101,17 +135,26 @@ export function TopBar(): React.ReactElement {
           onClick={toggleTheme}
           aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           style={{
-            background: 'var(--bg-page)',
-            border: '0.5px solid var(--border)',
+            background: '#1a1a1a',
+            border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 6,
-            padding: '5px 10px',
+            padding: '5px 12px',
             fontSize: 12,
-            color: 'var(--text-primary)',
+            color: '#888888',
             cursor: 'pointer',
             fontFamily: "'DM Sans', sans-serif",
+            transition: 'background 0.15s, color 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = '#f0f0f0';
+            (e.currentTarget as HTMLButtonElement).style.background = '#222222';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = '#888888';
+            (e.currentTarget as HTMLButtonElement).style.background = '#1a1a1a';
           }}
         >
-          {isDark ? 'Light mode' : 'Dark mode'}
+          {isDark ? '☀ Light' : '☾ Dark'}
         </button>
       </div>
     </header>

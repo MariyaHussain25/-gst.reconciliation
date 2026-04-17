@@ -1,7 +1,7 @@
 /**
  * Global CSS for the GST Reconciliation frontend.
- * Phase 12: Navy/blue design system — DM Sans + JetBrains Mono.
- *           CSS variables + Tailwind v4 tokens. Dual dark mode support.
+ * Revamp: Black / dark-grey / white / red / hints-of-blue SaaS design system.
+ *         DM Sans + JetBrains Mono. CSS variables + Tailwind v4 tokens.
  * Uses Tailwind CSS v4 via @import.
  */
 
@@ -20,43 +20,51 @@
 }
 
 /* ────────────────────────────────────────────────
-   Light Mode – CSS custom properties
-   Palette: Navy + Clean White + Light Blue-Grey
+   Root (Light fallback) — default palette used if
+   no theme class is present. Dark is the true default
+   set via anti-FOUC script in layout.tsx.
    ──────────────────────────────────────────────── */
 :root {
-  /* Navy palette */
-  --navy:        #0a1628;
-  --navy-mid:    #1e293b;
-  --navy-light:  #0f172a;
-  --blue-accent: #1e40af;
-  --blue-hover:  #2563eb;
-
-  /* Semantic surface colours */
-  --bg-page:     #f0f4f8;
+  /* Backgrounds */
+  --bg-base:     #f4f4f5;
+  --bg-page:     #f4f4f5;
   --bg-card:     #ffffff;
-  --text-primary:#0a1628;
-  --text-muted:  #64748b;
-  --border:      #e2e8f0;
+  --bg-elevated: #f9f9fa;
+
+  /* Text */
+  --text-primary: #111111;
+  --text-muted:   #71717a;
+  --text-subtle:  #a1a1aa;
+
+  /* Brand */
+  --red:          #e53e3e;
+  --red-hover:    #c53030;
+  --red-subtle:   rgba(229, 62, 62, 0.1);
+  --blue-accent:  #3b82f6;
+  --blue-hover:   #2563eb;
 
   /* Status */
-  --green:       #16a34a;
-  --red:         #dc2626;
-  --amber:       #d97706;
+  --green:        #16a34a;
+  --amber:        #d97706;
 
-  /* ── Tailwind-compatible aliases ── */
-  --primary:            var(--navy);
+  /* Borders */
+  --border:       rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.18);
+
+  /* Tailwind aliases */
+  --primary:            #111111;
   --primary-foreground: #ffffff;
-  --accent:             var(--blue-accent);
+  --accent:             var(--red);
   --accent-foreground:  #ffffff;
   --background:         var(--bg-page);
   --surface:            var(--bg-card);
   --foreground:         var(--text-primary);
-  --muted:              #e8edf4;
+  --muted:              #e4e4e7;
   --muted-foreground:   var(--text-muted);
-  --ring:               var(--blue-accent);
+  --ring:               var(--red);
   --info:               var(--blue-accent);
 
-  /* Status badge colours – spec colours */
+  /* Status badges */
   --status-success-bg:   #dcfce7;
   --status-success-text: #15803d;
   --status-warning-bg:   #fef9c3;
@@ -64,47 +72,72 @@
   --status-danger-bg:    #fee2e2;
   --status-danger-text:  #b91c1c;
 
-  /* Sidebar (always navy – never changes with theme) */
-  --sidebar-bg:     #0a1628;
-  --sidebar-fg:     #94a3b8;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  /* Sidebar */
+  --sidebar-bg:     #0a0a0a;
+  --sidebar-fg:     #888888;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(215 50% 8% / 0.08);
-  --shadow-elevated: 0 8px 24px -4px hsl(215 50% 8% / 0.14);
+  --shadow-card:     0 1px 3px 0 rgba(0,0,0,0.08);
+  --shadow-elevated: 0 8px 24px -4px rgba(0,0,0,0.14);
 }
 
 /* ────────────────────────────────────────────────
-   Dark Mode – supports both .dark and data-theme="dark"
+   Dark Mode — PRIMARY theme (black / dark-grey / red / blue)
    ──────────────────────────────────────────────── */
 .dark,
 [data-theme="dark"] {
-  --bg-page:     #0f172a;
-  --bg-card:     #1e293b;
-  --text-primary:#e2e8f0;
-  --text-muted:  #94a3b8;
-  --border:      #334155;
+  /* Backgrounds */
+  --bg-base:     #0a0a0a;
+  --bg-page:     #111111;
+  --bg-card:     #1a1a1a;
+  --bg-elevated: #222222;
 
-  /* Re-derive aliases */
-  --primary:            var(--navy-mid);
-  --primary-foreground: #ffffff;
+  /* Text */
+  --text-primary: #f0f0f0;
+  --text-muted:   #888888;
+  --text-subtle:  #555555;
+
+  /* Brand */
+  --red:          #e53e3e;
+  --red-hover:    #f56565;
+  --red-subtle:   rgba(229, 62, 62, 0.12);
+  --blue-accent:  #3b82f6;
+  --blue-hover:   #60a5fa;
+
+  /* Status */
+  --green:        #22c55e;
+  --amber:        #f59e0b;
+
+  /* Borders */
+  --border:       rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Tailwind aliases */
+  --primary:            #f0f0f0;
+  --primary-foreground: #111111;
   --background:         var(--bg-page);
   --surface:            var(--bg-card);
   --foreground:         var(--text-primary);
-  --muted:              #1e293b;
+  --muted:              #1f1f1f;
   --muted-foreground:   var(--text-muted);
 
-  /* Status badges in dark mode */
-  --status-success-bg:   #052e16;
-  --status-success-text: #86efac;
-  --status-warning-bg:   #1c1400;
-  --status-warning-text: #fcd34d;
-  --status-danger-bg:    #1c0505;
-  --status-danger-text:  #fca5a5;
+  /* Status badges in dark */
+  --status-success-bg:   rgba(34, 197, 94, 0.12);
+  --status-success-text: #4ade80;
+  --status-warning-bg:   rgba(245, 158, 11, 0.12);
+  --status-warning-text: #fbbf24;
+  --status-danger-bg:    rgba(229, 62, 62, 0.12);
+  --status-danger-text:  #f87171;
+
+  /* Sidebar */
+  --sidebar-bg:     #0a0a0a;
+  --sidebar-fg:     #888888;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
 
   /* Shadows */
-  --shadow-card:     0 1px 3px 0 hsl(0 0% 0% / 0.5);
-  --shadow-elevated: 0 8px 24px -4px hsl(0 0% 0% / 0.7);
+  --shadow-card:     0 1px 4px rgba(0,0,0,0.5);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.7);
 }
 
 /* ────────────────────────────────────────────────
@@ -141,6 +174,11 @@
   --color-status-danger-bg:    var(--status-danger-bg);
   --color-status-danger-text:  var(--status-danger-text);
 
+  /* Brand colours */
+  --color-red:         var(--red);
+  --color-red-hover:   var(--red-hover);
+  --color-blue-accent: var(--blue-accent);
+
   /* Sidebar */
   --color-sidebar-bg:     var(--sidebar-bg);
   --color-sidebar-fg:     var(--sidebar-fg);
@@ -174,66 +212,69 @@ body {
 }
 
 /* ────────────────────────────────────────────────
-   Global button classes (Steps 8)
+   Global button classes
    ──────────────────────────────────────────────── */
 .btn-primary {
-  background: #0a1628;
+  background: var(--red);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 12px;
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   text-decoration: none;
+  letter-spacing: 0.01em;
 }
-.btn-primary:hover { background: #1e293b; }
+.btn-primary:hover  { background: var(--red-hover); }
+.btn-primary:active { transform: scale(0.98); }
 
 .btn-secondary {
   background: transparent;
   color: var(--text-primary);
-  border: 0.5px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: 13px;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   text-decoration: none;
 }
-.btn-secondary:hover { border-color: #1e40af; color: #1e40af; }
+.btn-secondary:hover { border-color: var(--blue-accent); color: var(--blue-accent); background: rgba(59,130,246,0.06); }
 
 .btn-danger {
   background: transparent;
-  color: #dc2626;
-  border: 0.5px solid #fecaca;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 12px;
+  color: var(--red);
+  border: 1px solid rgba(229,62,62,0.3);
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: 13px;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: background 0.15s;
 }
-.btn-danger:hover { background: rgba(220, 38, 38, 0.05); }
+.btn-danger:hover { background: rgba(229, 62, 62, 0.08); }
 
 /* ────────────────────────────────────────────────
-   Global card style (Step 9)
+   Global card style
    ──────────────────────────────────────────────── */
 .card {
   background: var(--bg-card);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
 }
 
 .card-title {
@@ -246,4 +287,84 @@ body {
   font-size: 11px;
   font-weight: 400;
   color: var(--text-muted);
+}
+
+/* ────────────────────────────────────────────────
+   Responsive layout helpers
+   ──────────────────────────────────────────────── */
+
+/* Login: two-panel split */
+.login-split       { display: flex; min-height: 100vh; }
+.login-left        { flex: 0 0 55%; }
+.login-right       { flex: 0 0 45%; }
+
+/* Dashboard grids */
+.stats-grid        { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.two-col-grid      { display: grid; grid-template-columns: 1fr 1fr;       gap: 14px; }
+
+/* App layout - sidebar + content */
+.app-shell         { display: flex; height: 100vh; overflow: hidden; background: #111111; }
+.app-sidebar       { display: flex; flex-direction: column; }
+.app-content       { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.mobile-menu-btn   { display: none; }
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 40;
+}
+
+/* ── Tablet: 1024px ── */
+@media (max-width: 1024px) {
+  .login-left  { flex: 0 0 50%; }
+  .login-right { flex: 0 0 50%; }
+  .stats-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Mobile: 768px ── */
+@media (max-width: 768px) {
+  /* Login: hide left panel, form goes full-width */
+  .login-left  { display: none; }
+  .login-right { flex: 0 0 100%; width: 100%; }
+
+  /* Dashboard grids collapse to single column */
+  .stats-grid   { grid-template-columns: repeat(2, 1fr); }
+  .two-col-grid { grid-template-columns: 1fr; }
+
+  /* App shell: sidebar hidden by default, slides in when .open */
+  .app-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay.open {
+    display: block;
+  }
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ── Small mobile: 480px ── */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+
+  .login-right > div {
+    padding: 32px 24px !important;
+  }
+
+  /* Tighten main content padding */
+  main {
+    padding: 16px !important;
+  }
 }
