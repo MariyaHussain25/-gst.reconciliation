@@ -340,4 +340,16 @@ def generate_pdf(reconciliation: Reconciliation) -> bytes:
     """Build HTML and render to PDF bytes using the configured backend."""
     html = build_html(reconciliation, datetime.now(timezone.utc))
     backend = get_pdf_backend()
-    return backend.render(html)
+    try:
+        return backend.render(html, reconciliation)
+    except RuntimeError as primary_exc:
+        if backend.__class__.__name__ == "ReportLabBackend":
+            raise
+
+        fallback_backend = get_pdf_backend("reportlab")
+        try:
+            return fallback_backend.render(html, reconciliation)
+        except RuntimeError as fallback_exc:
+            raise RuntimeError(
+                f"Primary PDF backend failed: {primary_exc}. Fallback PDF backend failed: {fallback_exc}"
+            ) from fallback_exc

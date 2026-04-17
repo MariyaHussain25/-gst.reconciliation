@@ -7,6 +7,7 @@ metadata is stored in MongoDB only.
 
 import os
 import time
+from typing import Iterable
 from datetime import datetime, timezone
 from app.config.settings import settings
 from app.parsers.gstr2a_parser import parse_gstr2a
@@ -16,9 +17,127 @@ from app.models.gstr2b import Gstr2BRecord
 from app.models.user import User, Gstr2AFileRef, Gstr2BFileRef
 from app.schemas.api import UploadResponse
 from app.services import s3_service
+from app.utils.date_helpers import parse_gst_date, to_period
 
 
 ALLOWED_EXTENSIONS = {".xlsx", ".xls"}
+
+MONTH_NAME_MAP = {
+    "january": 1, "february": 2, "march": 3, "april": 4,
+    "may": 5, "june": 6, "july": 7, "august": 8,
+    "september": 9, "october": 10, "november": 11, "december": 12,
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4,
+    "jun": 6, "jul": 7, "aug": 8, "sep": 9,
+    "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def _gstr2b_period_to_yyyy_mm(tax_period: str, financial_year: str) -> str:
+    """Convert GSTR-2B tax period metadata into YYYY-MM."""
+    if not tax_period or not financial_year:
+        return ""
+
+    month_num = MONTH_NAME_MAP.get(tax_period.strip().lower())
+    if not month_num:
+        return ""
+
+    try:
+        start_year = int(financial_year.strip().split("-")[0])
+    except (ValueError, IndexError):
+        return ""
+
+    year = start_year if month_num >= 4 else start_year + 1
+    return f"{year}-{month_num:02d}"
+
+
+def _safe_period_from_date(date_str: str) -> str:
+    """Best-effort date to YYYY-MM conversion."""
+    if not date_str:
+        return ""
+    try:
+        return to_period(parse_gst_date(date_str))
+    except (ValueError, TypeError):
+        return ""
+
+
+def _collect_non_empty(values: Iterable[str]) -> set[str]:
+    return {value for value in values if value}
+
+
+async def _delete_existing_gstr2a_records(user_id: str, period_start: str, period_end: str, invoice_dates: list[str]) -> None:
+    """Replace existing raw GSTR-2A rows for the same user and period."""
+    if period_start or period_end:
+        await Gstr2ARecord.find(
+            Gstr2ARecord.user_id == user_id,
+            Gstr2ARecord.period_start == period_start,
+            Gstr2ARecord.period_end == period_end,
+        ).delete()
+        return
+
+    target_periods = _collect_non_empty(_safe_period_from_date(date_str) for date_str in invoice_dates)
+    if not target_periods:
+        return
+
+    existing = await Gstr2ARecord.find(Gstr2ARecord.user_id == user_id).to_list()
+    for record in existing:
+        if _safe_period_from_date(record.date) in target_periods:
+            await record.delete()
+
+
+async def _delete_existing_gstr2b_records(user_id: str, financial_year: str, tax_period: str, invoice_dates: list[str]) -> None:
+    """Replace existing raw GSTR-2B rows for the same user and period."""
+    if financial_year or tax_period:
+        await Gstr2BRecord.find(
+            Gstr2BRecord.user_id == user_id,
+            Gstr2BRecord.financial_year == financial_year,
+            Gstr2BRecord.tax_period == tax_period,
+        ).delete()
+        return
+
+    target_periods = _collect_non_empty(_safe_period_from_date(date_str) for date_str in invoice_dates)
+    if not target_periods:
+        return
+
+    existing = await Gstr2BRecord.find(Gstr2BRecord.user_id == user_id).to_list()
+    for record in existing:
+        period = _gstr2b_period_to_yyyy_mm(record.tax_period, record.financial_year) or _safe_period_from_date(record.invoice_date)
+        if period in target_periods:
+            await record.delete()
+
+
+async def _replace_gstr2a_file_ref(user_id: str, file_ref: Gstr2AFileRef) -> None:
+    """Keep one GSTR-2A file reference per file/period for the user."""
+    user = await User.find_one(User.user_id == user_id)
+    if user is None:
+        return
+
+    user.gstr2a_files = [
+        ref
+        for ref in user.gstr2a_files
+        if ref.period != file_ref.period and ref.file_name != file_ref.file_name
+    ]
+    user.gstr2a_files.append(file_ref)
+    user.updated_at = datetime.now(timezone.utc)
+    await user.save()
+
+
+async def _replace_gstr2b_file_ref(user_id: str, file_ref: Gstr2BFileRef) -> None:
+    """Keep one GSTR-2B file reference per file/period for the user."""
+    user = await User.find_one(User.user_id == user_id)
+    if user is None:
+        return
+
+    user.gstr2b_files = [
+        ref
+        for ref in user.gstr2b_files
+        if not (
+            ref.file_name == file_ref.file_name
+            or (ref.tax_period == file_ref.tax_period and ref.financial_year == file_ref.financial_year)
+        )
+    ]
+    user.gstr2b_files.append(file_ref)
+    user.updated_at = datetime.now(timezone.utc)
+    await user.save()
 
 
 def _detect_file_type(file_bytes: bytes) -> str:
@@ -68,6 +187,12 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
 
     if file_type == "GSTR_2A":
         result = parse_gstr2a(file_bytes, file_name)
+        await _delete_existing_gstr2a_records(
+            user_id=user_id,
+            period_start=result.metadata.period_start,
+            period_end=result.metadata.period_end,
+            invoice_dates=[invoice.date for invoice in result.invoices],
+        )
         records = [
             Gstr2ARecord(
                 user_id=user_id,
@@ -101,9 +226,7 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
             period=f"{result.metadata.period_start} to {result.metadata.period_end}",
             uploaded_at=datetime.now(timezone.utc),
         )
-        await User.find_one(User.user_id == user_id).update(
-            {"$push": {"gstr2a_files": file_ref.model_dump()}, "$set": {"updated_at": datetime.now(timezone.utc)}}
-        )
+        await _replace_gstr2a_file_ref(user_id, file_ref)
 
         return UploadResponse(
             success=True,
@@ -116,6 +239,12 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
 
     else:  # GSTR_2B
         result = parse_gstr2b(file_bytes, file_name)
+        await _delete_existing_gstr2b_records(
+            user_id=user_id,
+            financial_year=result.metadata.financial_year,
+            tax_period=result.metadata.tax_period,
+            invoice_dates=[invoice.invoice_date for invoice in result.b2b_invoices],
+        )
         records = [
             Gstr2BRecord(
                 user_id=user_id,
@@ -163,9 +292,7 @@ async def handle_upload(file_bytes: bytes, file_name: str, user_id: str) -> Uplo
             financial_year=result.metadata.financial_year,
             uploaded_at=datetime.now(timezone.utc),
         )
-        await User.find_one(User.user_id == user_id).update(
-            {"$push": {"gstr2b_files": file_ref.model_dump()}, "$set": {"updated_at": datetime.now(timezone.utc)}}
-        )
+        await _replace_gstr2b_file_ref(user_id, file_ref)
 
         return UploadResponse(
             success=True,

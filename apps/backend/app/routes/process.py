@@ -1,5 +1,6 @@
 """Process route - rewrite of process.route.ts"""
 
+import logging
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -8,6 +9,7 @@ from app.services.process_service import run_reconciliation
 from app.schemas.api import ProcessResponse, ErrorResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/process/{user_id}", response_model=ProcessResponse)
@@ -29,6 +31,7 @@ async def process_reconciliation(
             content=ErrorResponse(error=str(e), detail="Please verify your input and try again.").model_dump(),
         )
     except Exception:
+        logger.exception("[process] Reconciliation failed for user=%s period=%s", user_id, period)
         return JSONResponse(
             status_code=500,
             content=ErrorResponse(error="Reconciliation failed", detail="An error occurred during reconciliation.").model_dump(),

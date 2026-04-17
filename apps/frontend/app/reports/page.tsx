@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency, formatPeriod } from '../../lib/utils';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../lib/api';
 
 // ---------------------------------------------------------------------------
 // TypeScript interfaces
@@ -156,10 +156,9 @@ export default function ReportsPage(): React.ReactElement {
         },
       );
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string; detail?: string };
-        throw new Error(body.error ?? body.detail ?? `Request failed (${res.status})`);
+        throw new Error(await readApiErrorMessage(res, `Request failed (${res.status})`));
       }
-      const data = (await res.json()) as ReconciliationLookupResponse;
+      const data = await readApiJson<ReconciliationLookupResponse>(res);
       setResults(data.reconciliations);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
@@ -183,8 +182,7 @@ export default function ReportsPage(): React.ReactElement {
         },
       );
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string; detail?: string };
-        throw new Error(body.error ?? body.detail ?? `Download failed (${res.status})`);
+        throw new Error(await readApiErrorMessage(res, `Download failed (${res.status})`));
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

@@ -22,7 +22,7 @@ from .base import PdfBackend
 
 
 class WeasyPrintBackend(PdfBackend):
-    def render(self, html: str) -> bytes:
+  def render(self, html: str, reconciliation=None) -> bytes:
         try:
             from weasyprint import HTML
         except (ImportError, OSError, Exception) as exc:

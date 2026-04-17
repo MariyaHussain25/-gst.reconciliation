@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, FileSpreadsheet, CheckCircle, Loader2 } from 'lucide-react';
 import { parseJwtUserId } from '../../lib/auth';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../lib/api';
 import { useToast } from '../../components/ui/Toast';
 
 // â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -24,7 +24,7 @@ interface Step {
 const INITIAL_STEPS: Step[] = [
   { label: 'Upload GSTR-2A (Purchase Books)', status: 'idle' },
   { label: 'Upload GSTR-2B Return',           status: 'idle' },
-  { label: 'Run AI Reconciliation Pipeline',  status: 'idle' },
+  { label: 'Run Reconciliation Pipeline',     status: 'idle' },
 ];
 
 // â”€â”€ DropZone component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -307,10 +307,9 @@ export default function UploadPage(): React.ReactElement {
         body: form1,
       });
       if (!res1.ok) {
-        const body = (await res1.json()) as { error?: string; detail?: string };
-        throw new Error(body.error ?? body.detail ?? `Upload failed (HTTP ${res1.status})`);
+        throw new Error(await readApiErrorMessage(res1, `Upload failed (HTTP ${res1.status})`));
       }
-      const data1 = (await res1.json()) as { records_parsed?: number };
+      const data1 = await readApiJson<{ records_parsed?: number }>(res1);
       setStepStatus(0, 'done');
       toast('success', `GSTR-2A uploaded — ${data1.records_parsed ?? 0} records parsed.`);
 
@@ -326,10 +325,9 @@ export default function UploadPage(): React.ReactElement {
         body: form2,
       });
       if (!res2.ok) {
-        const body = (await res2.json()) as { error?: string; detail?: string };
-        throw new Error(body.error ?? body.detail ?? `Upload failed (HTTP ${res2.status})`);
+        throw new Error(await readApiErrorMessage(res2, `Upload failed (HTTP ${res2.status})`));
       }
-      const data2 = (await res2.json()) as { records_parsed?: number };
+      const data2 = await readApiJson<{ records_parsed?: number }>(res2);
       setStepStatus(1, 'done');
       toast('success', `GSTR-2B uploaded — ${data2.records_parsed ?? 0} records parsed.`);
 
@@ -340,10 +338,7 @@ export default function UploadPage(): React.ReactElement {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res3.ok) {
-        const body = (await res3.json()) as { error?: string; detail?: string };
-        throw new Error(
-          body.error ?? body.detail ?? `Reconciliation failed (HTTP ${res3.status})`,
-        );
+        throw new Error(await readApiErrorMessage(res3, `Reconciliation failed (HTTP ${res3.status})`));
       }
       setStepStatus(2, 'done');
       toast('success', 'Reconciliation complete! Redirecting to results…');
@@ -368,7 +363,7 @@ export default function UploadPage(): React.ReactElement {
       </h1>
       <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
         Drag &amp; drop or click to select your GSTR-2A and GSTR-2B returns, then hit
-        &ldquo;Upload &amp; Reconcile&rdquo; to run the AI pipeline.
+        &ldquo;Upload &amp; Reconcile&rdquo; to run the reconciliation workflow.
       </p>
 
       <div style={{ maxWidth: 760 }}>

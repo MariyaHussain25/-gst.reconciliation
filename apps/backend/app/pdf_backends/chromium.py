@@ -12,7 +12,7 @@ from .base import PdfBackend
 
 
 class ChromiumBackend(PdfBackend):
-    def render(self, html: str) -> bytes:
+    def render(self, html: str, reconciliation=None) -> bytes:
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as exc:

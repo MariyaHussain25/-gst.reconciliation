@@ -22,7 +22,7 @@ _GST_KEYWORD_PATTERN = (
 
 
 def _to_response(rule) -> RuleResponse:
-    """Convert a GstRule document to a RuleResponse (strips embedding)."""
+    """Convert a rule document to a RuleResponse (omits internal storage fields)."""
     return RuleResponse(
         rule_id=rule.rule_id,
         category=rule.category,
@@ -37,14 +37,14 @@ def _to_response(rule) -> RuleResponse:
 
 @router.get("/rules", response_model=list[RuleResponse])
 async def list_rules():
-    """Return all active GST rules (without embeddings)."""
+    """Return all active GST rules."""
     rules = await itc_rules_service.get_all_active_rules()
     return [_to_response(r) for r in rules]
 
 
 @router.get("/rules/{rule_id}", response_model=RuleResponse)
 async def get_rule(rule_id: str):
-    """Return a single rule by its rule_id (without embedding)."""
+    """Return a single rule by its rule_id."""
     rule = await itc_rules_service.get_rule_by_id(rule_id)
     if rule is None:
         return JSONResponse(
@@ -56,7 +56,7 @@ async def get_rule(rule_id: str):
 
 @router.post("/rules/search", response_model=RuleSearchResponse)
 async def search_rules(body: RuleSearchRequest):
-    """Search rules using RAG (embedding-based with keyword fallback)."""
+    """Search rules using keyword retrieval over saved or bundled GST rules."""
     rules, method = await itc_rules_service.find_relevant_rules(
         query=body.query,
         top_k=body.top_k,
@@ -74,14 +74,14 @@ async def upload_gst_rules(
     section: str = Form(default=""),
     category: str = Form(default="GENERAL"),
 ):
-    """Ingest a text or PDF file of GST rules into the vector knowledge base.
+    """Ingest a text or PDF file of GST rules into the rules knowledge base.
 
     Workflow:
       1. Read the uploaded file.
       2. Extract text (plain .txt or PDF).
       3. Chunk the text into overlapping segments.
-      4. Generate OpenAI text-embedding-3-small vectors for each chunk.
-      5. Persist each chunk as a ``GstRule`` document in MongoDB.
+      4. Persist each chunk as a ``GstRule`` document in MongoDB.
+      5. Use keyword matching over those saved rules during chat and explanation requests.
 
     Args:
         file: The uploaded .txt or .pdf file containing GST rules.
@@ -138,13 +138,10 @@ async def upload_gst_rules(
                 content={"success": False, "error": "Could not split the document into chunks."},
             )
 
-        # 3. Embed all chunks
-        embeddings = vector_service.embed_chunks(chunks)
-
-        # 4. Persist each chunk as a GstRule document
+        # 3. Persist each chunk as a GstRule document
         saved = 0
         source_name = filename or "uploaded_document"
-        for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+        for i, chunk in enumerate(chunks):
             rule = GstRule(
                 rule_id=str(uuid.uuid4()),
                 category=category.upper() or "GENERAL",
@@ -152,7 +149,7 @@ async def upload_gst_rules(
                 description=chunk,
                 keywords=_extract_keywords(chunk),
                 gst_section=section or None,
-                embedding=embedding,
+                embedding=[],
                 is_active=True,
             )
             await rule.insert()

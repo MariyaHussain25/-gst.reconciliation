@@ -22,4 +22,4 @@ class RuleResponse(BaseModel):
 class RuleSearchResponse(BaseModel):
     success: bool
     rules: list[RuleResponse]
-    search_method: str  # "embedding" or "keyword"
+    search_method: str  # "keyword" (saved rules or bundled fallback)

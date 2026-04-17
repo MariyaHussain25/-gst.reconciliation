@@ -2,15 +2,15 @@
  * @file apps/frontend/app/rules/page.tsx
  * @description GST Rules upload page — Phase 6 RAG Document Ingestion.
  * Allows administrators to upload text or PDF files containing GST rules.
- * The backend chunks the document, generates OpenAI embeddings, and stores
- * each chunk in MongoDB Atlas so the chatbot can retrieve relevant rules.
+ * The backend chunks the document and stores searchable rule records in
+ * MongoDB so the chatbot can retrieve relevant rules.
  */
 
 'use client';
 
 import React, { useState } from 'react';
 import { Loader2, Upload, BookOpen } from 'lucide-react';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../lib/api';
 
 interface UploadResult {
   success: boolean;
@@ -22,7 +22,7 @@ interface UploadResult {
 /**
  * Rules Upload page.
  * Accepts a .txt or .pdf file along with an optional GST section label and
- * category, then POSTs to `/api/rules/upload` for vector ingestion.
+ * category, then POSTs to `/api/rules/upload` for rule ingestion.
  */
 export default function RulesUploadPage(): React.ReactElement {
   const [file, setFile] = useState<File | null>(null);
@@ -57,9 +57,13 @@ export default function RulesUploadPage(): React.ReactElement {
         body: formData,
       });
 
-      const data: UploadResult = (await res.json()) as UploadResult;
+      if (!res.ok) {
+        throw new Error(await readApiErrorMessage(res, `Upload failed (HTTP ${res.status})`));
+      }
 
-      if (res.ok && data.success) {
+      const data = await readApiJson<UploadResult>(res);
+
+      if (data.success) {
         setResult(data);
         setFile(null);
         setSection('');
@@ -67,10 +71,10 @@ export default function RulesUploadPage(): React.ReactElement {
         const fileInput = document.getElementById('ruleFile') as HTMLInputElement | null;
         if (fileInput) fileInput.value = '';
       } else {
-        setError(data.error ?? `Upload failed (HTTP ${res.status})`);
+        setError(data.error ?? 'Upload failed.');
       }
-    } catch {
-      setError('Unable to connect to the server. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to connect to the server. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -86,8 +90,8 @@ export default function RulesUploadPage(): React.ReactElement {
     <div>
       <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>GST Rules Knowledge Base</h1>
       <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
-        Upload text or PDF files containing GST rules. The system chunks the document, generates vector
-        embeddings, and stores them in MongoDB so the AI chatbot can retrieve relevant rules.
+        Upload text or PDF files containing GST rules. The system chunks the document, stores searchable
+        rule records in MongoDB, and uses them as retrieval context for chat and explanations.
       </p>
 
       <div style={{ maxWidth: 600 }}>
@@ -196,9 +200,9 @@ export default function RulesUploadPage(): React.ReactElement {
             {[
               'Your document is uploaded securely to the backend.',
               'The text is extracted and split into overlapping ~500-character chunks.',
-              'Each chunk is converted into a 1,536-dimensional vector using OpenAI text-embedding-3-small.',
-              'All chunks are stored in MongoDB Atlas ready for semantic retrieval.',
-              'When a user asks a question in the Chat tab, the most relevant chunks are retrieved as context.',
+              'Each chunk is stored as a searchable GST rule record in MongoDB Atlas.',
+              'Keyword matching retrieves the most relevant rule chunks for the current query.',
+              'Those retrieved rules are passed into chat and explanation requests as context.',
             ].map((step, i) => (
               <li key={i} style={{ fontSize: 13, color: '#555', lineHeight: 1.6 }}>{step}</li>
             ))}

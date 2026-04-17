@@ -17,7 +17,13 @@ class Settings(BaseSettings):
 
     # Required
     MONGODB_URI: str = Field(..., description="MongoDB Atlas connection string")
-    OPENAI_API_KEY: str = Field(..., description="OpenAI API key for GPT-4o")
+
+    # OpenRouter — used for all AI generation (chat + explanations)
+    OPENROUTER_API_KEY: str = Field(..., description="OpenRouter API key")
+    OPENROUTER_MODEL: str = Field(
+        default="meta-llama/llama-3.3-70b-instruct:free",
+        description="OpenRouter model ID (use a :free suffix for free-tier models)",
+    )
 
     # Optional - Cloud storage (Phase 3)
     AWS_ACCESS_KEY_ID: str | None = Field(default=None)
@@ -44,12 +50,6 @@ class Settings(BaseSettings):
         return v  # type: ignore[return-value]
 
     SECRET_KEY: str = Field(default="change-me-in-production", description="JWT signing secret key")
-
-    # Phase 7 — Gemini model for AI explanations
-    # "Gemini 1.5 Pro" is the valid Google model ID closest to the requested "Gemini Pro".
-    GOOGLE_API_KEY: str | None = Field(default=None, description="Google API key for Gemini AI explanations")
-    OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-3-small", description="OpenAI embedding model for vector generation")
-    GEMINI_MODEL: str = Field(default="gemini-2.0-flash", description="Google Gemini chat model for AI explanations")
 
     # Phase 8 — PDF generation
     PDF_BACKEND: str = Field(default="weasy", description="PDF backend: 'weasy' or 'chromium'")

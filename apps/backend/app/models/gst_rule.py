@@ -13,7 +13,7 @@ class GstRule(Document):
     keywords: list[str] = Field(default_factory=list)
     gst_section: str | None = None
     gstr3b_table: str | None = None
-    embedding: list[float] = Field(default_factory=list)  # 1536 dimensions for Phase 6
+    embedding: list[float] = Field(default_factory=list)  # retained for backward compatibility; unused by keyword search
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

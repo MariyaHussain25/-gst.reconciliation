@@ -1,45 +1,60 @@
 """
 ITC Rules Service — Phase 6 RAG Knowledge Base
 
-Provides embedding-based search (via Google GenAI text-embedding-004) with
-automatic keyword-based fallback when Google is unavailable or returns no
-results.
+Provides keyword-based search over the GstRule collection.
+Embedding/vector search has been removed in favour of the simpler and
+equally effective keyword fallback for this domain.
 """
 
+from dataclasses import dataclass
+from functools import lru_cache
 import logging
 import re
+from pathlib import Path
 
 from app.models.gst_rule import GstRule
 
 logger = logging.getLogger(__name__)
+
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
+_RULES_DIR = _BACKEND_ROOT / "data" / "rules"
+
+_BUNDLED_RULE_META: dict[str, tuple[str, str]] = {
+    "chapter_v_itc.txt": ("ITC_ELIGIBILITY", "Chapter V — Input Tax Credit"),
+    "chapter_3_rcm.txt": ("RCM", "Chapter III — Reverse Charge Mechanism"),
+    "section_37_38_39_returns.txt": ("GENERAL", "Sections 37–39 — GST Returns"),
+}
+
+_QUERY_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "gst", "how", "i",
+    "in", "is", "it", "me", "of", "on", "or", "please", "tell", "the", "to", "under",
+    "what", "which", "with",
+}
+
+
+@dataclass(frozen=True)
+class BundledRule:
+    rule_id: str
+    category: str
+    title: str
+    description: str
+    keywords: list[str]
+    gst_section: str | None = None
+    gstr3b_table: str | None = None
+    is_active: bool = True
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
-async def find_relevant_rules(query: str, top_k: int = 3) -> tuple[list[GstRule], str]:
-    """Return the top_k most relevant rules for *query*.
+async def find_relevant_rules(query: str, top_k: int = 3) -> tuple[list[GstRule | BundledRule], str]:
+    """Return the top_k most relevant rules for *query* using keyword matching.
 
-    Tries embedding-based cosine similarity search first; falls back to
-    keyword matching.  Never raises — always returns (rules_list, method).
-
-    Returns:
-        A tuple of (list[GstRule], search_method) where search_method is
-        "embedding" or "keyword".
+    Never raises — always returns (rules_list, method).
     """
-    # 1. Attempt embedding-based search
-    try:
-        results = await _embedding_search(query, top_k)
-        if results:
-            logger.info("[itc_rules] Returned %d rules via embedding search.", len(results))
-            return results, "embedding"
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.warning("[itc_rules] Embedding search failed (%s) — falling back to keyword.", exc)
-
-    # 2. Keyword fallback
     results = await _keyword_search(query, top_k)
-    logger.info("[itc_rules] Returned %d rules via keyword fallback.", len(results))
+    logger.info("[itc_rules] Returned %d rules via keyword search.", len(results))
     return results, "keyword"
 
 
@@ -56,157 +71,102 @@ async def get_all_active_rules() -> list[GstRule]:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
-    """Compute cosine similarity between two equal-length vectors."""
-    if not a or not b or len(a) != len(b):
-        return 0.0
-    try:
-        import numpy as np  # optional dependency
-
-        va = np.array(a, dtype=float)
-        vb = np.array(b, dtype=float)
-        norm_a = np.linalg.norm(va)
-        norm_b = np.linalg.norm(vb)
-        if norm_a == 0 or norm_b == 0:
-            return 0.0
-        return float(np.dot(va, vb) / (norm_a * norm_b))
-    except ImportError:
-        # Pure-Python fallback (slower but dependency-free)
-        dot = sum(x * y for x, y in zip(a, b))
-        norm_a = sum(x * x for x in a) ** 0.5
-        norm_b = sum(x * x for x in b) ** 0.5
-        if norm_a == 0 or norm_b == 0:
-            return 0.0
-        return dot / (norm_a * norm_b)
-
-
-def _get_query_embedding(query: str) -> list[float]:
-    """Generate embedding using OpenAI text-embedding-3-small via vector_service.
-
-    Returns an empty list if the API key is missing or the call fails.
-    Falls back to Google GenAI text-embedding-004 if OpenAI fails.
-    """
-    from app.services.vector_service import get_openai_embedding
-
-    vec = get_openai_embedding(query)
-    if vec:
-        return vec
-
-    # Secondary fallback: Google GenAI text-embedding-004
-    from app.config.settings import settings
-
-    api_key = settings.GOOGLE_API_KEY
-    if not api_key:
-        logger.warning("[itc_rules] GOOGLE_API_KEY is not set. Cannot generate fallback embeddings.")
-        return []
-
-    try:
-        import google.generativeai as genai
-
-        genai.configure(api_key=api_key)
-        query = query[:10000]
-        result = genai.embed_content(
-            model="models/text-embedding-004",
-            content=query,
-            task_type="retrieval_document",
-        )
-        return result["embedding"]
-    except ImportError:
-        logger.error("[itc_rules] google-generativeai package is not installed.")
-        return []
-    except Exception as exc:
-        logger.error("[itc_rules] Google GenAI Embedding fallback failed: %s", exc)
-        return []
-
-
-async def _embedding_search(query: str, top_k: int) -> list[GstRule]:
-    """Return rules most similar to the query using MongoDB Atlas Vector Search.
-
-    Uses a ``$vectorSearch`` aggregation pipeline on the ``gst_rules``
-    collection so the similarity ranking is performed server-side by the
-    Atlas index rather than fetching every document and computing cosine
-    similarity in Python.
-
-    Requirements (configured manually in the Atlas UI):
-      - Collection : gst_rules
-      - Index name : vector_index
-      - Field      : embedding
-      - Dimensions : 1536
-      - Similarity : cosine
-
-    Returns an empty list if embedding generation fails or the aggregation
-    returns no results.
-    """
-    query_vec = _get_query_embedding(query)
-    if not query_vec:
-        return []
-
-    try:
-        collection = GstRule.get_motor_collection()
-        pipeline = [
-            {
-                "$vectorSearch": {
-                    "index": "vector_index",
-                    "path": "embedding",
-                    "queryVector": query_vec,
-                    "numCandidates": min(top_k * 10, 200),
-                    "limit": top_k,
-                    "filter": {"is_active": True},
-                }
-            },
-            {
-                "$project": {
-                    "_id": 1,
-                    "rule_id": 1,
-                    "category": 1,
-                    "title": 1,
-                    "description": 1,
-                    "keywords": 1,
-                    "gst_section": 1,
-                    "gstr3b_table": 1,
-                    "embedding": 1,
-                    "is_active": 1,
-                    "created_at": 1,
-                    "score": {"$meta": "vectorSearchScore"},
-                }
-            },
-        ]
-
-        raw_docs = await collection.aggregate(pipeline).to_list(length=top_k)
-        rules: list[GstRule] = []
-        for doc in raw_docs:
-            doc.pop("score", None)
-            rules.append(GstRule.model_validate(doc))
-        return rules
-    except Exception as exc:
-        logger.error(
-            "[itc_rules] $vectorSearch aggregation failed: %s. "
-            "Ensure the 'vector_index' Search Index is created in the MongoDB Atlas UI "
-            "(collection: gst_rules, field: embedding, dimensions: 1536, similarity: cosine).",
-            exc,
-        )
-        return []
-
-
-async def _keyword_search(query: str, top_k: int) -> list[GstRule]:
+async def _keyword_search(query: str, top_k: int) -> list[GstRule | BundledRule]:
     """Return rules sorted by keyword overlap with the query tokens."""
-    # Tokenize: lowercase words and multi-word phrases from query
-    tokens = set(re.findall(r"\w+", query.lower()))
+    tokens = _extract_query_tokens(query)
 
     all_rules = await GstRule.find(GstRule.is_active == True).to_list()  # noqa: E712
-    scored: list[tuple[int, GstRule]] = []
-    for rule in all_rules:
-        # Tokenize each keyword phrase and count overlapping tokens
-        rule_tokens: set[str] = set()
-        for kw in rule.keywords:
-            rule_tokens.update(re.findall(r"\w+", kw.lower()))
+    if not all_rules:
+        bundled_rules = list(_load_bundled_rules())
+        return _score_rules(tokens, bundled_rules, top_k)
+
+    return _score_rules(tokens, all_rules, top_k)
+
+
+def _rule_tokens(rule: GstRule | BundledRule) -> set[str]:
+    """Collect searchable tokens from a rule object."""
+    tokens: set[str] = set()
+    for keyword in getattr(rule, "keywords", []):
+        tokens.update(re.findall(r"\w+", keyword.lower()))
+
+    searchable_text = " ".join(
+        part
+        for part in [
+            getattr(rule, "title", ""),
+            getattr(rule, "description", ""),
+            getattr(rule, "category", ""),
+            getattr(rule, "gst_section", "") or "",
+        ]
+        if part
+    )
+    tokens.update(re.findall(r"\w+", searchable_text.lower()))
+    return tokens
+
+
+def _extract_query_tokens(query: str) -> set[str]:
+    """Normalize a user query into high-signal search tokens."""
+    return {
+        token
+        for token in re.findall(r"\w+", query.lower())
+        if len(token) > 2 and token not in _QUERY_STOPWORDS
+    }
+
+
+def _score_rules(tokens: set[str], rules: list[GstRule] | list[BundledRule], top_k: int) -> list[GstRule | BundledRule]:
+    """Score rules by keyword overlap and return the top entries."""
+    scored: list[tuple[int, GstRule | BundledRule]] = []
+    for rule in rules:
+        rule_tokens = _rule_tokens(rule)
         overlap = len(tokens & rule_tokens)
         if overlap > 0:
             scored.append((overlap, rule))
 
     if not scored:
-        # Return all active rules if no keyword match
-        return all_rules[:top_k]
+        # Return a deterministic subset if there is no keyword match.
+        return list(rules[:top_k])
 
     scored.sort(key=lambda t: t[0], reverse=True)
     return [rule for _, rule in scored[:top_k]]
+
+
+def _derive_rule_title(default_title: str, paragraph: str, index: int) -> str:
+    """Build a readable title for a bundled-rule paragraph."""
+    first_sentence = re.split(r"(?<=[.!?])\s+", paragraph.strip(), maxsplit=1)[0]
+    condensed = " ".join(first_sentence.split())
+    if 12 <= len(condensed) <= 120:
+        return condensed
+    return f"{default_title} — excerpt {index + 1}"
+
+
+@lru_cache(maxsize=1)
+def _load_bundled_rules() -> tuple[BundledRule, ...]:
+    """Load bundled GST rule text files for fallback retrieval."""
+    bundled_rules: list[BundledRule] = []
+
+    if not _RULES_DIR.exists():
+        return tuple(bundled_rules)
+
+    for path in sorted(_RULES_DIR.glob("*.txt")):
+        text = path.read_text(encoding="utf-8")
+        category, default_title = _BUNDLED_RULE_META.get(path.name, ("GENERAL", path.stem.replace("_", " ").title()))
+        paragraphs = [
+            " ".join(block.split())
+            for block in re.split(r"\n\s*\n", text)
+            if len(block.strip()) >= 80
+        ]
+
+        for index, paragraph in enumerate(paragraphs):
+            title = _derive_rule_title(default_title, paragraph, index)
+            keywords = sorted(set(re.findall(r"\w+", f"{default_title} {paragraph}".lower())))[:30]
+            bundled_rules.append(
+                BundledRule(
+                    rule_id=f"builtin:{path.stem}:{index}",
+                    category=category,
+                    title=title,
+                    description=paragraph,
+                    keywords=keywords,
+                    gst_section=default_title,
+                )
+            )
+
+    return tuple(bundled_rules)

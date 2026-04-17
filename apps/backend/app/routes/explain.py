@@ -6,8 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from app.auth.dependencies import get_current_user_id
-from app.models.reconciliation import Reconciliation
+from app.auth.dependencies import get_current_user_id, verify_reconciliation_ownership
 from app.schemas.explain import ExplainResponse, ExplainResultItem, ExplainResultsResponse
 from app.services import ai_explanation_service
 
@@ -22,19 +21,9 @@ async def generate_explanations(
 ):
     """Trigger AI explanation generation for all results in a reconciliation."""
     try:
-        reconciliation = await Reconciliation.find_one(
-            Reconciliation.reconciliation_id == reconciliation_id
-        )
-        if reconciliation is None:
-            return JSONResponse(
-                status_code=404,
-                content={
-                    "success": False,
-                    "error": f"Reconciliation '{reconciliation_id}' not found.",
-                },
-            )
+        reconciliation = await verify_reconciliation_ownership(reconciliation_id, current_user_id)
 
-        explanations = await ai_explanation_service.generate_explanations_for_reconciliation(
+        explanations, ai_enriched_count = await ai_explanation_service.generate_explanations_for_reconciliation(
             reconciliation
         )
 
@@ -47,7 +36,10 @@ async def generate_explanations(
             success=True,
             reconciliation_id=reconciliation_id,
             results_explained=len(explanations),
-            message=f"Generated AI explanations for {len(explanations)} result(s).",
+            message=(
+                f"Generated explanations for {len(explanations)} result(s). "
+                f"OpenRouter enriched {ai_enriched_count} result(s); the remainder used deterministic summaries."
+            ),
         )
 
     except Exception as exc:  # pylint: disable=broad-except
@@ -64,17 +56,7 @@ async def get_explanations(
     current_user_id: Annotated[str, Depends(get_current_user_id)],
 ):
     """Fetch a reconciliation with its AI explanations."""
-    reconciliation = await Reconciliation.find_one(
-        Reconciliation.reconciliation_id == reconciliation_id
-    )
-    if reconciliation is None:
-        return JSONResponse(
-            status_code=404,
-            content={
-                "success": False,
-                "error": f"Reconciliation '{reconciliation_id}' not found.",
-            },
-        )
+    reconciliation = await verify_reconciliation_ownership(reconciliation_id, current_user_id)
 
     result_items = [
         ExplainResultItem(

@@ -15,7 +15,6 @@ import io
 from datetime import datetime, timezone
 from typing import Annotated, Optional
 
-from beanie.operators import In
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -119,6 +118,14 @@ def _resolve_periods(
     return None
 
 
+def _build_reconciliation_filters(user_id: str, periods: Optional[list[str]]) -> list:
+    """Build a valid Beanie filter list for reconciliation lookup routes."""
+    query: dict[str, object] = {"user_id": user_id}
+    if periods:
+        query["period"] = {"$in": periods}
+    return [query]
+
+
 # ---------------------------------------------------------------------------
 # Request body schema
 # ---------------------------------------------------------------------------
@@ -145,12 +152,7 @@ async def lookup_reconciliations(
         raise HTTPException(status_code=403, detail="Access denied")
 
     periods = _resolve_periods(financial_year, quarter, date_range)
-
-    query = Reconciliation.user_id == user_id
-    if periods:
-        query = query & (In(Reconciliation.period, periods))  # type: ignore[operator]
-
-    docs = await Reconciliation.find(query).to_list()
+    docs = await Reconciliation.find(*_build_reconciliation_filters(user_id, periods)).to_list()
 
     items = [
         ReconciliationLookupItem(
@@ -189,17 +191,10 @@ async def download_pdf_by_user(
         raise HTTPException(status_code=403, detail="Access denied")
 
     periods = _resolve_periods(financial_year, quarter, date_range)
-
-    query = Reconciliation.user_id == user_id
-    if periods:
-        query = query & (In(Reconciliation.period, periods))  # type: ignore[operator]
-
-    docs = await Reconciliation.find(query).to_list()
+    docs = await Reconciliation.find(*_build_reconciliation_filters(user_id, periods)).to_list()
 
     if not docs:
-        available = await Reconciliation.find(
-            Reconciliation.user_id == user_id
-        ).to_list()
+        available = await Reconciliation.find({"user_id": user_id}).to_list()
         available_periods = sorted({d.period for d in available})
         return JSONResponse(
             status_code=404,

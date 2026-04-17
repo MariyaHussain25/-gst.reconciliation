@@ -442,6 +442,13 @@ async def run_full_matching_pipeline(user_id: str, period: str) -> dict:
         total_ineligible_itc=total_ineligible_itc,
     )
 
+    existing_reconciliations = await Reconciliation.find(
+        Reconciliation.user_id == user_id,
+        Reconciliation.period == period,
+    ).to_list()
+    for existing in existing_reconciliations:
+        await existing.delete()
+
     reconciliation = Reconciliation(
         reconciliation_id=uuid.uuid4().hex,
         user_id=user_id,

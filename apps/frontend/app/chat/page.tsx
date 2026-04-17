@@ -1,7 +1,7 @@
 /**
  * @file apps/frontend/app/chat/page.tsx
  * @description Chatbot / RAG interface — lets users ask free-text GST
- * questions that are answered by Gemini AI augmented with ITC rules.
+ * questions that are answered by an OpenRouter-backed assistant augmented with ITC rules.
  * Uses Server-Sent Events for real-time token streaming with a typing effect.
  */
 
@@ -9,6 +9,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
+import { readApiErrorMessage } from '../../lib/api';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -57,9 +58,12 @@ export default function ChatPage(): React.ReactElement {
       });
 
       if (!res.ok || !res.body) {
+        const message = res.ok
+          ? 'Sorry, I encountered an error. Please try again.'
+          : await readApiErrorMessage(res, 'Sorry, I encountered an error. Please try again.');
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' },
+          { role: 'assistant', content: message },
         ]);
         setLoading(false);
         return;

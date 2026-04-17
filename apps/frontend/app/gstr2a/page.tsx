@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { clearSessionAndRedirectToLogin, isTokenValid, parseJwtUserId } from '../../lib/auth';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../lib/api';
 
 interface Section {
   id: string;
@@ -132,11 +132,10 @@ export default function GSTR2APage(): React.ReactElement {
       );
 
       if (!res.ok) {
-        const body = (await res.json()) as { detail?: string; error?: string };
-        throw new Error(body.detail ?? body.error ?? `Request failed (${res.status})`);
+        throw new Error(await readApiErrorMessage(res, `Request failed (${res.status})`));
       }
 
-      const data = (await res.json()) as ReconciliationLookupResponse;
+      const data = await readApiJson<ReconciliationLookupResponse>(res);
 
       if (data.reconciliations.length > 0) {
         const sorted = [...data.reconciliations].sort(
@@ -175,86 +174,132 @@ export default function GSTR2APage(): React.ReactElement {
   const period = reconciliation?.period ?? '—';
   const financialYear = reconciliation?.financial_year ?? '—';
 
+  const statCards = [
+    {
+      label: 'Total Invoices',
+      value: reconciliation?.summary.total_invoices ?? null,
+      topColor: 'linear-gradient(90deg, #e53e3e, #3b82f6)',
+      valueColor: '#f0f0f0',
+    },
+    {
+      label: 'Matched',
+      value: reconciliation?.summary.matched_count ?? null,
+      topColor: '#22c55e',
+      valueColor: '#22c55e',
+    },
+    {
+      label: 'Missing in 2A',
+      value: reconciliation?.summary.missing_in_2a_count ?? null,
+      topColor: '#f59e0b',
+      valueColor: '#f59e0b',
+    },
+    {
+      label: 'Missing in 2B',
+      value: reconciliation?.summary.missing_in_2b_count ?? null,
+      topColor: '#e53e3e',
+      valueColor: '#e53e3e',
+    },
+  ] as const;
+
   return (
-    <div>
-      {/* Page header strip */}
-      <div className="mb-6 rounded-lg bg-primary px-6 py-4">
-        <nav className="mb-1 flex items-center gap-1 text-xs text-primary-foreground/70">
-          <Link href="/" className="transition hover:text-primary-foreground">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* Page header */}
+      <div>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#555555', marginBottom: 10 }}>
+          <Link href="/" style={{ color: '#555555', textDecoration: 'none' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#f0f0f0'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#555555'; }}>
             Home
           </Link>
           <span>›</span>
-          <Link href="/file-returns" className="transition hover:text-primary-foreground">
+          <Link href="/file-returns" style={{ color: '#555555', textDecoration: 'none' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#f0f0f0'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#555555'; }}>
             File Returns
           </Link>
           <span>›</span>
-          <Link href="/file-returns/returns" className="transition hover:text-primary-foreground">
+          <Link href="/file-returns/returns" style={{ color: '#555555', textDecoration: 'none' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#f0f0f0'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#555555'; }}>
             Returns List
           </Link>
           <span>›</span>
-          <span className="text-primary-foreground">GSTR-2A</span>
+          <span style={{ color: '#888888' }}>GSTR-2A</span>
         </nav>
-        <h1 className="text-lg font-bold text-primary-foreground">GSTR-2A — Auto Drafted Details</h1>
-        <div className="mt-1 flex flex-wrap gap-6 text-sm text-primary-foreground/70">
-          {loading ? (
-            <span>Loading period data…</span>
-          ) : (
-            <>
-              <span>
-                Financial Year:{' '}
-                <strong className="text-primary-foreground">{financialYear}</strong>
-              </span>
-              <span>
-                Return Period:{' '}
-                <strong className="text-primary-foreground">{period}</strong>
-              </span>
-            </>
-          )}
+
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <p style={{ fontSize: 11, color: '#555555', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+              {loading ? 'Loading…' : `FY ${financialYear} · Period ${period}`}
+            </p>
+            <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f0f0f0', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              GSTR-2A
+            </h2>
+            <p style={{ fontSize: 13, color: '#555555', marginTop: 4 }}>Auto Drafted Details — read-only</p>
+          </div>
+          <span style={{
+            fontSize: 11,
+            padding: '3px 10px',
+            borderRadius: 20,
+            background: 'rgba(59,130,246,0.1)',
+            color: '#3b82f6',
+            border: '1px solid rgba(59,130,246,0.2)',
+            fontFamily: "'JetBrains Mono', monospace",
+            alignSelf: 'flex-start',
+          }}>
+            Live
+          </span>
         </div>
       </div>
 
       {/* Error banner */}
       {error !== null && (
-        <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '12px 16px', color: '#f87171', fontSize: 13 }}>
           {error}
         </div>
       )}
 
-      {/* Reconciliation summary strip (when data available) */}
+      {/* Stats row */}
       {reconciliation !== null && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-lg border border-border bg-surface p-4 text-center">
-            <p className="text-xs text-muted-foreground">Total Invoices</p>
-            <p className="mt-1 text-xl font-bold text-foreground">
-              {reconciliation.summary.total_invoices}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-surface p-4 text-center">
-            <p className="text-xs text-muted-foreground">Matched</p>
-            <p className="mt-1 text-xl font-bold text-foreground">
-              {reconciliation.summary.matched_count}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-surface p-4 text-center">
-            <p className="text-xs text-muted-foreground">Missing in 2A</p>
-            <p className="mt-1 text-xl font-bold text-foreground">
-              {reconciliation.summary.missing_in_2a_count}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-surface p-4 text-center">
-            <p className="text-xs text-muted-foreground">Missing in 2B</p>
-            <p className="mt-1 text-xl font-bold text-foreground">
-              {reconciliation.summary.missing_in_2b_count}
-            </p>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+          {statCards.map((card) => (
+            <div
+              key={card.label}
+              style={{
+                background: '#1a1a1a',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 12,
+                padding: '18px 20px',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0,
+                height: 2,
+                background: card.topColor,
+                borderRadius: '12px 12px 0 0',
+              }} />
+              <p style={{ color: '#555555', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 10 }}>
+                {card.label}
+              </p>
+              <p style={{ color: card.valueColor, fontSize: 28, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.03em' }}>
+                {card.value === null ? '—' : card.value.toLocaleString()}
+              </p>
+            </div>
+          ))}
         </div>
       )}
 
       {/* No data state */}
       {!loading && reconciliation === null && error === null && (
-        <div className="mb-6 rounded-lg border border-border bg-surface p-6 text-center text-sm text-muted-foreground">
+        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '32px 20px', textAlign: 'center', fontSize: 13, color: '#555555' }}>
           No reconciliation data found. Please{' '}
-          <Link href="/upload" className="font-medium text-primary hover:underline">
+          <Link href="/upload" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 500 }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'none'; }}>
             upload your GST files
           </Link>{' '}
           to run reconciliation first.
@@ -262,41 +307,87 @@ export default function GSTR2APage(): React.ReactElement {
       )}
 
       {/* Read-only note banner */}
-      <div className="mb-6 flex items-start gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground">
-        <span className="mt-0.5 flex-shrink-0">ℹ️</span>
-        <p>
-          <strong>Note:</strong> You can only view details of inward supplies in GSTR-2A.
-          This return is auto-populated from the GSTR-1 filed by your suppliers and cannot
-          be edited.
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12,
+        background: 'rgba(59,130,246,0.07)',
+        border: '1px solid rgba(59,130,246,0.18)',
+        borderRadius: 10,
+        padding: '12px 16px',
+        fontSize: 13,
+        color: '#888888',
+      }}>
+        <span style={{ color: '#3b82f6', flexShrink: 0, marginTop: 1 }}>ℹ</span>
+        <p style={{ margin: 0, lineHeight: 1.6 }}>
+          <strong style={{ color: '#aaaaaa' }}>Note:</strong> You can only view details of inward supplies in GSTR-2A.
+          This return is auto-populated from the GSTR-1 filed by your suppliers and cannot be edited.
         </p>
       </div>
 
       {/* Section groups */}
-      <div className="space-y-8">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {SECTION_GROUPS.map((group) => (
-          <div key={group.part}>
-            {/* Part label */}
-            <div className="mb-3 flex items-center gap-3">
-              <span className="rounded bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground">
+          <div
+            key={group.part}
+            style={{
+              background: '#1a1a1a',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 12,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Part header */}
+            <div style={{
+              padding: '14px 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              background: '#141414',
+            }}>
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: '3px 8px',
+                borderRadius: 4,
+                background: 'rgba(229,62,62,0.12)',
+                color: '#e53e3e',
+                border: '1px solid rgba(229,62,62,0.2)',
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.06em',
+              }}>
                 {group.part}
               </span>
-              <span className="text-sm font-semibold text-primary">{group.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#f0f0f0' }}>{group.label}</span>
             </div>
 
-            {/* Section cards */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {group.sections.map((section) => (
+            {/* Section rows */}
+            <div>
+              {group.sections.map((section, idx) => (
                 <button
                   key={section.id}
-                  className="group flex items-center justify-between rounded-lg bg-primary px-5 py-4 text-left transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 20px',
+                    background: 'transparent',
+                    border: 'none',
+                    borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                 >
                   <div>
-                    <p className="text-sm font-semibold text-primary-foreground">{section.title}</p>
-                    <p className="mt-0.5 text-xs text-primary-foreground/70">{section.subtitle}</p>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#e0e0e0', margin: 0 }}>{section.title}</p>
+                    <p style={{ fontSize: 11, color: '#555555', marginTop: 3 }}>{section.subtitle}</p>
                   </div>
-                  <span className="ml-4 flex-shrink-0 text-lg text-primary-foreground/70 transition group-hover:text-primary-foreground">
-                    ›
-                  </span>
+                  <span style={{ color: '#444444', fontSize: 18, flexShrink: 0, marginLeft: 16, fontFamily: 'monospace' }}>›</span>
                 </button>
               ))}
             </div>

@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage } from '../../lib/api';
 
 export default function RegisterPage(): React.ReactElement {
   const router = useRouter();
@@ -35,8 +35,7 @@ export default function RegisterPage(): React.ReactElement {
       if (res.ok) {
         router.push('/login');
       } else {
-        const body = await res.json().catch(() => ({}));
-        setError((body as { detail?: string }).detail ?? 'Registration failed. Please try again.');
+        setError(await readApiErrorMessage(res, 'Registration failed. Please try again.'));
       }
     } catch {
       setError('Unable to connect to the server. Please try again.');

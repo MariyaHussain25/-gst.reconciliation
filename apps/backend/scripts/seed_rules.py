@@ -2,7 +2,7 @@
 
 Reads every .txt file from apps/backend/data/rules/ and POSTs each one as a
 multipart/form-data request to the running backend so the content gets chunked,
-embedded with OpenAI text-embedding-3-small, and persisted to MongoDB.
+normalized into rule records, and persisted to MongoDB.
 
 Usage (from the repo root or apps/backend/):
     python scripts/seed_rules.py [--base-url http://localhost:8000]

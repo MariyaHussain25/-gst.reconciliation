@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { parseJwtUserId } from '../../lib/auth';
 import { formatCurrency } from '../../lib/utils';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../lib/api';
 
 interface ReconciliationSummary {
   total_invoices: number;
@@ -120,10 +120,9 @@ export default function ResultsPage(): React.ReactElement {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string; detail?: string };
-        throw new Error(body.error ?? body.detail ?? `Request failed (HTTP ${res.status})`);
+        throw new Error(await readApiErrorMessage(res, `Request failed (HTTP ${res.status})`));
       }
-      const data = (await res.json()) as ReconciliationLookupResponse;
+      const data = await readApiJson<ReconciliationLookupResponse>(res);
       if (!data.reconciliations || data.reconciliations.length === 0) {
         setError('No reconciliation results found. Please upload your files and run reconciliation first.');
         return;

@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isTokenValid } from '../../lib/auth';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../lib/api';
 
 function getEmailValidationError(value: string): string | null {
   if (!value.trim()) return 'Please enter your email address.';
@@ -81,21 +81,13 @@ export default function LoginPage(): React.ReactElement {
       });
 
       if (res.ok) {
-        const data: { access_token: string; token_type: string } = await res.json();
+        const data = await readApiJson<{ access_token: string; token_type: string }>(res);
         const jwt = data.access_token;
         localStorage.setItem('token', jwt);
         document.cookie = `token=${jwt}; path=/; max-age=86400`;
         router.push('/upload');
       } else {
-        const body = (await res.json().catch(() => ({}))) as {
-          detail?: string | { message?: string } | Array<{ msg?: string }>;
-        };
-        const detail =
-          typeof body.detail === 'string'
-            ? body.detail
-            : Array.isArray(body.detail)
-              ? body.detail.map((item) => item.msg).filter(Boolean).join(', ')
-              : body.detail?.message;
+        const detail = await readApiErrorMessage(res, 'Login failed. Please try again.');
 
         const normalizedDetail = detail?.toLowerCase() ?? '';
         if (res.status === 401 || normalizedDetail.includes('incorrect') || normalizedDetail.includes('invalid')) {

@@ -79,7 +79,7 @@ export function ChatWidget(): React.ReactElement {
               GST AI Assistant
             </p>
             <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-              Powered by Gemini
+              Powered by OpenRouter
             </p>
           </div>
           <button

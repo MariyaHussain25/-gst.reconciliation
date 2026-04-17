@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MatchStatusBadge, ReconStatusBadge } from '../components/ui/StatusBadge';
-import { apiFetch } from '../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../lib/api';
 import { parseJwtUserId } from '../lib/auth';
 
 // â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -96,9 +96,14 @@ export default function DashboardPage(): React.ReactElement {
     apiFetch(`/api/dashboard/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(await readApiErrorMessage(res, 'Failed to load dashboard data.'));
+        }
+        return readApiJson<DashboardData>(res);
+      })
       .then((json: DashboardData) => setData(json))
-      .catch(() => setError('Failed to load dashboard data.'))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load dashboard data.'))
       .finally(() => setLoading(false));
   }, []);
 

@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { clearSessionAndRedirectToLogin, isTokenValid, parseJwtUserId } from '../../lib/auth';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../lib/api';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -107,11 +107,10 @@ export default function ITCSummaryPage(): React.ReactElement {
       );
 
       if (!res.ok) {
-        const body = (await res.json()) as { detail?: string; error?: string };
-        throw new Error(body.detail ?? body.error ?? `Request failed (${res.status})`);
+        throw new Error(await readApiErrorMessage(res, `Request failed (${res.status})`));
       }
 
-      const data = (await res.json()) as ReconciliationLookupResponse;
+      const data = await readApiJson<ReconciliationLookupResponse>(res);
 
       if (data.reconciliations.length > 0) {
         // Pick the most recently created reconciliation

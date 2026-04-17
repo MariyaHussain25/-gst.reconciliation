@@ -12,7 +12,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { FilingStatusBadge, type FilingStatus } from '../../../components/ui/StatusBadge';
-import { apiFetch } from '../../../lib/api';
+import { apiFetch, readApiErrorMessage, readApiJson } from '../../../lib/api';
 import { isTokenValid, parseJwtUserId } from '../../../lib/auth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -130,15 +130,17 @@ function ReturnsListInner(): React.ReactElement {
       if (!userId) { setError('Invalid session'); return; }
 
       const res = await apiFetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/returns-summary/${userId}?period=${period}`,
+        `/api/returns-summary/${encodeURIComponent(userId)}?period=${encodeURIComponent(period)}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      if (!res.ok) { setError('Failed to load returns data'); return; }
-      const json = await res.json() as { success: boolean; returns: ReturnRow[] };
+      if (!res.ok) {
+        throw new Error(await readApiErrorMessage(res, 'Failed to load returns data.'));
+      }
+      const json = await readApiJson<{ success: boolean; returns: ReturnRow[] }>(res);
       if (!json.success) { setError('Failed to load returns data'); return; }
       setRows(json.returns);
-    } catch {
-      setError('Could not connect to server');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not connect to server');
     } finally {
       setLoading(false);
     }

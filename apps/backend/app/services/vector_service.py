@@ -4,7 +4,7 @@ Vector Service — Phase 6 RAG Document Ingestion.
 Handles:
   - Text chunking (with configurable chunk size and overlap)
   - PDF text extraction via pypdf
-  - OpenAI text-embedding-3-small vector generation (1536 dimensions)
+    - Rule-document preprocessing for keyword-based retrieval
 """
 
 import logging
@@ -97,58 +97,4 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
         raise RuntimeError(f"Failed to extract text from PDF: {exc}") from exc
 
 
-def get_openai_embedding(text: str) -> list[float]:
-    """Generate a 1536-dimensional embedding vector using OpenAI text-embedding-3-small.
-
-    Args:
-        text: The text to embed (will be truncated to the model's token limit).
-
-    Returns:
-        List of 1536 floats, or an empty list if embedding fails.
-    """
-    from app.config.settings import settings
-
-    api_key = settings.OPENAI_API_KEY
-    if not api_key:
-        logger.warning("[vector_service] OPENAI_API_KEY is not set. Cannot generate embeddings.")
-        return []
-
-    try:
-        from openai import OpenAI  # type: ignore
-
-        client = OpenAI(api_key=api_key)
-        # Normalize whitespace and truncate to avoid token-limit errors
-        clean_text = " ".join(text.split())[:8191]
-
-        response = client.embeddings.create(
-            model=settings.OPENAI_EMBEDDING_MODEL,
-            input=clean_text,
-        )
-        return response.data[0].embedding
-    except ImportError:
-        logger.error("[vector_service] openai package is not installed.")
-        return []
-    except Exception as exc:
-        logger.error("[vector_service] OpenAI embedding failed: %s", exc)
-        return []
-
-
-def embed_chunks(chunks: list[str]) -> list[list[float]]:
-    """Return an embedding vector for each chunk.
-
-    Chunks that fail to embed receive an empty list placeholder so the index
-    of each embedding always corresponds to the same index in *chunks*.
-
-    Args:
-        chunks: List of text chunks to embed.
-
-    Returns:
-        Parallel list of embedding vectors (or empty lists on failure).
-    """
-    embeddings: list[list[float]] = []
-    for i, chunk in enumerate(chunks):
-        vec = get_openai_embedding(chunk)
-        if not vec:
-            logger.warning("[vector_service] Empty embedding for chunk index %d.", i)
-        embeddings.append(vec)
-    return embeddings
+# Embedding generation has been removed. Keyword-based search is used instead.
