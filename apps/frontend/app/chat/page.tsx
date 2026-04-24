@@ -118,15 +118,15 @@ export default function ChatPage(): React.ReactElement {
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
       {/* Header */}
       <div style={{ marginBottom: 18, flexShrink: 0 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 4 }}>GST Assistant</h1>
-        <p style={{ color: '#555', fontSize: 13 }}>Ask anything about ITC eligibility, GSTR-2A/2B reconciliation, or GST rules.</p>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>GST Assistant</h1>
+        <p style={{ color: '#64748b', fontSize: 13 }}>Ask anything about ITC eligibility, GSTR-2A/2B reconciliation, or GST rules.</p>
       </div>
 
       {/* Messages */}
       <div
         style={{
-          flex: 1, overflowY: 'auto', background: '#141414',
-          border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14,
+          flex: 1, overflowY: 'auto', background: '#f8fafc',
+          border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
           padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 14,
         }}
       >
@@ -138,7 +138,7 @@ export default function ChatPage(): React.ReactElement {
             {msg.role === 'assistant' && (
               <div style={{
                 width: 28, height: 28, borderRadius: 8, flexShrink: 0, marginTop: 2,
-                background: 'linear-gradient(135deg, #e53e3e, #c53030)',
+                background: 'linear-gradient(135deg, #0891b2, #0e7490)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 700, color: '#fff', userSelect: 'none',
               }}>G</div>
@@ -148,9 +148,9 @@ export default function ChatPage(): React.ReactElement {
                 maxWidth: '72%',
                 borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
                 padding: '10px 14px', fontSize: 13, lineHeight: 1.65,
-                background: msg.role === 'user' ? 'rgba(229,62,62,0.14)' : '#1e1e1e',
-                color: msg.role === 'user' ? '#f0f0f0' : '#ccc',
-                border: msg.role === 'user' ? '1px solid rgba(229,62,62,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                background: msg.role === 'user' ? 'rgba(8,145,178,0.10)' : '#ffffff',
+                color: msg.role === 'user' ? '#0f172a' : '#374151',
+                border: msg.role === 'user' ? '1px solid rgba(8,145,178,0.2)' : '1px solid rgba(0,0,0,0.08)',
               }}
             >
               {msg.content}
@@ -162,20 +162,19 @@ export default function ChatPage(): React.ReactElement {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8, flexShrink: 0, marginTop: 2,
-              background: 'linear-gradient(135deg, #e53e3e, #c53030)',
+              background: 'linear-gradient(135deg, #0891b2, #0e7490)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, color: '#fff', userSelect: 'none',
-            }}>G</div>
-            <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '4px 16px 16px 16px', padding: '10px 14px', maxWidth: '72%', fontSize: 13, lineHeight: 1.65, color: '#ccc' }}>
+              fontSize: 12, fontWeight: 700, color: '#fff', userSelect: 'none', }}>G</div>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '4px 16px 16px 16px', padding: '10px 14px', maxWidth: '72%', fontSize: 13, lineHeight: 1.65, color: '#374151' }}>
               {streamingText ? (
                 <span>
                   {streamingText}
-                  <span style={{ display: 'inline-block', width: 2, height: 14, background: '#e53e3e', marginLeft: 2, verticalAlign: 'text-bottom', animation: 'blink-cursor 0.8s steps(2) infinite' }} />
+                  <span style={{ display: 'inline-block', width: 2, height: 14, background: '#0891b2', marginLeft: 2, verticalAlign: 'text-bottom', animation: 'blink-cursor 0.8s steps(2) infinite' }} />
                 </span>
               ) : (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Loader2 size={13} color="#555" className="animate-spin" />
-                  <span style={{ color: '#555' }}>Thinking…</span>
+                  <Loader2 size={13} color="#94a3b8" className="animate-spin" />
+                  <span style={{ color: '#94a3b8' }}>Thinking…</span>
                 </span>
               )}
             </div>
@@ -193,12 +192,12 @@ export default function ChatPage(): React.ReactElement {
           placeholder="Ask a GST question…"
           disabled={loading}
           style={{
-            flex: 1, background: '#141414', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 12, padding: '11px 16px', fontSize: 13, color: '#e0e0e0',
+            flex: 1, background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)',
+            borderRadius: 12, padding: '11px 16px', fontSize: 13, color: '#0f172a',
             outline: 'none', fontFamily: "'DM Sans', sans-serif", opacity: loading ? 0.5 : 1,
           }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = '#0891b2'; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
         />
         <button
           type="submit"

@@ -47,10 +47,10 @@ const ICONS: Record<ToastType, React.ComponentType<{ size?: number; color?: stri
 };
 
 const STYLES: Record<ToastType, { border: string; iconColor: string }> = {
-  success: { border: 'rgba(34,197,94,0.45)',   iconColor: '#4ade80' },
-  error:   { border: 'rgba(239,68,68,0.45)',   iconColor: '#f87171' },
-  info:    { border: 'rgba(59,130,246,0.45)',  iconColor: '#60a5fa' },
-  warning: { border: 'rgba(245,158,11,0.45)', iconColor: '#fbbf24' },
+  success: { border: 'rgba(22,163,74,0.4)',   iconColor: '#16a34a' },
+  error:   { border: 'rgba(220,38,38,0.4)',   iconColor: '#dc2626' },
+  info:    { border: 'rgba(37,99,235,0.4)',   iconColor: '#2563eb' },
+  warning: { border: 'rgba(217,119,6,0.4)',  iconColor: '#d97706' },
 };
 
 // ── Individual Toast card ─────────────────────────────────────────────────────
@@ -92,11 +92,11 @@ function ToastCard({
         display: 'flex',
         alignItems: 'flex-start',
         gap: 10,
-        background: '#1c1c1c',
+        background: '#ffffff',
         border: `1px solid ${s.border}`,
         borderRadius: 12,
         padding: '13px 14px',
-        boxShadow: '0 12px 32px rgba(0,0,0,0.55)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
         maxWidth: 360,
         width: '100%',
         transform: visible ? 'translateX(0) scale(1)' : 'translateX(24px) scale(0.95)',
@@ -109,7 +109,7 @@ function ToastCard({
       <span style={{ flexShrink: 0, marginTop: 1, display: 'flex' }}>
         <Icon size={16} color={s.iconColor} />
       </span>
-      <p style={{ flex: 1, fontSize: 13, color: '#e0e0e0', lineHeight: 1.5, margin: 0 }}>
+      <p style={{ flex: 1, fontSize: 13, color: '#0f172a', lineHeight: 1.5, margin: 0 }}>
         {item.message}
       </p>
       <button
@@ -120,7 +120,7 @@ function ToastCard({
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          color: '#555',
+          color: '#94a3b8',
           padding: 2,
           flexShrink: 0,
           borderRadius: 4,
@@ -128,10 +128,10 @@ function ToastCard({
           lineHeight: 1,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = '#aaa';
+          (e.currentTarget as HTMLButtonElement).style.color = '#475569';
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = '#555';
+          (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8';
         }}
       >
         <X size={14} />

@@ -68,8 +68,8 @@ export function TopBar({
     <header
       style={{
         height: 54,
-        background: '#111111',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: '#ffffff',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
         padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
@@ -86,12 +86,12 @@ export function TopBar({
           className="mobile-menu-btn"
           aria-label="Open navigation"
           style={{
-            background: '#1a1a1a',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: '#f1f5f9',
+            border: '1px solid rgba(0,0,0,0.1)',
             borderRadius: 6,
             padding: '6px 8px',
             cursor: 'pointer',
-            color: '#c0c0c0',
+            color: '#64748b',
             lineHeight: 1,
           }}
         >
@@ -103,7 +103,7 @@ export function TopBar({
           style={{
             fontSize: 15,
             fontWeight: 600,
-            color: '#f0f0f0',
+            color: '#0f172a',
             letterSpacing: '-0.01em',
           }}
         >
@@ -113,18 +113,18 @@ export function TopBar({
 
       {/* Right: company, GSTIN chip, theme toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 13, fontWeight: 500, color: '#888888' }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: '#64748b' }}>
           {COMPANY}
         </span>
         <span
           style={{
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: 11,
-            background: '#1a1a1a',
+            background: '#eff6ff',
             padding: '4px 10px',
             borderRadius: 6,
-            color: '#3b82f6',
-            border: '1px solid rgba(59,130,246,0.2)',
+            color: '#2563eb',
+            border: '1px solid rgba(37,99,235,0.2)',
             letterSpacing: '0.02em',
           }}
         >
@@ -135,26 +135,26 @@ export function TopBar({
           onClick={toggleTheme}
           aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           style={{
-            background: '#1a1a1a',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: '#f1f5f9',
+            border: '1px solid rgba(0,0,0,0.1)',
             borderRadius: 6,
             padding: '5px 12px',
             fontSize: 12,
-            color: '#888888',
+            color: '#64748b',
             cursor: 'pointer',
             fontFamily: "'DM Sans', sans-serif",
             transition: 'background 0.15s, color 0.15s',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = '#f0f0f0';
-            (e.currentTarget as HTMLButtonElement).style.background = '#222222';
+            (e.currentTarget as HTMLButtonElement).style.color = '#0f172a';
+            (e.currentTarget as HTMLButtonElement).style.background = '#e2e8f0';
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = '#888888';
-            (e.currentTarget as HTMLButtonElement).style.background = '#1a1a1a';
+            (e.currentTarget as HTMLButtonElement).style.color = '#64748b';
+            (e.currentTarget as HTMLButtonElement).style.background = '#f1f5f9';
           }}
         >
-          {isDark ? '☀ Light' : '☾ Dark'}
+          {isDark ? '☾ Dark mode' : '☀ Light mode'}
         </button>
       </div>
     </header>

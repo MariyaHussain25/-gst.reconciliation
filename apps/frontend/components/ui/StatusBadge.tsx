@@ -54,13 +54,13 @@ export function YNBadge({ status }: { status: 'Y' | 'N' }): React.ReactElement {
 
 /** Pill badge for reconciliation match_status values returned by the backend. */
 const MATCH_STATUS_STYLES: Record<string, { bg: string; color: string; border: string; label: string }> = {
-  MATCHED:         { bg: 'rgba(34,197,94,0.12)',  color: '#4ade80', border: 'rgba(34,197,94,0.25)',  label: 'Matched' },
-  FUZZY_MATCH:     { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: 'rgba(251,191,36,0.25)', label: 'Fuzzy Match' },
-  MISSING_IN_2A:   { bg: 'rgba(245,158,11,0.12)', color: '#fb923c', border: 'rgba(245,158,11,0.25)', label: 'Missing 2A' },
-  MISSING_IN_2B:   { bg: 'rgba(229,62,62,0.12)',  color: '#f87171', border: 'rgba(229,62,62,0.25)',  label: 'Missing 2B' },
-  VALUE_MISMATCH:  { bg: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: 'rgba(245,158,11,0.25)', label: 'Value Diff' },
-  GSTIN_MISMATCH:  { bg: 'rgba(139,92,246,0.12)', color: '#c084fc', border: 'rgba(139,92,246,0.25)', label: 'GSTIN Diff' },
-  UNMATCHED:       { bg: 'rgba(107,114,128,0.15)', color: '#9ca3af', border: 'rgba(107,114,128,0.25)', label: 'Unmatched' },
+  MATCHED:         { bg: '#dcfce7',  color: '#15803d', border: 'rgba(22,163,74,0.3)',   label: 'Matched' },
+  FUZZY_MATCH:     { bg: '#fef9c3',  color: '#92400e', border: 'rgba(161,98,7,0.3)',    label: 'Fuzzy Match' },
+  MISSING_IN_2A:   { bg: '#ffedd5',  color: '#c2410c', border: 'rgba(194,65,12,0.3)',   label: 'Missing 2A' },
+  MISSING_IN_2B:   { bg: '#fee2e2',  color: '#b91c1c', border: 'rgba(185,28,28,0.3)',   label: 'Missing 2B' },
+  VALUE_MISMATCH:  { bg: '#fef9c3',  color: '#92400e', border: 'rgba(161,98,7,0.3)',    label: 'Value Diff' },
+  GSTIN_MISMATCH:  { bg: '#f3e8ff',  color: '#7e22ce', border: 'rgba(126,34,206,0.3)',  label: 'GSTIN Diff' },
+  UNMATCHED:       { bg: '#f1f5f9',  color: '#475569', border: 'rgba(71,85,105,0.25)', label: 'Unmatched' },
 };
 
 export function MatchStatusBadge({ status }: { status: string }): React.ReactElement {
@@ -85,10 +85,10 @@ export function MatchStatusBadge({ status }: { status: string }): React.ReactEle
 
 /** Pill badge for a Reconciliation document's overall status (PENDING/PROCESSING/COMPLETED/FAILED). */
 const RECON_STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  COMPLETED:  { bg: 'rgba(34,197,94,0.12)',  color: '#4ade80', border: 'rgba(34,197,94,0.25)' },
-  PROCESSING: { bg: 'rgba(59,130,246,0.12)', color: '#60a5fa', border: 'rgba(59,130,246,0.25)' },
-  PENDING:    { bg: 'rgba(107,114,128,0.15)', color: '#9ca3af', border: 'rgba(107,114,128,0.25)' },
-  FAILED:     { bg: 'rgba(229,62,62,0.12)',  color: '#f87171', border: 'rgba(229,62,62,0.25)' },
+  COMPLETED:  { bg: '#dcfce7',  color: '#15803d', border: 'rgba(22,163,74,0.3)' },
+  PROCESSING: { bg: '#dbeafe',  color: '#1d4ed8', border: 'rgba(29,78,216,0.3)' },
+  PENDING:    { bg: '#f1f5f9',  color: '#475569', border: 'rgba(71,85,105,0.25)' },
+  FAILED:     { bg: '#fee2e2',  color: '#b91c1c', border: 'rgba(185,28,28,0.3)' },
 };
 
 export function ReconStatusBadge({ status }: { status: string }): React.ReactElement {

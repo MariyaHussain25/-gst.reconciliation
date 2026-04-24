@@ -66,16 +66,16 @@ function StatCard({
   return (
     <div
       style={{
-        background: accent ? 'rgba(229,62,62,0.07)' : '#1a1a1a',
-        border: `1px solid ${accent ? 'rgba(229,62,62,0.22)' : 'rgba(255,255,255,0.07)'}`,
+        background: accent ? 'rgba(8,145,178,0.07)' : '#ffffff',
+        border: `1px solid ${accent ? 'rgba(8,145,178,0.22)' : 'rgba(0,0,0,0.08)'}`,
         borderRadius: 10,
         padding: '16px 18px',
       }}
     >
-      <p style={{ fontSize: 10, fontWeight: 600, color: accent ? '#e53e3e' : '#444', letterSpacing: '0.09em', textTransform: 'uppercase', margin: 0 }}>
+      <p style={{ fontSize: 10, fontWeight: 600, color: accent ? '#0891b2' : '#64748b', letterSpacing: '0.09em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p style={{ fontSize: 21, fontWeight: 700, color: '#f0f0f0', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+      <p style={{ fontSize: 21, fontWeight: 700, color: '#0f172a', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
         {value}
       </p>
     </div>
@@ -153,12 +153,12 @@ export default function ITCSummaryPage(): React.ReactElement {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>ITC Summary</h1>
-      <p style={{ color: '#666', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>Input Tax Credit breakdown from your latest reconciliation.</p>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>ITC Summary</h1>
+      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>Input Tax Credit breakdown from your latest reconciliation.</p>
 
       {/* Loading */}
       {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '32px 0', color: '#555' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '32px 0', color: '#64748b' }}>
           <Loader2 size={18} className="animate-spin" />
           <span style={{ fontSize: 14 }}>Loading ITC data…</span>
         </div>
@@ -166,14 +166,14 @@ export default function ITCSummaryPage(): React.ReactElement {
 
       {/* Error */}
       {error !== null && !loading && (
-        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '14px 18px', color: '#f87171', fontSize: 13, marginBottom: 20 }}>
+        <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10, padding: '14px 18px', color: '#dc2626', fontSize: 13, marginBottom: 20 }}>
           {error}
         </div>
       )}
 
       {/* Empty */}
       {!loading && reconciliation === null && error === null && (
-        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '40px 24px', textAlign: 'center', color: '#555', fontSize: 14 }}>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '40px 24px', textAlign: 'center', color: '#64748b', fontSize: 14 }}>
           No reconciliation data found. Please{' '}
           <Link href="/upload" style={{ color: '#3b82f6', textDecoration: 'none' }}>
             upload your GST files
@@ -187,16 +187,16 @@ export default function ITCSummaryPage(): React.ReactElement {
         <>
           {/* Period info */}
           <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-            <span style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: '#888' }}>
-              Period: <strong style={{ color: '#ccc' }}>{period}</strong>
+            <span style={{ background: '#f0f9ff', border: '1px solid rgba(8,145,178,0.15)', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: '#0891b2' }}>
+              Period: <strong style={{ color: '#0c4a6e' }}>{period}</strong>
             </span>
-            <span style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: '#888' }}>
-              FY: <strong style={{ color: '#ccc' }}>{financialYear}</strong>
+            <span style={{ background: '#f0f9ff', border: '1px solid rgba(8,145,178,0.15)', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: '#0891b2' }}>
+              FY: <strong style={{ color: '#0c4a6e' }}>{financialYear}</strong>
             </span>
           </div>
 
           {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)', marginBottom: 24 }}>
             {(['available', 'not-available'] as TabKey[]).map((tab) => (
               <button
                 key={tab}
@@ -204,8 +204,8 @@ export default function ITCSummaryPage(): React.ReactElement {
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   padding: '10px 18px', fontSize: 13, fontWeight: 600,
-                  color: activeTab === tab ? '#f87171' : '#555',
-                  borderBottom: activeTab === tab ? '2px solid #e53e3e' : '2px solid transparent',
+                  color: activeTab === tab ? '#0891b2' : '#64748b',
+                  borderBottom: activeTab === tab ? '2px solid #0891b2' : '2px solid transparent',
                   marginBottom: -1, transition: 'color 0.15s',
                 }}
               >
@@ -216,8 +216,8 @@ export default function ITCSummaryPage(): React.ReactElement {
 
           {/* Tab: Available */}
           {activeTab === 'available' && (
-            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '22px' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 18 }}>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '22px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 18 }}>
                 Part A — ITC Available: Credit claimable in GSTR-3B
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
@@ -235,8 +235,8 @@ export default function ITCSummaryPage(): React.ReactElement {
 
           {/* Tab: Not Available */}
           {activeTab === 'not-available' && (
-            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '22px' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 18 }}>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '22px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 18 }}>
                 Part B — ITC Not Available / Blocked
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
@@ -252,7 +252,7 @@ export default function ITCSummaryPage(): React.ReactElement {
           )}
 
           {/* Go to Reports */}
-          <p style={{ marginTop: 24, fontSize: 13, color: '#555' }}>
+          <p style={{ marginTop: 24, fontSize: 13, color: '#64748b' }}>
             View the full reconciliation report in{' '}
             <Link href="/reports" style={{ color: '#3b82f6', textDecoration: 'none' }}
               onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}

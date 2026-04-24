@@ -76,12 +76,12 @@ const MONTH_OPTIONS = last24Months();
 
 function StatusBadge({ status }: { status: string }): React.ReactElement {
   const map: Record<string, { bg: string; color: string }> = {
-    COMPLETED: { bg: 'rgba(34,197,94,0.12)',   color: '#4ade80' },
-    PROCESSING: { bg: 'rgba(245,158,11,0.12)',  color: '#fbbf24' },
-    PENDING:    { bg: 'rgba(255,255,255,0.05)', color: '#555' },
-    FAILED:     { bg: 'rgba(229,62,62,0.12)',   color: '#f87171' },
+    COMPLETED: { bg: 'rgba(22,163,74,0.12)',   color: '#15803d' },
+    PROCESSING: { bg: 'rgba(245,158,11,0.12)',  color: '#b45309' },
+    PENDING:    { bg: 'rgba(0,0,0,0.05)', color: '#64748b' },
+    FAILED:     { bg: 'rgba(220,38,38,0.10)',   color: '#dc2626' },
   };
-  const s = map[status] ?? { bg: 'rgba(255,255,255,0.05)', color: '#555' };
+  const s = map[status] ?? { bg: 'rgba(0,0,0,0.05)', color: '#64748b' };
   return (
     <span style={{ background: s.bg, color: s.color, borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
       {status}
@@ -201,11 +201,11 @@ export default function ReportsPage(): React.ReactElement {
   }
 
   const selectSt: React.CSSProperties = {
-    background: '#0d0d0d',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: '#ffffff',
+    border: '1px solid rgba(0,0,0,0.12)',
     borderRadius: 8,
     padding: '8px 10px',
-    color: '#e0e0e0',
+    color: '#0f172a',
     fontSize: 13,
     outline: 'none',
     fontFamily: "'DM Sans', sans-serif",
@@ -215,12 +215,12 @@ export default function ReportsPage(): React.ReactElement {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>PDF Reports</h1>
-      <p style={{ color: '#666', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>Look up and download GST reconciliation PDF reports.</p>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>PDF Reports</h1>
+      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>Look up and download GST reconciliation PDF reports.</p>
 
       {/* Filter card */}
-      <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '20px 22px', marginBottom: 24 }}>
-        <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 12 }}>Filter by</p>
+      <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '20px 22px', marginBottom: 24 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 12 }}>Filter by</p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
           {(['fy', 'daterange', 'all'] as DurationMode[]).map((id) => {
             const active = mode === id;
@@ -231,9 +231,9 @@ export default function ReportsPage(): React.ReactElement {
                 onClick={() => setMode(id)}
                 style={{
                   padding: '6px 14px', fontSize: 12, fontWeight: 500, borderRadius: 7,
-                  border: `1px solid ${active ? 'rgba(229,62,62,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                  background: active ? 'rgba(229,62,62,0.1)' : 'transparent',
-                  color: active ? '#f87171' : '#666',
+                  border: `1px solid ${active ? 'rgba(8,145,178,0.3)' : 'rgba(0,0,0,0.08)'}`,
+                  background: active ? 'rgba(8,145,178,0.08)' : 'transparent',
+                  color: active ? '#0891b2' : '#64748b',
                   cursor: 'pointer', transition: 'all 0.15s ease', fontFamily: "'DM Sans', sans-serif",
                 }}
               >
@@ -246,13 +246,13 @@ export default function ReportsPage(): React.ReactElement {
         {mode === 'fy' && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>Financial Year</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Financial Year</label>
               <select value={fy} onChange={(e) => setFy(e.target.value)} style={selectSt}>
                 {['2023-24', '2024-25', '2025-26'].map((y) => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>Quarter</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Quarter</label>
               <select value={quarter} onChange={(e) => setQuarter(e.target.value)} style={selectSt}>
                 {['Full Year', 'Q1 (Apr-Jun)', 'Q2 (Jul-Sep)', 'Q3 (Oct-Dec)', 'Q4 (Jan-Mar)'].map((q) => <option key={q} value={q}>{q}</option>)}
               </select>
@@ -263,13 +263,13 @@ export default function ReportsPage(): React.ReactElement {
         {mode === 'daterange' && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>From</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>From</label>
               <select value={fromMonth} onChange={(e) => setFromMonth(e.target.value)} style={selectSt}>
                 {MONTH_OPTIONS.map((m) => <option key={m} value={m}>{formatPeriod(m)}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>To</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>To</label>
               <select value={toMonth} onChange={(e) => setToMonth(e.target.value)} style={selectSt}>
                 {MONTH_OPTIONS.map((m) => <option key={m} value={m}>{formatPeriod(m)}</option>)}
               </select>
@@ -279,8 +279,8 @@ export default function ReportsPage(): React.ReactElement {
 
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: 'wrap' }}>
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#555', marginBottom: 6 }}>Account</label>
-            <p style={{ fontSize: 12, color: '#666', fontFamily: "'JetBrains Mono', monospace", background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '9px 12px', margin: 0 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Account</label>
+            <p style={{ fontSize: 12, color: '#475569', fontFamily: "'JetBrains Mono', monospace", background: '#f8fafc', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, padding: '9px 12px', margin: 0 }}>
               {userId || 'Loading\u2026'}
             </p>
           </div>
@@ -303,19 +303,19 @@ export default function ReportsPage(): React.ReactElement {
       )}
 
       {results !== null && results.length === 0 && (
-        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '40px 24px', textAlign: 'center' }}>
-          <p style={{ color: '#555', fontSize: 14 }}>No reconciliation reports found for the selected period.</p>
-          <p style={{ color: '#444', fontSize: 12, marginTop: 6 }}>Try &quot;All Records&quot; to see everything.</p>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '40px 24px', textAlign: 'center' }}>
+          <p style={{ color: '#64748b', fontSize: 14 }}>No reconciliation reports found for the selected period.</p>
+          <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 6 }}>Try &quot;All Records&quot; to see everything.</p>
         </div>
       )}
 
       {results !== null && results.length > 0 && (
-        <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                 {['Period', 'FY', 'Status', 'Date', 'Invoices', 'Eligible ITC', 'Blocked ITC', ''].map((h) => (
-                  <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#444', letterSpacing: '0.08em', textTransform: 'uppercase', background: '#141414', whiteSpace: 'nowrap' }}>
+                  <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#64748b', letterSpacing: '0.08em', textTransform: 'uppercase', background: '#f8fafc', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
                 ))}
@@ -325,17 +325,17 @@ export default function ReportsPage(): React.ReactElement {
               {results.map((item, idx) => (
                 <tr
                   key={item.reconciliation_id}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: idx % 2 === 0 ? '#1a1a1a' : 'transparent', transition: 'background 0.12s' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.03)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = idx % 2 === 0 ? '#1a1a1a' : 'transparent'; }}
+                  style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', background: idx % 2 === 0 ? '#f8fafc' : '#ffffff', transition: 'background 0.12s' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(8,145,178,0.04)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = idx % 2 === 0 ? '#f8fafc' : '#ffffff'; }}
                 >
-                  <td style={{ padding: '11px 14px', color: '#e0e0e0', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{formatPeriod(item.period)}</td>
-                  <td style={{ padding: '11px 14px', color: '#666', fontSize: 12 }}>{item.financial_year}</td>
+                  <td style={{ padding: '11px 14px', color: '#0f172a', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{formatPeriod(item.period)}</td>
+                  <td style={{ padding: '11px 14px', color: '#64748b', fontSize: 12 }}>{item.financial_year}</td>
                   <td style={{ padding: '11px 14px' }}><StatusBadge status={item.status} /></td>
-                  <td style={{ padding: '11px 14px', color: '#555', fontSize: 12, whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '11px 14px', color: '#64748b', fontSize: 12, whiteSpace: 'nowrap' }}>
                     {new Date(item.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </td>
-                  <td style={{ padding: '11px 14px', textAlign: 'right', color: '#ccc', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{item.summary.total_invoices}</td>
+                  <td style={{ padding: '11px 14px', textAlign: 'right', color: '#475569', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{item.summary.total_invoices}</td>
                   <td style={{ padding: '11px 14px', textAlign: 'right', color: '#4ade80', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{formatCurrency(item.summary.total_eligible_itc)}</td>
                   <td style={{ padding: '11px 14px', textAlign: 'right', color: '#f87171', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{formatCurrency(item.summary.total_blocked_itc)}</td>
                   <td style={{ padding: '11px 14px' }}>

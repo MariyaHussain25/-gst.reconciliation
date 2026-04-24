@@ -59,16 +59,16 @@ function StatCard({
   return (
     <div
       style={{
-        background: accent ? 'rgba(229,62,62,0.07)' : '#1a1a1a',
-        border: `1px solid ${accent ? 'rgba(229,62,62,0.22)' : 'rgba(255,255,255,0.07)'}`,
+        background: accent ? 'rgba(8,145,178,0.07)' : '#ffffff',
+        border: `1px solid ${accent ? 'rgba(8,145,178,0.22)' : 'rgba(0,0,0,0.08)'}`,
         borderRadius: 10,
         padding: '16px 18px',
       }}
     >
-      <p style={{ fontSize: 10, fontWeight: 600, color: accent ? '#e53e3e' : '#444', letterSpacing: '0.09em', textTransform: 'uppercase', margin: 0 }}>
+      <p style={{ fontSize: 10, fontWeight: 600, color: accent ? '#0891b2' : '#64748b', letterSpacing: '0.09em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p style={{ fontSize: 21, fontWeight: 700, color: '#f0f0f0', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+      <p style={{ fontSize: 21, fontWeight: 700, color: '#0f172a', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
         {value}
       </p>
     </div>
@@ -142,22 +142,22 @@ export default function ResultsPage(): React.ReactElement {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>
         Reconciliation Results
       </h1>
-      <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
         Matched invoices, discrepancies, and ITC eligibility breakdown.
       </p>
 
       {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#555', fontSize: 14, padding: '20px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#64748b', fontSize: 14, padding: '20px 0' }}>
           <Loader2 size={18} className="animate-spin" />
           Loading results…
         </div>
       )}
 
       {error !== null && (
-        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '12px 16px', color: '#f87171', fontSize: 13, marginBottom: 24 }}>
+        <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10, padding: '12px 16px', color: '#dc2626', fontSize: 13, marginBottom: 24 }}>
           {error}
         </div>
       )}
@@ -165,12 +165,12 @@ export default function ResultsPage(): React.ReactElement {
       {summary !== null && (
         <div>
           {message !== null && (
-            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '9px 14px', fontSize: 12, color: '#555', marginBottom: 28, fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ background: '#f8fafc', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, padding: '9px 14px', fontSize: 12, color: '#64748b', marginBottom: 28, fontFamily: "'JetBrains Mono', monospace" }}>
               {message}
             </div>
           )}
 
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 14 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 14 }}>
             Invoice Summary
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 10, marginBottom: 32 }}>
@@ -184,7 +184,7 @@ export default function ResultsPage(): React.ReactElement {
             <StatCard label="GSTIN Mismatch" value={summary.gstin_mismatch_count} />
           </div>
 
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#444', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 14 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 14 }}>
             ITC Summary
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10, marginBottom: 32 }}>
@@ -193,7 +193,7 @@ export default function ResultsPage(): React.ReactElement {
             <StatCard label="Ineligible ITC (₹)" value={formatCurrency(summary.total_ineligible_itc)} />
           </div>
 
-          <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '14px 18px', fontSize: 13, color: '#555' }}>
+          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '14px 18px', fontSize: 13, color: '#64748b' }}>
             Want the detailed PDF report?{' '}
             <Link
               href="/reports"

@@ -358,10 +358,10 @@ export default function UploadPage(): React.ReactElement {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>
         Upload Documents
       </h1>
-      <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
         Drag &amp; drop or click to select your GSTR-2A and GSTR-2B returns, then hit
         &ldquo;Upload &amp; Reconcile&rdquo; to run the reconciliation workflow.
       </p>
@@ -390,8 +390,8 @@ export default function UploadPage(): React.ReactElement {
           {steps.some((s) => s.status !== 'idle') && (
             <div
               style={{
-                background: '#1a1a1a',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.08)',
                 borderRadius: 12,
                 padding: '20px 22px',
                 marginBottom: 20,
@@ -400,7 +400,7 @@ export default function UploadPage(): React.ReactElement {
               <p
                 style={{
                   fontSize: 11,
-                  color: '#444',
+                  color: '#64748b',
                   fontWeight: 600,
                   letterSpacing: '0.09em',
                   textTransform: 'uppercase',

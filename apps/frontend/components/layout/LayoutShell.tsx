@@ -53,7 +53,7 @@ export function LayoutShell({
               flex: 1,
               overflowY: 'auto',
               padding: '28px',
-              background: '#111111',
+              background: 'var(--bg-page)',
             }}
           >
             {children}

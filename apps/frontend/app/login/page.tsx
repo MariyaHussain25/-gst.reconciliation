@@ -109,7 +109,7 @@ export default function LoginPage(): React.ReactElement {
     <div
       className="login-split"
       style={{
-        background: '#0a0a0a',
+        background: '#f1f5f9',
         fontFamily: "'DM Sans', sans-serif",
       }}
     >
@@ -117,13 +117,13 @@ export default function LoginPage(): React.ReactElement {
       <div
         className="login-left"
         style={{
-          background: '#0a0a0a',
+          background: 'linear-gradient(160deg, #0c4a6e 0%, #0891b2 60%, #0e7490 100%)',
           display: 'flex',
           flexDirection: 'column',
           padding: '40px 48px',
           position: 'relative',
           overflow: 'hidden',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          borderRight: '1px solid rgba(0,0,0,0.08)',
         }}
       >
         {/* Decorative red glow — top-left */}
@@ -135,7 +135,7 @@ export default function LoginPage(): React.ReactElement {
             width: '700px',
             height: '700px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(229,62,62,0.10) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%)',
             pointerEvents: 'none',
           }}
         />
@@ -148,7 +148,7 @@ export default function LoginPage(): React.ReactElement {
             width: '500px',
             height: '500px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 65%)',
             pointerEvents: 'none',
           }}
         />
@@ -161,7 +161,7 @@ export default function LoginPage(): React.ReactElement {
                 width: 32,
                 height: 32,
                 borderRadius: 8,
-                background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+                background: 'linear-gradient(135deg, #ffffff30 0%, #ffffff10 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -194,8 +194,8 @@ export default function LoginPage(): React.ReactElement {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              background: 'rgba(229,62,62,0.1)',
-              border: '1px solid rgba(229,62,62,0.25)',
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.25)',
               borderRadius: 20,
               padding: '4px 12px',
               marginBottom: 28,
@@ -206,14 +206,14 @@ export default function LoginPage(): React.ReactElement {
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: '#e53e3e',
+                background: '#ffffff',
                 display: 'inline-block',
               }}
             />
             <span
               style={{
                 fontSize: 11,
-                color: '#e53e3e',
+                color: '#e0f2fe',
                 fontFamily: "'JetBrains Mono', monospace",
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
@@ -235,13 +235,13 @@ export default function LoginPage(): React.ReactElement {
           >
             Reconcile Smarter,
             <br />
-            <span style={{ color: '#e53e3e' }}>Not Harder.</span>
+            <span style={{ color: '#7dd3fc' }}>Not Harder.</span>
           </h1>
 
           <p
             style={{
               fontSize: 16,
-              color: '#888888',
+              color: 'rgba(255,255,255,0.7)',
               maxWidth: '440px',
               lineHeight: 1.7,
               marginBottom: 44,
@@ -254,9 +254,9 @@ export default function LoginPage(): React.ReactElement {
           {/* Feature bullets */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[
-              { label: 'Automated invoice matching across 2A & 2B', color: '#e53e3e' },
-              { label: 'AI-generated ITC eligibility explanations', color: '#3b82f6' },
-              { label: 'One-click compliance reports & PDF exports', color: '#e53e3e' },
+              { label: 'Automated invoice matching across 2A & 2B', color: '#7dd3fc' },
+              { label: 'AI-generated ITC eligibility explanations', color: '#a5f3fc' },
+              { label: 'One-click compliance reports & PDF exports', color: '#7dd3fc' },
             ].map((feat) => (
               <div key={feat.label} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div
@@ -276,7 +276,7 @@ export default function LoginPage(): React.ReactElement {
                     <path d="M2 5.5L4.5 8L9 3" stroke={feat.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <span style={{ fontSize: 14, color: '#c0c0c0', lineHeight: 1.4 }}>{feat.label}</span>
+                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', lineHeight: 1.4 }}>{feat.label}</span>
               </div>
             ))}
           </div>
@@ -290,7 +290,7 @@ export default function LoginPage(): React.ReactElement {
             display: 'flex',
             gap: 40,
             paddingTop: 28,
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid rgba(255,255,255,0.15)',
           }}
         >
           {[
@@ -299,10 +299,10 @@ export default function LoginPage(): React.ReactElement {
             { value: 'GST-ready', label: 'All return types' },
           ].map((stat) => (
             <div key={stat.label}>
-              <p style={{ fontSize: 18, fontWeight: 700, color: '#f0f0f0', letterSpacing: '-0.02em' }}>
+              <p style={{ fontSize: 18, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.02em' }}>
                 {stat.value}
               </p>
-              <p style={{ fontSize: 12, color: '#666666', marginTop: 2 }}>{stat.label}</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{stat.label}</p>
             </div>
           ))}
         </div>
@@ -312,7 +312,7 @@ export default function LoginPage(): React.ReactElement {
       <div
         className="login-right"
         style={{
-          background: '#111111',
+          background: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -326,14 +326,14 @@ export default function LoginPage(): React.ReactElement {
               style={{
                 fontSize: 24,
                 fontWeight: 700,
-                color: '#f0f0f0',
+                color: '#0f172a',
                 letterSpacing: '-0.02em',
                 marginBottom: 6,
               }}
             >
               Welcome back
             </h2>
-            <p style={{ fontSize: 14, color: '#888888', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
               Sign in to your account to continue
             </p>
           </div>
@@ -343,7 +343,7 @@ export default function LoginPage(): React.ReactElement {
             <div>
               <label
                 htmlFor="email"
-                style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#c0c0c0', marginBottom: 7 }}
+                style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 7 }}
               >
                 Email address
               </label>
@@ -363,21 +363,21 @@ export default function LoginPage(): React.ReactElement {
                 }}
                 onInput={(e) => e.currentTarget.setCustomValidity('')}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#e53e3e';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                  e.currentTarget.style.borderColor = '#0891b2';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(8,145,178,0.12)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 style={{
                   width: '100%',
-                  background: '#1a1a1a',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#f8fafc',
+                  border: '1px solid rgba(0,0,0,0.12)',
                   borderRadius: 8,
                   padding: '11px 14px',
                   fontSize: 14,
-                  color: '#f0f0f0',
+                  color: '#0f172a',
                   outline: 'none',
                   fontFamily: "'DM Sans', sans-serif",
                   boxSizing: 'border-box',
@@ -392,7 +392,7 @@ export default function LoginPage(): React.ReactElement {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
                 <label
                   htmlFor="password"
-                  style={{ fontSize: 13, fontWeight: 500, color: '#c0c0c0' }}
+                  style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}
                 >
                   Password
                 </label>
@@ -413,21 +413,21 @@ export default function LoginPage(): React.ReactElement {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#e53e3e';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                  e.currentTarget.style.borderColor = '#0891b2';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(8,145,178,0.12)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 style={{
                   width: '100%',
-                  background: '#1a1a1a',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#f8fafc',
+                  border: '1px solid rgba(0,0,0,0.12)',
                   borderRadius: 8,
                   padding: '11px 14px',
                   fontSize: 14,
-                  color: '#f0f0f0',
+                  color: '#0f172a',
                   outline: 'none',
                   fontFamily: "'DM Sans', sans-serif",
                   boxSizing: 'border-box',
@@ -452,10 +452,10 @@ export default function LoginPage(): React.ReactElement {
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <circle cx="8" cy="8" r="7" stroke="#e53e3e" strokeWidth="1.5" />
-                  <path d="M8 5v3.5M8 10.5v.5" stroke="#e53e3e" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="8" cy="8" r="7" stroke="#dc2626" strokeWidth="1.5" />
+                  <path d="M8 5v3.5M8 10.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
-                <p style={{ fontSize: 13, color: '#e53e3e', lineHeight: 1.4 }}>{error}</p>
+                <p style={{ fontSize: 13, color: '#dc2626', lineHeight: 1.4 }}>{error}</p>
               </div>
             )}
 
@@ -465,7 +465,7 @@ export default function LoginPage(): React.ReactElement {
               disabled={loading}
               style={{
                 width: '100%',
-                background: loading ? '#7a1d1d' : '#e53e3e',
+                background: loading ? '#075985' : '#0891b2',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
@@ -479,10 +479,10 @@ export default function LoginPage(): React.ReactElement {
                 marginTop: 2,
               }}
               onMouseEnter={(e) => {
-                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#c53030';
+                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#0e7490';
               }}
               onMouseLeave={(e) => {
-                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#e53e3e';
+                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#0891b2';
               }}
             >
               {loading ? 'Signing in…' : 'Sign in'}
@@ -490,7 +490,7 @@ export default function LoginPage(): React.ReactElement {
           </form>
 
           {/* Register link */}
-          <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: '#666666' }}>
+          <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
             Don&apos;t have an account?{' '}
             <a
               href="/register"

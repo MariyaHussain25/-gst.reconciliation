@@ -48,7 +48,7 @@ export default function RegisterPage(): React.ReactElement {
     <div
       style={{
         minHeight: '100vh',
-        background: '#111111',
+        background: '#f1f5f9',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -64,19 +64,19 @@ export default function RegisterPage(): React.ReactElement {
               width: 30,
               height: 30,
               borderRadius: 7,
-              background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+              background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 15,
               fontWeight: 700,
               color: '#fff',
-              boxShadow: '0 2px 8px rgba(229,62,62,0.35)',
+              boxShadow: '0 2px 8px rgba(8,145,178,0.35)',
             }}
           >
             G
           </div>
-          <span style={{ color: '#f0f0f0', fontSize: 14, fontWeight: 600, letterSpacing: '-0.01em' }}>
+          <span style={{ color: '#0f172a', fontSize: 14, fontWeight: 600, letterSpacing: '-0.01em' }}>
             GST Reconciliation
           </span>
         </div>
@@ -84,17 +84,17 @@ export default function RegisterPage(): React.ReactElement {
         {/* Card */}
         <div
           style={{
-            background: '#1a1a1a',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: 14,
             padding: '36px 40px',
           }}
         >
           <div style={{ marginBottom: 28 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', letterSpacing: '-0.02em', marginBottom: 6 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 6 }}>
               Create your account
             </h2>
-            <p style={{ fontSize: 14, color: '#666666' }}>
+            <p style={{ fontSize: 14, color: '#64748b' }}>
               Start reconciling GST returns in minutes
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function RegisterPage(): React.ReactElement {
           <form onSubmit={(e) => void handleRegister(e)} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* Full Name */}
             <div>
-              <label htmlFor="name" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#c0c0c0', marginBottom: 7 }}>
+              <label htmlFor="name" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 7 }}>
                 Full Name
               </label>
               <input
@@ -113,21 +113,21 @@ export default function RegisterPage(): React.ReactElement {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#e53e3e';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                  e.currentTarget.style.borderColor = '#0891b2';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(8,145,178,0.12)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 style={{
                   width: '100%',
-                  background: '#111111',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#f8fafc',
+                  border: '1px solid rgba(0,0,0,0.12)',
                   borderRadius: 8,
                   padding: '11px 14px',
                   fontSize: 14,
-                  color: '#f0f0f0',
+                  color: '#0f172a',
                   outline: 'none',
                   fontFamily: "'DM Sans', sans-serif",
                   boxSizing: 'border-box',
@@ -139,7 +139,7 @@ export default function RegisterPage(): React.ReactElement {
 
             {/* Email */}
             <div>
-              <label htmlFor="email" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#c0c0c0', marginBottom: 7 }}>
+              <label htmlFor="email" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 7 }}>
                 Email address
               </label>
               <input
@@ -150,21 +150,21 @@ export default function RegisterPage(): React.ReactElement {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#e53e3e';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                  e.currentTarget.style.borderColor = '#0891b2';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(8,145,178,0.12)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 style={{
                   width: '100%',
-                  background: '#111111',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#f8fafc',
+                  border: '1px solid rgba(0,0,0,0.12)',
                   borderRadius: 8,
                   padding: '11px 14px',
                   fontSize: 14,
-                  color: '#f0f0f0',
+                  color: '#0f172a',
                   outline: 'none',
                   fontFamily: "'DM Sans', sans-serif",
                   boxSizing: 'border-box',
@@ -176,7 +176,7 @@ export default function RegisterPage(): React.ReactElement {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#c0c0c0', marginBottom: 7 }}>
+              <label htmlFor="password" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 7 }}>
                 Password
               </label>
               <input
@@ -187,21 +187,21 @@ export default function RegisterPage(): React.ReactElement {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#e53e3e';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(229,62,62,0.12)';
+                  e.currentTarget.style.borderColor = '#0891b2';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(8,145,178,0.12)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 style={{
                   width: '100%',
-                  background: '#111111',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#f8fafc',
+                  border: '1px solid rgba(0,0,0,0.12)',
                   borderRadius: 8,
                   padding: '11px 14px',
                   fontSize: 14,
-                  color: '#f0f0f0',
+                  color: '#0f172a',
                   outline: 'none',
                   fontFamily: "'DM Sans', sans-serif",
                   boxSizing: 'border-box',
@@ -243,10 +243,10 @@ export default function RegisterPage(): React.ReactElement {
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <circle cx="8" cy="8" r="7" stroke="#e53e3e" strokeWidth="1.5" />
-                  <path d="M8 5v3.5M8 10.5v.5" stroke="#e53e3e" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="8" cy="8" r="7" stroke="#dc2626" strokeWidth="1.5" />
+                  <path d="M8 5v3.5M8 10.5v.5" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
-                <p style={{ fontSize: 13, color: '#e53e3e', lineHeight: 1.4 }}>{error}</p>
+                <p style={{ fontSize: 13, color: '#dc2626', lineHeight: 1.4 }}>{error}</p>
               </div>
             )}
 
@@ -256,7 +256,7 @@ export default function RegisterPage(): React.ReactElement {
               disabled={loading}
               style={{
                 width: '100%',
-                background: loading ? '#7a1d1d' : '#e53e3e',
+                background: loading ? '#075985' : '#0891b2',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
@@ -270,17 +270,17 @@ export default function RegisterPage(): React.ReactElement {
                 marginTop: 2,
               }}
               onMouseEnter={(e) => {
-                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#c53030';
+                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#0e7490';
               }}
               onMouseLeave={(e) => {
-                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#e53e3e';
+                if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#0891b2';
               }}
             >
               {loading ? 'Creating account…' : 'Create account'}
             </button>
           </form>
 
-          <p style={{ marginTop: 22, textAlign: 'center', fontSize: 13, color: '#666666' }}>
+          <p style={{ marginTop: 22, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
             Already have an account?{' '}
             <a
               href="/login"

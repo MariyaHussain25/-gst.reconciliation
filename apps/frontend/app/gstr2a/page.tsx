@@ -178,8 +178,8 @@ export default function GSTR2APage(): React.ReactElement {
     {
       label: 'Total Invoices',
       value: reconciliation?.summary.total_invoices ?? null,
-      topColor: 'linear-gradient(90deg, #e53e3e, #3b82f6)',
-      valueColor: '#f0f0f0',
+      topColor: 'linear-gradient(90deg, #0891b2, #2563eb)',
+      valueColor: '#0f172a',
     },
     {
       label: 'Matched',
@@ -197,7 +197,7 @@ export default function GSTR2APage(): React.ReactElement {
       label: 'Missing in 2B',
       value: reconciliation?.summary.missing_in_2b_count ?? null,
       topColor: '#e53e3e',
-      valueColor: '#e53e3e',
+      valueColor: '#dc2626',
     },
   ] as const;
 
@@ -206,37 +206,37 @@ export default function GSTR2APage(): React.ReactElement {
 
       {/* Page header */}
       <div>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#555555', marginBottom: 10 }}>
-          <Link href="/" style={{ color: '#555555', textDecoration: 'none' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#f0f0f0'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#555555'; }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#64748b', marginBottom: 10 }}>
+          <Link href="/" style={{ color: '#64748b', textDecoration: 'none' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#0891b2'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#64748b'; }}>
             Home
           </Link>
           <span>›</span>
-          <Link href="/file-returns" style={{ color: '#555555', textDecoration: 'none' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#f0f0f0'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#555555'; }}>
+          <Link href="/file-returns" style={{ color: '#64748b', textDecoration: 'none' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#0891b2'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#64748b'; }}>
             File Returns
           </Link>
           <span>›</span>
-          <Link href="/file-returns/returns" style={{ color: '#555555', textDecoration: 'none' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#f0f0f0'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#555555'; }}>
+          <Link href="/file-returns/returns" style={{ color: '#64748b', textDecoration: 'none' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#0891b2'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#64748b'; }}>
             Returns List
           </Link>
           <span>›</span>
-          <span style={{ color: '#888888' }}>GSTR-2A</span>
+          <span style={{ color: '#94a3b8' }}>GSTR-2A</span>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <p style={{ fontSize: 11, color: '#555555', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+            <p style={{ fontSize: 11, color: '#64748b', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
               {loading ? 'Loading…' : `FY ${financialYear} · Period ${period}`}
             </p>
-            <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f0f0f0', letterSpacing: '-0.02em', lineHeight: 1 }}>
+            <h2 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1 }}>
               GSTR-2A
             </h2>
-            <p style={{ fontSize: 13, color: '#555555', marginTop: 4 }}>Auto Drafted Details — read-only</p>
+            <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Auto Drafted Details — read-only</p>
           </div>
           <span style={{
             fontSize: 11,
@@ -267,8 +267,8 @@ export default function GSTR2APage(): React.ReactElement {
             <div
               key={card.label}
               style={{
-                background: '#1a1a1a',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.08)',
                 borderRadius: 12,
                 padding: '18px 20px',
                 position: 'relative',
@@ -282,7 +282,7 @@ export default function GSTR2APage(): React.ReactElement {
                 background: card.topColor,
                 borderRadius: '12px 12px 0 0',
               }} />
-              <p style={{ color: '#555555', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 10 }}>
+              <p style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 10 }}>
                 {card.label}
               </p>
               <p style={{ color: card.valueColor, fontSize: 28, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.03em' }}>
@@ -295,7 +295,7 @@ export default function GSTR2APage(): React.ReactElement {
 
       {/* No data state */}
       {!loading && reconciliation === null && error === null && (
-        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '32px 20px', textAlign: 'center', fontSize: 13, color: '#555555' }}>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '32px 20px', textAlign: 'center', fontSize: 13, color: '#64748b' }}>
           No reconciliation data found. Please{' '}
           <Link href="/upload" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 500 }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline'; }}
@@ -316,7 +316,7 @@ export default function GSTR2APage(): React.ReactElement {
         borderRadius: 10,
         padding: '12px 16px',
         fontSize: 13,
-        color: '#888888',
+        color: '#64748b',
       }}>
         <span style={{ color: '#3b82f6', flexShrink: 0, marginTop: 1 }}>ℹ</span>
         <p style={{ margin: 0, lineHeight: 1.6 }}>
@@ -331,8 +331,8 @@ export default function GSTR2APage(): React.ReactElement {
           <div
             key={group.part}
             style={{
-              background: '#1a1a1a',
-              border: '1px solid rgba(255,255,255,0.07)',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: 12,
               overflow: 'hidden',
             }}
@@ -340,26 +340,26 @@ export default function GSTR2APage(): React.ReactElement {
             {/* Part header */}
             <div style={{
               padding: '14px 20px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
               display: 'flex',
               alignItems: 'center',
               gap: 12,
-              background: '#141414',
+              background: '#f8fafc',
             }}>
               <span style={{
                 fontSize: 10,
                 fontWeight: 700,
                 padding: '3px 8px',
                 borderRadius: 4,
-                background: 'rgba(229,62,62,0.12)',
-                color: '#e53e3e',
-                border: '1px solid rgba(229,62,62,0.2)',
+                background: 'rgba(8,145,178,0.10)',
+                color: '#0891b2',
+                border: '1px solid rgba(8,145,178,0.2)',
                 fontFamily: "'JetBrains Mono', monospace",
                 letterSpacing: '0.06em',
               }}>
                 {group.part}
               </span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#f0f0f0' }}>{group.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{group.label}</span>
             </div>
 
             {/* Section rows */}
@@ -375,19 +375,19 @@ export default function GSTR2APage(): React.ReactElement {
                     padding: '14px 20px',
                     background: 'transparent',
                     border: 'none',
-                    borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                    borderTop: idx === 0 ? 'none' : '1px solid rgba(0,0,0,0.05)',
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: 'background 0.15s',
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)'; }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.03)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                 >
                   <div>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#e0e0e0', margin: 0 }}>{section.title}</p>
-                    <p style={{ fontSize: 11, color: '#555555', marginTop: 3 }}>{section.subtitle}</p>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#0f172a', margin: 0 }}>{section.title}</p>
+                    <p style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>{section.subtitle}</p>
                   </div>
-                  <span style={{ color: '#444444', fontSize: 18, flexShrink: 0, marginLeft: 16, fontFamily: 'monospace' }}>›</span>
+                  <span style={{ color: '#94a3b8', fontSize: 18, flexShrink: 0, marginLeft: 16, fontFamily: 'monospace' }}>›</span>
                 </button>
               ))}
             </div>

@@ -60,9 +60,9 @@ const PILL_FREQ: CSSProperties = {
   display: 'inline-block',
   fontSize: 11,
   fontWeight: 500,
-  color: '#555',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  color: '#64748b',
+  background: 'rgba(0,0,0,0.04)',
+  border: '1px solid rgba(0,0,0,0.08)',
   borderRadius: 4,
   padding: '2px 8px',
 };
@@ -83,9 +83,9 @@ const BTN_VIEW: CSSProperties = {
   fontSize: 11,
   fontWeight: 700,
   letterSpacing: '0.06em',
-  color: '#e53e3e',
-  background: 'rgba(229,62,62,0.08)',
-  border: '1px solid rgba(229,62,62,0.25)',
+  color: '#0891b2',
+  background: 'rgba(8,145,178,0.08)',
+  border: '1px solid rgba(8,145,178,0.25)',
   borderRadius: 5,
   padding: '5px 14px',
   cursor: 'pointer',
@@ -97,9 +97,9 @@ const BTN_DOWNLOAD: CSSProperties = {
   fontSize: 11,
   fontWeight: 700,
   letterSpacing: '0.06em',
-  color: '#888',
+  color: '#64748b',
   background: 'transparent',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid rgba(0,0,0,0.12)',
   borderRadius: 5,
   padding: '5px 14px',
   cursor: 'pointer',
@@ -152,34 +152,34 @@ function ReturnsListInner(): React.ReactElement {
     <div>
       {/* Page header */}
       <div style={{ marginBottom: 24 }}>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#555', marginBottom: 10 }}>
-          <Link href="/" style={{ color: '#e53e3e', textDecoration: 'none' }}>Home</Link>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748b', marginBottom: 10 }}>
+          <Link href="/" style={{ color: '#0891b2', textDecoration: 'none' }}>Home</Link>
           <span>›</span>
-          <Link href="/file-returns" style={{ color: '#e53e3e', textDecoration: 'none' }}>File Returns</Link>
+          <Link href="/file-returns" style={{ color: '#0891b2', textDecoration: 'none' }}>File Returns</Link>
           <span>›</span>
           <span>Returns List</span>
         </nav>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', margin: 0, marginBottom: 4 }}>File Returns</h1>
-        <p style={{ fontSize: 13, color: '#666', margin: 0 }}>Period: {periodLabel(fy, month)}</p>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', margin: 0, marginBottom: 4 }}>File Returns</h1>
+        <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>Period: {periodLabel(fy, month)}</p>
       </div>
 
       {/* Loading skeleton */}
       {loading && (
-        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, overflow: 'hidden' }}>
           {[0, 1, 2, 3].map((i) => (
             <div key={i} style={{
               padding: '20px 24px',
-              borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+              borderBottom: i < 3 ? '1px solid rgba(0,0,0,0.06)' : 'none',
               display: 'flex', justifyContent: 'space-between', gap: 16,
             }}>
               <div style={{ flex: 1 }}>
-                <div style={{ width: 80, height: 14, background: 'rgba(255,255,255,0.06)', borderRadius: 4, marginBottom: 8 }} />
-                <div style={{ width: '60%', height: 11, background: 'rgba(255,255,255,0.04)', borderRadius: 4, marginBottom: 6 }} />
-                <div style={{ width: 60, height: 20, background: 'rgba(255,255,255,0.04)', borderRadius: 4 }} />
+                <div style={{ width: 80, height: 14, background: 'rgba(0,0,0,0.06)', borderRadius: 4, marginBottom: 8 }} />
+                <div style={{ width: '60%', height: 11, background: 'rgba(0,0,0,0.04)', borderRadius: 4, marginBottom: 6 }} />
+                <div style={{ width: 60, height: 20, background: 'rgba(0,0,0,0.04)', borderRadius: 4 }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
-                <div style={{ width: 60, height: 22, background: 'rgba(255,255,255,0.06)', borderRadius: 4 }} />
-                <div style={{ width: 120, height: 26, background: 'rgba(255,255,255,0.04)', borderRadius: 5 }} />
+                <div style={{ width: 60, height: 22, background: 'rgba(0,0,0,0.06)', borderRadius: 4 }} />
+                <div style={{ width: 120, height: 26, background: 'rgba(0,0,0,0.04)', borderRadius: 5 }} />
               </div>
             </div>
           ))}
@@ -188,11 +188,11 @@ function ReturnsListInner(): React.ReactElement {
 
       {/* Error state */}
       {!loading && error && (
-        <div style={{ background: '#1a1a1a', border: '1px solid rgba(229,62,62,0.2)', borderRadius: 12, padding: '24px', textAlign: 'center' }}>
-          <p style={{ color: '#e53e3e', fontSize: 13, margin: 0 }}>{error}</p>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 12, padding: '24px', textAlign: 'center' }}>
+          <p style={{ color: '#dc2626', fontSize: 13, margin: 0 }}>{error}</p>
           <button
             onClick={() => void fetchReturns()}
-            style={{ marginTop: 12, fontSize: 12, color: '#888', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '5px 14px', cursor: 'pointer' }}
+            style={{ marginTop: 12, fontSize: 12, color: '#64748b', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 5, padding: '5px 14px', cursor: 'pointer' }}
           >
             Retry
           </button>
@@ -201,7 +201,7 @@ function ReturnsListInner(): React.ReactElement {
 
       {/* Returns list */}
       {!loading && !error && (
-        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, overflow: 'hidden' }}>
           {rows.map((ret, i) => (
             <div
               key={ret.type}
@@ -211,20 +211,20 @@ function ReturnsListInner(): React.ReactElement {
                 justifyContent: 'space-between',
                 gap: 16,
                 padding: '20px 24px',
-                borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                borderBottom: i < rows.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
               }}
             >
               {/* Left: name + description + pills */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f0', margin: 0, marginBottom: 3 }}>{ret.type}</p>
-                <p style={{ fontSize: 12, color: '#888', margin: 0, marginBottom: 8, lineHeight: 1.5 }}>{ret.description}</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: 0, marginBottom: 3 }}>{ret.type}</p>
+                <p style={{ fontSize: 12, color: '#64748b', margin: 0, marginBottom: 8, lineHeight: 1.5 }}>{ret.description}</p>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <span style={PILL_FREQ}>{ret.frequency}</span>
                   {ret.record_count !== null && ret.record_count > 0 && (
                     <span style={PILL_COUNT}>{ret.record_count.toLocaleString()} records</span>
                   )}
                   {ret.record_count === 0 && (
-                    <span style={{ ...PILL_COUNT, color: '#555', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <span style={{ ...PILL_COUNT, color: '#64748b', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }}>
                       No data
                     </span>
                   )}
@@ -252,7 +252,7 @@ function ReturnsListInner(): React.ReactElement {
 export default function ReturnsListPage(): React.ReactElement {
   return (
     <Suspense fallback={
-      <div style={{ padding: '40px 0', textAlign: 'center', color: '#555', fontSize: 13 }}>
+      <div style={{ padding: '40px 0', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
         Loading…
       </div>
     }>

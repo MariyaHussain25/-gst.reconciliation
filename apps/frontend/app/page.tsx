@@ -115,10 +115,10 @@ export default function DashboardPage(): React.ReactElement {
     {
       label: 'Total Invoices',
       value: loading ? null : (stats?.total_invoices ?? 0),
-      topColor: 'linear-gradient(90deg, #e53e3e, #3b82f6)',
-      valueColor: '#f0f0f0',
+      topColor: 'linear-gradient(90deg, #0891b2, #2563eb)',
+      valueColor: '#0f172a',
       sub: `FY ${fy}`,
-      subColor: '#444444',
+      subColor: '#64748b',
     },
     {
       label: 'Matched',
@@ -142,9 +142,9 @@ export default function DashboardPage(): React.ReactElement {
       label: 'Missing in 2B',
       value: loading ? null : (stats?.missing_in_2b_count ?? 0),
       topColor: '#e53e3e',
-      valueColor: '#e53e3e',
+      valueColor: '#dc2626',
       sub: 'Not in GSTR-2B',
-      subColor: '#e53e3e',
+      subColor: '#dc2626',
     },
   ] as const;
 
@@ -157,7 +157,7 @@ export default function DashboardPage(): React.ReactElement {
           <p
             style={{
               fontSize: 11,
-              color: '#555555',
+              color: '#64748b',
               fontFamily: "'JetBrains Mono', monospace",
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
@@ -170,7 +170,7 @@ export default function DashboardPage(): React.ReactElement {
             style={{
               fontSize: 26,
               fontWeight: 700,
-              color: '#f0f0f0',
+              color: '#0f172a',
               letterSpacing: '-0.02em',
               lineHeight: 1,
             }}
@@ -200,8 +200,8 @@ export default function DashboardPage(): React.ReactElement {
           <div
             key={card.label}
             style={{
-              background: '#1a1a1a',
-              border: '1px solid rgba(255,255,255,0.07)',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: 12,
               padding: '20px 22px',
               position: 'relative',
@@ -219,7 +219,7 @@ export default function DashboardPage(): React.ReactElement {
             />
             <p
               style={{
-                color: '#555555',
+                color: '#64748b',
                 fontSize: 11,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
@@ -253,8 +253,8 @@ export default function DashboardPage(): React.ReactElement {
         {/* Left â€” Recent Runs */}
         <div
           style={{
-            background: '#1a1a1a',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: 12,
             overflow: 'hidden',
           }}
@@ -262,17 +262,17 @@ export default function DashboardPage(): React.ReactElement {
           <div
             style={{
               padding: '16px 20px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
             }}
           >
             <div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f0', letterSpacing: '-0.01em' }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>
                 Recent Runs
               </p>
-              <p style={{ fontSize: 11, color: '#555555', marginTop: 2 }}>Last 5 reconciliation jobs</p>
+              <p style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Last 5 reconciliation jobs</p>
             </div>
             <span
               style={{
@@ -292,7 +292,7 @@ export default function DashboardPage(): React.ReactElement {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
-                <tr style={{ background: '#141414' }}>
+                <tr style={{ background: '#f8fafc' }}>
                   {['Period', 'FY', 'Status', 'Matched / Total', 'Date'].map((h) => (
                     <th
                       key={h}
@@ -303,8 +303,8 @@ export default function DashboardPage(): React.ReactElement {
                         fontWeight: 600,
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
-                        color: '#555555',
-                        borderBottom: '1px solid rgba(255,255,255,0.06)',
+                        color: '#64748b',
+                        borderBottom: '1px solid rgba(0,0,0,0.06)',
                         whiteSpace: 'nowrap',
                       }}
                     >
@@ -316,7 +316,7 @@ export default function DashboardPage(): React.ReactElement {
               <tbody>
                 {loading ? (
                   Array.from({ length: 3 }).map((_, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                       {Array.from({ length: 5 }).map((__, j) => (
                         <td key={j} style={{ padding: '12px 16px' }}>
                           <Skeleton w={j === 2 ? 70 : j === 3 ? 60 : 80} h={14} />
@@ -326,7 +326,7 @@ export default function DashboardPage(): React.ReactElement {
                   ))
                 ) : !data?.recent_runs?.length ? (
                   <tr>
-                    <td colSpan={5} style={{ padding: '32px 16px', textAlign: 'center', color: '#444444', fontSize: 13 }}>
+                    <td colSpan={5} style={{ padding: '32px 16px', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
                       No reconciliation runs yet.{' '}
                       <Link href="/upload" style={{ color: '#3b82f6' }}>Upload files</Link> to get started.
                     </td>
@@ -337,23 +337,23 @@ export default function DashboardPage(): React.ReactElement {
                       key={run.reconciliation_id}
                       style={{
                         borderBottom: idx < data.recent_runs.length - 1
-                          ? '1px solid rgba(255,255,255,0.04)'
+                          ? '1px solid rgba(0,0,0,0.04)'
                           : 'none',
                       }}
                     >
-                      <td style={{ padding: '11px 16px', color: '#e0e0e0', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '11px 16px', color: '#0f172a', fontWeight: 500, whiteSpace: 'nowrap' }}>
                         {fmtPeriod(run.period)}
                       </td>
-                      <td style={{ padding: '11px 16px', color: '#666666', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '11px 16px', color: '#64748b', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, whiteSpace: 'nowrap' }}>
                         {run.financial_year}
                       </td>
                       <td style={{ padding: '11px 16px' }}>
                         <ReconStatusBadge status={run.status} />
                       </td>
-                      <td style={{ padding: '11px 16px', color: '#888888', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '11px 16px', color: '#94a3b8', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, whiteSpace: 'nowrap' }}>
                         {run.matched_count} / {run.total_invoices}
                       </td>
-                      <td style={{ padding: '11px 16px', color: '#555555', fontSize: 11, whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '11px 16px', color: '#64748b', fontSize: 11, whiteSpace: 'nowrap' }}>
                         {fmtDate(run.created_at)}
                       </td>
                     </tr>
@@ -366,7 +366,7 @@ export default function DashboardPage(): React.ReactElement {
           <div
             style={{
               padding: '14px 20px',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
+              borderTop: '1px solid rgba(0,0,0,0.06)',
               display: 'flex',
               gap: 8,
               flexWrap: 'wrap',
@@ -381,19 +381,19 @@ export default function DashboardPage(): React.ReactElement {
         {/* Right â€” Recent Supplier Results */}
         <div
           style={{
-            background: '#1a1a1a',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: 12,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f0', letterSpacing: '-0.01em' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>
               Recent Reconciliation
             </p>
-            <p style={{ fontSize: 11, color: '#555555', marginTop: 2 }}>FY {fy}</p>
+            <p style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>FY {fy}</p>
           </div>
 
           <div style={{ flex: 1 }}>
@@ -406,7 +406,7 @@ export default function DashboardPage(): React.ReactElement {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '13px 20px',
-                    borderBottom: i < 4 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  borderBottom: i < 4 ? '1px solid rgba(0,0,0,0.04)' : 'none',
                   }}
                 >
                   <Skeleton w={160} h={14} />
@@ -414,7 +414,7 @@ export default function DashboardPage(): React.ReactElement {
                 </div>
               ))
             ) : !data?.recent_results?.length ? (
-              <div style={{ padding: '32px 20px', textAlign: 'center', color: '#444444', fontSize: 13 }}>
+              <div style={{ padding: '32px 20px', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
                 No results yet. Run a reconciliation to see supplier matches.
               </div>
             ) : (
@@ -427,15 +427,15 @@ export default function DashboardPage(): React.ReactElement {
                     justifyContent: 'space-between',
                     padding: '12px 20px',
                     borderBottom: idx < data.recent_results.length - 1
-                      ? '1px solid rgba(255,255,255,0.04)'
+                      ? '1px solid rgba(0,0,0,0.04)'
                       : 'none',
                     transition: 'background 0.12s',
                     cursor: 'default',
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.02)'; }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(0,0,0,0.02)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
                 >
-                  <span style={{ fontSize: 13, color: '#d0d0d0', fontWeight: 500 }}>
+                  <span style={{ fontSize: 13, color: '#0f172a', fontWeight: 500 }}>
                     {row.vendor_name}
                   </span>
                   <MatchStatusBadge status={row.match_status} />

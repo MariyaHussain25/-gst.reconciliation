@@ -81,34 +81,34 @@ export default function RulesUploadPage(): React.ReactElement {
   }
 
   const inputSt: React.CSSProperties = {
-    width: '100%', background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
-    padding: '9px 12px', color: '#e0e0e0', fontSize: 13, outline: 'none', fontFamily: "'DM Sans', sans-serif",
+    width: '100%', background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 8,
+    padding: '9px 12px', color: '#0f172a', fontSize: 13, outline: 'none', fontFamily: "'DM Sans', sans-serif",
     boxSizing: 'border-box',
   };
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>GST Rules Knowledge Base</h1>
-      <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>GST Rules Knowledge Base</h1>
+      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
         Upload text or PDF files containing GST rules. The system chunks the document, stores searchable
         rule records in MongoDB, and uses them as retrieval context for chat and explanations.
       </p>
 
       <div style={{ maxWidth: 600 }}>
-        <form onSubmit={(e) => void handleSubmit(e)} style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '24px' }}>
+        <form onSubmit={(e) => void handleSubmit(e)} style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '24px' }}>
 
           {/* File drop zone */}
           <div style={{ marginBottom: 22 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#666', marginBottom: 8 }}>GST Rules Document — .txt or .pdf</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 8 }}>GST Rules Document — .txt or .pdf</label>
             <div
               role="button"
               tabIndex={0}
               onClick={() => document.getElementById('ruleFile')?.click()}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('ruleFile')?.click(); }}
               style={{
-                border: `2px dashed ${file ? 'rgba(34,197,94,0.45)' : 'rgba(255,255,255,0.1)'}`,
+                border: `2px dashed ${file ? 'rgba(22,163,74,0.45)' : 'rgba(0,0,0,0.12)'}`,
                 borderRadius: 12, padding: '28px 20px', textAlign: 'center', cursor: 'pointer',
-                background: file ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.02)',
+                background: file ? 'rgba(22,163,74,0.05)' : '#f8fafc',
                 transition: 'border-color 0.2s, background 0.2s',
                 outline: 'none',
               }}
@@ -119,14 +119,14 @@ export default function RulesUploadPage(): React.ReactElement {
               {file ? (
                 <>
                   <BookOpen size={26} color="#4ade80" style={{ marginBottom: 8 }} />
-                  <p style={{ color: '#4ade80', fontSize: 13, fontWeight: 500 }}>{file.name}</p>
-                  <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>{(file.size / 1024).toFixed(1)} KB · Click to replace</p>
+                  <p style={{ color: '#16a34a', fontSize: 13, fontWeight: 500 }}>{file.name}</p>
+                  <p style={{ color: '#64748b', fontSize: 11, marginTop: 4 }}>{(file.size / 1024).toFixed(1)} KB · Click to replace</p>
                 </>
               ) : (
                 <>
-                  <Upload size={22} color="#444" style={{ marginBottom: 10 }} />
-                  <p style={{ color: '#888', fontSize: 13 }}>Click to select a .txt or .pdf file</p>
-                  <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>Maximum 10 MB · Larger documents are chunked automatically</p>
+                  <Upload size={22} color="#94a3b8" style={{ marginBottom: 10 }} />
+                  <p style={{ color: '#64748b', fontSize: 13 }}>Click to select a .txt or .pdf file</p>
+                  <p style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>Maximum 10 MB · Larger documents are chunked automatically</p>
                 </>
               )}
             </div>
@@ -134,22 +134,22 @@ export default function RulesUploadPage(): React.ReactElement {
 
           {/* Section label */}
           <div style={{ marginBottom: 18 }}>
-            <label htmlFor="section" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#666', marginBottom: 7 }}>
-              GST Section <span style={{ color: '#444' }}>(optional)</span>
+            <label htmlFor="section" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 7 }}>
+              GST Section <span style={{ color: '#94a3b8' }}>(optional)</span>
             </label>
             <input
               id="section" type="text" value={section}
               onChange={(e) => setSection(e.target.value)}
               placeholder="e.g. Section 16, Rule 36, Schedule II"
-              style={{ ...inputSt, color: section ? '#e0e0e0' : undefined }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+              style={{ ...inputSt, color: section ? '#0f172a' : undefined }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#0891b2'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; }}
             />
           </div>
 
           {/* Category */}
           <div style={{ marginBottom: 24 }}>
-            <label htmlFor="category" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#666', marginBottom: 7 }}>Category</label>
+            <label htmlFor="category" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 7 }}>Category</label>
             <select
               id="category" value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -173,11 +173,11 @@ export default function RulesUploadPage(): React.ReactElement {
 
           {/* Success */}
           {result !== null && result.success && (
-            <div style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.22)', borderRadius: 8, padding: '11px 14px', fontSize: 13, marginBottom: 18 }}>
-              <p style={{ color: '#4ade80', fontWeight: 600, margin: '0 0 4px' }}>✓ Ingestion complete</p>
-              <p style={{ color: '#86efac', margin: 0 }}>{result.message}</p>
+            <div style={{ background: 'rgba(22,163,74,0.07)', border: '1px solid rgba(22,163,74,0.22)', borderRadius: 8, padding: '11px 14px', fontSize: 13, marginBottom: 18 }}>
+              <p style={{ color: '#15803d', fontWeight: 600, margin: '0 0 4px' }}>✓ Ingestion complete</p>
+              <p style={{ color: '#16a34a', margin: 0 }}>{result.message}</p>
               {result.chunks_saved !== undefined && (
-                <p style={{ color: '#555', fontSize: 11, margin: '4px 0 0' }}>{result.chunks_saved} chunk(s) saved to MongoDB.</p>
+                <p style={{ color: '#64748b', fontSize: 11, margin: '4px 0 0' }}>{result.chunks_saved} chunk(s) saved to MongoDB.</p>
               )}
             </div>
           )}
@@ -194,8 +194,8 @@ export default function RulesUploadPage(): React.ReactElement {
         </form>
 
         {/* How it works */}
-        <div style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '20px 22px', marginTop: 20 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#e0e0e0', marginBottom: 14 }}>How it works</p>
+        <div style={{ background: '#f8fafc', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '20px 22px', marginTop: 20 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', marginBottom: 14 }}>How it works</p>
           <ol style={{ paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 10, margin: 0 }}>
             {[
               'Your document is uploaded securely to the backend.',
@@ -204,7 +204,7 @@ export default function RulesUploadPage(): React.ReactElement {
               'Keyword matching retrieves the most relevant rule chunks for the current query.',
               'Those retrieved rules are passed into chat and explanation requests as context.',
             ].map((step, i) => (
-              <li key={i} style={{ fontSize: 13, color: '#555', lineHeight: 1.6 }}>{step}</li>
+              <li key={i} style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>{step}</li>
             ))}
           </ol>
         </div>

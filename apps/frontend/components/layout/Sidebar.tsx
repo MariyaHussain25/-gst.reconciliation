@@ -60,11 +60,11 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
       style={{
         width: '100%',
         height: '100%',
-        background: '#0a0a0a',
+        background: 'var(--sidebar-bg)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        borderRight: '1px solid var(--sidebar-border)',
       }}
     >
       {/* ── Logo / Brand ── */}
@@ -73,7 +73,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
           height: 58,
           display: 'flex',
           alignItems: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--sidebar-border)',
           flexShrink: 0,
           overflow: 'hidden',
         }}
@@ -94,7 +94,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
               width: 30,
               height: 30,
               borderRadius: 8,
-              background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+              background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -102,7 +102,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
               fontWeight: 700,
               color: '#fff',
               flexShrink: 0,
-              boxShadow: '0 2px 10px rgba(229,62,62,0.4)',
+              boxShadow: '0 2px 10px rgba(8,145,178,0.45)',
             }}
           >
             G
@@ -111,12 +111,12 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
 
         {/* Text — hidden when collapsed */}
         <div className="sidebar-logo-text" style={{ overflow: 'hidden' }}>
-          <p style={{ color: '#f0f0f0', fontSize: 13, fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
+          <p style={{ color: '#f0f8ff', fontSize: 13, fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
             GST Recon
           </p>
           <p
             style={{
-              color: '#3b82f6',
+              color: '#7dd3fc',
               fontSize: 10,
               fontFamily: "'JetBrains Mono', monospace",
               marginTop: 2,
@@ -136,7 +136,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
           style={{
             fontSize: 10,
             fontWeight: 600,
-            color: '#3a3a3a',
+            color: 'rgba(255,255,255,0.25)',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
@@ -162,8 +162,8 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
                 alignItems: 'center',
                 textDecoration: 'none',
                 position: 'relative',
-                borderLeft: active ? '2px solid #e53e3e' : '2px solid transparent',
-                background: active ? 'rgba(229,62,62,0.08)' : 'transparent',
+                borderLeft: active ? '2px solid #38bdf8' : '2px solid transparent',
+                background: active ? 'rgba(56,189,248,0.14)' : 'transparent',
                 transition: 'background 0.15s, border-color 0.15s',
               }}
             >
@@ -183,7 +183,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
                 <item.Icon
                   size={16}
                   strokeWidth={active ? 2.2 : 1.8}
-                  color={active ? '#e53e3e' : '#556'}
+                  color={active ? '#38bdf8' : 'rgba(255,255,255,0.4)'}
                 />
               </span>
 
@@ -193,7 +193,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
                 style={{
                   fontSize: 13,
                   fontWeight: active ? 500 : 400,
-                  color: active ? '#f0f0f0' : '#888',
+                  color: active ? '#f0f8ff' : 'rgba(255,255,255,0.55)',
                   whiteSpace: 'nowrap',
                   letterSpacing: '-0.005em',
                 }}
@@ -208,7 +208,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
       {/* ── User / Logout ── */}
       <div
         style={{
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid var(--sidebar-border)',
           flexShrink: 0,
           overflow: 'hidden',
         }}
@@ -230,7 +230,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
             transition: 'background 0.15s',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(229,62,62,0.07)';
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
@@ -247,11 +247,11 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
               flexShrink: 0,
             }}
           >
-            <LogOut size={15} color="#666" strokeWidth={1.8} />
+            <LogOut size={15} color="rgba(255,255,255,0.4)" strokeWidth={1.8} />
           </span>
           <span
             className="sidebar-label"
-            style={{ fontSize: 13, color: '#888', whiteSpace: 'nowrap' }}
+            style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap' }}
           >
             Sign out
           </span>

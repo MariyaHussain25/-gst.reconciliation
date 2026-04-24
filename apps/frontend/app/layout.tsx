@@ -38,7 +38,19 @@ export default function RootLayout({
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.removeAttribute('data-theme');}else{document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}}catch(e){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}})();`,
+            __html: `(function(){try{
+  var v=localStorage.getItem('themeVer');
+  if(v!=='2'){
+    localStorage.setItem('theme','light');
+    localStorage.setItem('themeVer','2');
+    document.documentElement.classList.remove('dark');
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    var t=localStorage.getItem('theme');
+    if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}
+    else{document.documentElement.classList.remove('dark');document.documentElement.removeAttribute('data-theme');}
+  }
+}catch(e){}})();`,
           }}
         />
       </head>
