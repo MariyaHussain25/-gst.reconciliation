@@ -260,4 +260,3 @@ export function Sidebar({ onClose }: { onClose?: () => void }): React.ReactEleme
     </aside>
   );
 }
-

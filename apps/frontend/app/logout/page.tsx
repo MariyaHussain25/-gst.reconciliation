@@ -17,3 +17,4 @@ export default function LogoutPage(): React.ReactElement {
     </div>
   );
 }
+

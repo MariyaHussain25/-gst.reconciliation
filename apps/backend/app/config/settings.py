@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # Security
     MAX_UPLOAD_SIZE_MB: int = Field(default=10, description="Maximum file upload size in MB")
     ALLOWED_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000"],
+        default=["http://localhost:3000,http://localhost:3001"],
         description="CORS allowed origins"
     )
 

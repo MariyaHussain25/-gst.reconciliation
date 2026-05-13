@@ -1,4 +1,4 @@
-"""GSTR-2A record document model - replaces gstr2a.model.ts"""
+"""GSTR-2A record document model"""
 
 from datetime import datetime, timezone
 from beanie import Document
@@ -19,7 +19,19 @@ class Gstr2ARecord(Document):
     particulars: str = ""
     party_gstin: str = ""
     vch_type: str = ""
+
+    # ── Two distinct invoice number fields ───────────────────────────────────
+    # vch_no         = internal Tally voucher number  (e.g. "2513")
+    #                  mapped from the "Vch No." column
+    # invoice_number = official supplier invoice number (e.g. "02103")
+    #                  mapped from the "invoice_number" / "Invoice No." column
+    #
+    # When the Excel has both columns, both are stored separately.
+    # When only one column exists (older Tally exports), invoice_number
+    # falls back to the same value as vch_no so matching still works.
     vch_no: str = ""
+    invoice_number: str = ""          # ← NEW — official supplier invoice number
+
     taxable_amount: float = 0.0
     igst: float = 0.0
     cgst: float = 0.0

@@ -64,8 +64,9 @@ GST_HEADER_KEYWORDS = ("gstin", "tax", "invoice", "amount", "date", "particulars
 COLUMN_ALIASES: dict[str, list[str]] = {
     "party_gstin": ["GSTIN of supplier", "Supplier GSTIN", "GSTIN/UIN"],
     "supplier_name": ["Trade/Legal name", "Supplier Trade Name", "Particulars"],
-    "invoice_number": ["Invoice number", "Invoice No.", "Vch No."],
+    "invoice_number": ["Invoice number", "Invoice No."],
     "invoice_type": ["Invoice type", "Vch Type"],
+    "vch_number":     ["Vch No.", "Voucher No"], 
     "invoice_date": ["Invoice date", "Invoice Date", "Date"],
     "invoice_value": ["Invoice Value(₹)", "Invoice Value", "Invoice Amount"],
     "place_of_supply": ["Place of supply"],

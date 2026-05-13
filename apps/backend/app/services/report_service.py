@@ -45,7 +45,7 @@ async def generate_gst_summary_json(reconciliation: Reconciliation) -> Dict[str,
     table_4c = round(table_4a - table_4b, 2)
 
     return {
-        "gstin": reconciliation.user_id,
+        "gstin": (reconciliation.results[0].gstr2a_vendor_gstin if reconciliation.results else "N/A"),
         "return_period": reconciliation.period,
         "table_4": {
             "4A_itc_available": table_4a,

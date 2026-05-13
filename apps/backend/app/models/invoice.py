@@ -1,4 +1,4 @@
-"""Invoice document model - replaces invoice.model.ts with NEW duplicate tracking fields"""
+"""Invoice document model"""
 
 from datetime import datetime, timezone
 from typing import Literal, Optional
@@ -12,26 +12,26 @@ class Invoice(Document):
     gstin: str
     vendor_name: str
     normalized_vendor_name: str = ""
-    invoice_number: str
+    invoice_number: str                    # official supplier invoice number
     normalized_invoice_number: str = ""
     invoice_date: datetime
-    period: str  # YYYY-MM format
+    period: str                            # YYYY-MM format
     taxable_amount: float = 0.0
     igst: float = 0.0
     cgst: float = 0.0
     sgst: float = 0.0
-    cess: float = 0.0  # NEW - was missing in TS model
+    cess: float = 0.0
     total_amount: float = 0.0
     match_status: str = "UNMATCHED"
     match_confidence: float = 0.0
     itc_category: Optional[str] = None
     description: Optional[str] = None
 
-    # NEW duplicate tracking fields
+    # Duplicate tracking
     is_duplicate: bool = False
     duplicate_group_id: Optional[str] = None
-    duplicate_of: Optional[str] = None  # ObjectId reference to primary invoice as string
-    duplicate_status: Optional[str] = None  # FLAGGED, CONFIRMED, DISMISSED
+    duplicate_of: Optional[str] = None
+    duplicate_status: Optional[str] = None
     duplicate_reason: Optional[str] = None
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
